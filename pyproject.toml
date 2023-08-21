@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "TcTools"
+version = "0.0.1"
+authors = [
+  { name="Robert Roos", email="robert.soor@gmail.com" },
+]
+description = "A set of tools for TwinCAT projects"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "BSD-3-Clause"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+]
+
+[project.scripts]
+format = "tctools.format:main"
+xml_sort = "tctools.xml_sort:main"

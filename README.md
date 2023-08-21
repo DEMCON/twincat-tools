@@ -24,7 +24,7 @@ Use this to to make consistent use of spaces/tabs.
 Usage:
 
 ```cmd
-python -m tctools.auto_format [--project=<file>] [--files=<files>]
+python -m tctools.format [--project=<file>] [--files=<files>]
 ```
 
 Add `--help` for full instructions.
