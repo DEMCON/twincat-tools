@@ -56,7 +56,7 @@ class XmlSorter:
                 fh.write(
                     etree.tostring(
                         root,
-                        doctype=header_before or '<?xml version="1.0"?>'
+                        doctype=header_before or '<?xml version="1.0"?>',
                     )
                 )
                 # Write by hand (instead of `tree.write()` so we can control the header
@@ -78,10 +78,11 @@ class XmlSorter:
         for child in node:
             self.sort_node_recursively(child)
 
-        try:
-            node[:] = sorted(node, key=self.get_node_sorting_key)
-        except TypeError:
-            pass
+        node[:] = sorted(node, key=self.get_node_sorting_key)
+
+        # Force content to emtpy string to prevent self-closing tags:
+        # if node.text is None:
+        #     node.text = ""
 
     @staticmethod
     def sort_attributes(node):

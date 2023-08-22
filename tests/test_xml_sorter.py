@@ -34,7 +34,7 @@ def test_single_file_plain_xml(plc_code):
     ]
 
     assert_order_of_lines_in_file(expected, file, is_substring=True, check_true=False)
-    tctools.xml_sort_main("--file", str(file))
+    tctools.xml_sort_main("--files", str(file))
     assert_order_of_lines_in_file(expected, file, is_substring=True)
 
 
@@ -50,12 +50,19 @@ def test_use_attributes(plc_code):
     # <name>*</name> is not used for sorting
 
     assert_order_of_lines_in_file(expected, file, is_substring=True, check_true=False)
-    tctools.xml_sort_main("--file", str(file))
+    tctools.xml_sort_main("--files", str(file))
     assert_order_of_lines_in_file(expected, file, is_substring=True)
 
 
-def test_single_file(plc_code):
+def test_single_project_file(plc_code):
     """Test XML sort on a single target file."""
     file = plc_code / "TwinCAT Project1" / "TwinCAT Project1.tsproj"
-    tctools.xml_sort_main("--file", str(file))
-    return
+    tctools.xml_sort_main(
+        "--files",
+        str(file),
+        "--skip-nodes",
+        "Device",
+        "DeploymentEvents",
+        "TcSmItem",
+        "DataType",
+    )

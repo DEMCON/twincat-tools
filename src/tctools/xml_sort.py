@@ -13,7 +13,12 @@ def parse_arguments(args):
         "Device ./MyTwinCATProject"
     )
 
-    parser.add_argument("-f", "--file", action="append", help="Target a specific file")
+    parser.add_argument(
+        "-n",
+        "--skip-nodes",
+        nargs="+",
+        help="Do not touch the attributes and sub-nodes of nodes with these names",
+    )
 
     return parser.parse_args(args if args else sys.argv)
 
@@ -21,8 +26,13 @@ def parse_arguments(args):
 def main(*args):
     arguments = parse_arguments(args)
 
-    sorter = XmlSorter()
-    sorter.sort_file(arguments.file[0])
+    sorter = XmlSorter(
+        quiet=arguments.quiet,
+        skip_nodes=arguments.skip_nodes,
+    )
+
+    for file in arguments.files:
+        sorter.sort_file(file)
 
 
 if __name__ == "__main__":
