@@ -100,25 +100,25 @@ def test_single_project_file(plc_code):
     )
 
 
-def test_multiple_files(plc_code, capsys):
+def test_multiple_files(plc_code, caplog):
     """Test CLI interface."""
     file1 = plc_code / "books.xml"
     file2 = plc_code / "plant_catalog.xml"
-    tctools.xml_sort.main(str(file1), str(file2))
-    result = capsys.readouterr().out
+    tctools.xml_sort.main(str(file1), str(file2), "-l", "DEBUG")
+    result = "\n".join([rec.msg for rec in caplog.records])
     assert "books.xml" in result
     assert "plant_catalog.xml" in result
 
 
-def test_folder(plc_code, capsys):
+def test_folder(plc_code, caplog):
     """Test CLI interface."""
-    tctools.xml_sort.main(str(plc_code), "--filter", "*.xml")
-    result = capsys.readouterr().out
+    tctools.xml_sort.main(str(plc_code), "--filter", "*.xml", "-l", "DEBUG")
+    result = "\n".join([rec.msg for rec in caplog.records])
     assert "books.xml" in result
     assert "plant_catalog.xml" in result
 
 
-def test_project(plc_code, capsys):
+def test_project(plc_code, caplog):
     """Test running over a full project as normal."""
     file = plc_code / "TwinCAT Project1"
     tctools.xml_sort.main(
@@ -134,9 +134,11 @@ def test_project(plc_code, capsys):
         "*.tsproj",
         "*.xti",
         "*.plcproj",
+        "-l",
+        "DEBUG",
     )
 
-    result = capsys.readouterr().out
+    result = "\n".join([rec.msg for rec in caplog.records])
 
     expected = ["TwinCAT Project1.tsproj", "MyPlc.plcproj", "Device 2 (EtherCAT).xti", "NC.xti"]
 
