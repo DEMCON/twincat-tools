@@ -9,27 +9,30 @@ class XmlSorter:
     Use one instance for a sequence of files.
     """
 
-    def __init__(self, quiet=False, dry=False, skip_nodes=None):
+    def __init__(self, quiet=False, resave=True, report=False, skip_nodes=None):
         """
 
         :param quiet:       If true, do not mention each file we touch
-        :param dry:         If true, do not actually save the altered files
+        :param resave:      If true, re-save the files in-place
+        :param report:      If true, print all changes to make
         :param skip_nodes:  List of node tags to ignore (and their children)
         """
 
         self.quiet = quiet
-        self.dry = dry
+        self.resave = resave
+        self.report = report
         self.skip_nodes = skip_nodes
         if self.skip_nodes is None:
             self.skip_nodes = []
 
-        self.files_checked = 0
-        self.files_altered = 0
+        self.files_checked = 0  # Files read by parser
+        self.files_to_alter = 0  # Files that seem to require changes
+        self.files_resaved = 0  # Files actually re-saved to disk
 
         # Preserve `CDATA` XML flags
         self.parser = etree.XMLParser(strip_cdata=False)
 
-    def sort_file(self, path: str) -> bool:
+    def sort_file(self, path: str):
         """Sort a single file."""
 
         try:
@@ -49,20 +52,39 @@ class XmlSorter:
         etree.indent(tree, space="  ", level=0)
 
         if not self.quiet:
-            print(f"Processed file `{path}`")
+            print(f"Processing file `{path}`...")
 
-        if not self.dry:
+        tree_bytes = etree.tostring(root, doctype=header_before)
+
+        with open(path, "rb") as fh:
+            current_contents = fh.readlines()
+
+        current_bytes = b"".join(current_contents)
+
+        if current_bytes != tree_bytes:
+            self.files_to_alter += 1
+            if self.report:
+                print("Old file contents:")
+                print("-" * 50)
+                print(current_bytes.decode("utf-8"))
+                print("-" * 50)
+                print("New file contents:")
+                print("-" * 50)
+                print(tree_bytes.decode("utf-8"))
+                print("-" * 50)
+            elif not self.resave:
+                print(f"File can be re-sorted: `{path}`")
+        else:
+            if self.report:
+                print()
+                print("<content identical>")
+                print()
+
+        if self.resave:
             with open(path, "wb") as fh:
-                fh.write(
-                    etree.tostring(
-                        root,
-                        doctype=header_before,
-                    )
-                )
+                fh.write(tree_bytes)
                 # Write by hand (instead of `tree.write()` so we can control the header
-                self.files_altered += 1
-
-        return True
+                self.files_resaved += 1
 
     def sort_node_recursively(self, node):
         """Sort a node and any sub-nodes, and their sub-nodes."""

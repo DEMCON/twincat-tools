@@ -26,15 +26,24 @@ def parse_arguments(args):
         action="store_true",
         default=False,
     )
+    parser.add_argument(
+        "--check",
+        help="Do not modify files on disk, but give a non-zero exit code if there "
+        "would be changes",
+        action="store_true",
+        default=False,
+    )
 
     return parser.parse_args(args)
 
 
-def main(*args):
+def main(*args) -> int:
     arguments = parse_arguments(args)
 
     sorter = XmlSorter(
         quiet=arguments.quiet,
+        resave=not arguments.dry and not arguments.check,
+        report=arguments.dry,
         skip_nodes=arguments.skip_nodes,
     )
 
@@ -57,6 +66,20 @@ def main(*args):
     for path in files:
         sorter.sort_file(str(path))
 
+    print(f"Checked {sorter.files_checked} file(s)")
+
+    if arguments.check:
+        if sorter.files_to_alter == 0:
+            print(f"No changes to be made in checked files!")
+            return 0
+
+        print(f"{sorter.files_to_alter} file(s) can be re-sorted")
+        return 1
+
+    print(f"Re-saved {sorter.files_resaved} file(s)")
+    return 0
+
 
 if __name__ == "__main__":
-    main(*sys.argv[1:])  # Skip script name
+    exit_code = main(*sys.argv[1:])  # Skip script name
+    exit(exit_code)

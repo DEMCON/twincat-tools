@@ -1,4 +1,5 @@
 import pytest
+from time import sleep
 
 import tctools.xml_sort
 
@@ -52,6 +53,38 @@ def test_use_attributes(plc_code):
     assert_order_of_lines_in_file(expected, file, is_substring=True, check_true=False)
     tctools.xml_sort.main(str(file))
     assert_order_of_lines_in_file(expected, file, is_substring=True)
+
+
+def test_single_file_dry(plc_code, capsys):
+    """Test using dry run."""
+    file = plc_code / "books.xml"
+
+    tctools.xml_sort.main(str(file), "--dry")
+
+    result = capsys.readouterr().out
+    assert '<book letter="a">' in result
+
+    tctools.xml_sort.main(str(file))  # Make change for real
+    capsys.readouterr()
+
+    tctools.xml_sort.main(str(file), "--dry")
+
+    result3 = capsys.readouterr().out
+    assert '<book letter="a">' not in result3
+    assert "identical" in result3
+
+
+def test_single_file_check(plc_code):
+    """Test using check flag."""
+    file = plc_code / "books.xml"
+
+    code = tctools.xml_sort.main(str(file), "--check")
+    assert code != 0
+
+    tctools.xml_sort.main(str(file))  # Make change for real
+
+    code2 = tctools.xml_sort.main(str(file), "--check")
+    assert code2 == 0
 
 
 def test_single_project_file(plc_code):
