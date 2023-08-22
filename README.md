@@ -12,7 +12,7 @@ Use this XML sorter before committing your changes to fix the XML layout and kee
 Usage:
 
 ```cmd
-python -m tctools.xml_sort [--project=<file>] [--files=<files>]
+python -m tctools.xml_sort [FILE/FOLDER, ...] -r --ext tsproj xti plcproj --skip-nodes Device DeploymentEvents TcSmItem DataType
 ```
 
 Add `--help` for full instructions.
@@ -41,7 +41,7 @@ Use this to to make consistent use of spaces/tabs.
 Usage:
 
 ```cmd
-python -m tctools.format [--project=<file>] [--files=<files>]
+python -m tctools.format [--project=<file>] [--file=<files>]
 ```
 
 Add `--help` for full instructions.

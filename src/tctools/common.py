@@ -8,13 +8,31 @@ def common_argparser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
         parser = ArgumentParser()
 
     parser.add_argument(
+        "target",
+        help="File or folder to target",
+        nargs="+",
+    )
+
+    parser.add_argument(
         "-q",
         "--quiet",
         help="Do not provide any CLI output",
         action="store_true",
         default=False,
     )
-    parser.add_argument("-f", "--files", action="append", help="Target a specific file")
     # parser.add_argument("--project", help="Path to .plcproj files to target")
+    parser.add_argument(
+        "-r",
+        "--recursive",
+        help="Also target folder (and their files) inside a target folder",
+        action="store_true",
+        default=False,
+    )
+    parser.add_argument(
+        "--filter",
+        help="Target files only with these extensions",
+        nargs="+",
+        default=["*.xml"],
+    )
 
     return parser
