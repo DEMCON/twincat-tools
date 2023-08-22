@@ -28,6 +28,7 @@ There are a couple of difference between this sorter and Ruud's:
   * This is because `lxml` does not show it an attribute.
 * This sorter will prefer self-closing tags where content is emtpy, instead of leaving them as they were.
   * This is a consequence of `lxml`, it cannot identify self-closing tags upon reading.
+  * The self-closing tags also do not have a trailing space before the final "/>".
 * Unicode characters are written as `#...;` instead of literals.
   * Something `lxml` just seems to do.
 

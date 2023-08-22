@@ -48,6 +48,8 @@ def main(*args):
             elif path.is_dir():
                 if arguments.filter:
                     for filt in arguments.filter:
+                        if arguments.recursive:
+                            filt = f"**/{filt}"
                         files += path.glob(filt)
             else:
                 raise ValueError(f"Could not find file or folder: `{target}`")

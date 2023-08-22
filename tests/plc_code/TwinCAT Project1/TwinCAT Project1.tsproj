@@ -2,7 +2,7 @@
 <TcSmProject xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.beckhoff.com/schemas/2012/07/TcSmProject" TcSmVersion="1.0" TcVersion="3.1.4024.32">
 	<DataTypes>
 		<DataType>
-			<Name GUID="{18071995-0000-0000-0000-002000000001}" IecBaseType="true" AutoDeleteType="true" HideSubItems="true">ARRAY [0..0] OF BIT</Name>
+			<Name GUID="{18071995-0000-0000-0000-002000000001}" IecBaseType="true" BitType="true" AutoDeleteType="true" HideSubItems="true">ARRAY [0..0] OF BIT</Name>
 			<BitSize>1</BitSize>
 			<BaseType GUID="{18071995-0000-0000-0000-000000000010}">BIT</BaseType>
 			<ArrayInfo>
@@ -11,7 +11,7 @@
 			</ArrayInfo>
 		</DataType>
 		<DataType>
-			<Name GUID="{18071995-0000-0000-0000-002000000006}" IecBaseType="true" AutoDeleteType="true" HideSubItems="true">ARRAY [0..5] OF BIT</Name>
+			<Name GUID="{18071995-0000-0000-0000-002000000006}" IecBaseType="true" BitType="true" AutoDeleteType="true" HideSubItems="true">ARRAY [0..5] OF BIT</Name>
 			<BitSize>6</BitSize>
 			<BaseType GUID="{18071995-0000-0000-0000-000000000010}">BIT</BaseType>
 			<ArrayInfo>
@@ -33,22 +33,1428 @@
 				</Task>
 			</Tasks>
 		</System>
+		<Motion>
+			<NC File="NC.xti"/>
+			<CNC CncEVersion="true" ToolMngAdsPort="851" VE="100">
+				<Name>CNC</Name>
+				<GeoTask Priority="3" CycleTime="20000" AmsPort="554" AdtTasks="true">
+					<Name>CNC-Task GEO</Name>
+				</GeoTask>
+				<SdaTask Priority="9" CycleTime="100000" AmsPort="555" AdtTasks="true">
+					<Name>CNC-Task SDA</Name>
+				</SdaTask>
+				<ComTask Priority="14" CycleTime="100000" AmsPort="556" AdtTasks="true">
+					<Name>CNC-Task COM</Name>
+				</ComTask>
+				<Data Name="Startup"><![CDATA[# *****************************************
+#
+#TC_STARTUP_DESC: TwinCAT CNC-Configuration
+#
+# *****************************************
+#
+#fb_storage_size[0]                                   0x200000                                    # Buffer for Forward / Backward interpolation in byte
+error_protocol_mode                                   LOG | PRINT | REPORT | TC3_EVENT_LOGGER 
+no_error_message_at_reset                             1                                           # no error message at reset
+#
+# -------------------------------------------------------
+# NC-program path
+# -------------------------------------------------------
+# path[ <channelNr> ].prg[ <Index> ]
+#
+# prg        -> Program path
+# log_nr     -> logical program path number
+# typ        -> Programmpfadtyp ( 0x01 Main program path          )
+#                               ( 0x02 Sub program path           )
+#                               ( 0x03 Main- and sub program path )
+#
+# prioritaet -> priority of the program path, 
+#               (if there are multible program paths with the same type)
+#
+# additional program path, customer
+pfad[0].prg[0]                                        sub
+pfad[0].log_nr[0]                                     1              # logical path number
+pfad[0].typ[0]                                        0x07           # main- and subprogram path, MSG SAVE
+pfad[0].prioritaet[0]                                 1              # priority
+#
+# program path for sub programs
+pfad[0].prg[1]                                        cycles
+pfad[0].log_nr[1]                                     2              # logical path number
+pfad[0].typ[1]                                        0x03           # main- and subprogram path
+pfad[0].prioritaet[1]                                 2              # priority
+#
+# program path for cycles
+pfad[0].prg[2]                                        customer
+pfad[0].log_nr[2]                                     3              # logical path number
+pfad[0].typ[2]                                        0x03           # main- and subprogram path
+pfad[0].prioritaet[2]                                 3              # priority
+#
+# ------------------------------------------------------------------------------------------------------
+# Do not change data below this line!!!
+# Daten unterhalb dieser Zeile nicht aendern, teilweise werden durch
+# den Systemmanager Aenderungen automatisch durchgefuehrt!!!
+# ------------------------------------------------------------------------------------------------------
+#
+#
+kanal_anzahl                                          0
+ext_var_max                                           100
+#
+# ----------------------------------------
+# Lists for configuration data
+# ----------------------------------------
+listen                                                ASCII
+#
+default_sda_mds                                       tc_virtual_1\default_sda.lis
+#
+hand_mds                                              tc_virtual_2\hand_mds.lis
+#
+konf_path                                             .
+#
+default_achs_mds                                      tc_virtual_3\default_mds.lis
+zahl_mds                                              3
+achs_mds[0]                                          tc_virtual_4\achsmds1.lis
+achs_mds[1]                                          tc_virtual_5\achsmds2.lis
+achs_mds[2]                                          tc_virtual_6\achsmds3.lis
+#
+zahl_kw                                               0
+#
+Ende
+
+]]></Data>
+				<Data Name="Default SDA" Offset="1"><![CDATA[# ****************************************
+#
+#TC_CHANNEL_DEFAULT_DESC: Default channel parameter, default initialisation
+#
+# ****************************************
+#
+# Definition of standard M functions and synchronization types
+# (default NO_SYNCH  0x0)
+# ===============================================================
+m_synch[0]                                          MOS      ( P-CHAN-00041 : MOS for M0  (programmed stop)
+m_synch[1]                                          MOS      ( P-CHAN-00041 : MOS for M1  (optional stop)
+m_synch[2]                                          MOS      ( P-CHAN-00041 : MOS for M2  (program end)
+m_synch[17]                                         MOS      ( P-CHAN-00041 : MOS for M17 (end of subroutine)
+m_synch[29]                                         MOS      ( P-CHAN-00041 : MOS for M29 (end of subroutine)
+m_synch[30]                                         MOS      ( P-CHAN-00041 : MOS for M30 (program end)
+#
+#
+# Definition of axis specific M-functions
+# ===============================================================
+#m_default_outp_ax_name[0]                            X      ( P-CHAN-00039 : Forcing of axis specific processing of a M function (M0 on axis X)
+#
+# Definition of H-functions and synchronization types
+# (default NO_SYNCH  0x0)
+# ===============================================================
+h_synch[0]                                          MOS      ( P-CHAN-00027 : MOS for H0
+#
+# Definition of external tool management and tool synchronisation
+# ===============================================================
+ext_wzv_vorhanden                                     0      ( P-CHAN-00016 : External tool management is available (e.g. in PLC)
+t_info_to_wzv                                         0      ( P-CHAN-00087 : Inform external tool management about T command
+einrechnen_mit_t                                      0      ( P-CHAN-00014 : D command is automatically executed with the same number of the T-command (No D command required)
+tool_life_to_wzv                                      0      ( P-CHAN-00076 : Transmit the tool life data to external tool management 
+d_clear_to_wzv                                        1      ( P-CHAN-00103 : Saving and deleting of tool data in an external tool management
+#
+tool.synch	                                    MOS      ( P-CHAN-00086 : MOS for Txx - Tools are synchronized with PLC
+tool.prozess_zeit                                     0      ( P-CHAN-00072 : [0.1us] Process time of the tool change (for simulation)
+tool.minimum_length                                   0      ( P-CHAN-00156 : [0.1um] Minimum tool length (0: no check)
+tool.minimum_radius                                   0      ( P-CHAN-00157 : [0.1um] Minimum tool radius (0: no check)
+#
+# Automatic stop of decoding
+# ==========================
+flush.d_cmd                                       FAW_D      ( P-CHAN-00271 : Initiation of an implicit '#FLUSH WAIT' before the D word.
+#
+# Settings for measurement
+# ===============================================================
+messtyp                                               1      ( P-CHAN-00057 : Default measurement type
+kasto_residual_path                                 100      ( P-CHAN-00030 : [0.1um] Default residual path for edge banding (measurement)
+#
+# Definition of symbolic character strings (macros)
+# ===============================================================
+#makro_def[0].symbol                           SYMBOL_0       ( P-CHAN-00057 : Macro name in NC program
+#makro_def[0].nc_code                            CODE_0       ( P-CHAN-00062 : Related NC code to be replaced
+#makro_def[1].symbol                           SYMBOL_1       ( P-CHAN-00057 : Macro name in NC program
+#makro_def[1].nc_code                            CODE_1       ( P-CHAN-00062 : Related NC code to be replaced
+#
+# Default G-functions after NC program start
+# ===============================================================
+#prog_start.g_gruppe[0].nr                             1      ( P-CHAN-00063 : G01  is default (group  0 - path preparatory: G00,G01,G02,G03)
+#prog_start.g_gruppe[4].nr                            19	     ( P-CHAN-00063 : G19  is default (group  4 - plane selection: G17,G18,G19)
+#prog_start.g_gruppe[6].nr                            26	     ( P-CHAN-00063 : G26  is default (group  6 - transition mode of TRC: G25,G26)
+#prog_start.g_gruppe[8].nr                            51	     ( P-CHAN-00063 : G51  is default (group  8 - diameter programming: G51,G52)
+#prog_start.g_gruppe[12].nr                           71	     ( P-CHAN-00063 : G71  is default (group 12 - unit: G70,G71)
+#prog_start.g_gruppe[14].nr                           91      ( P-CHAN-00063 : G91  is default (group 14 - dimension: G90,G91)
+#prog_start.g_gruppe[22].nr                          138	     ( P-CHAN-00063 : G138 is default (group 22 - selection mode of TRC : G138,G139)
+#prog_start.g_gruppe[23].nr                          162	     ( P-CHAN-00063 : G162 is default (group 23 - circle center point programming: G161,G162)
+#prog_start.g_gruppe[25].nr                          164	     ( P-CHAN-00063 : G164 is default (group 25 - circle center point correction: G164,G165)
+#
+# Default spindle M-functions after NC program start
+# ===============================================================
+#prog_start.m_gruppe[0].nr                             3      ( P-CHAN-00064 : M3 is default spindle M function (M03,M04,M05)
+#
+# Default dynamic parameters after NC program start
+# ===============================================================
+#prog_start.feedrate                                   0      ( P-CHAN-00099 : [mm/min or m/min, depends on P-CHAN-00108] Default feedrate for G01,G02,G03 
+#prog_start.slope.profile                              1      ( P-CHAN-00071 : Type of acceleration profile (1: active jerk limitation)
+#prog_start.slope.ramp_time                            2      ( P-CHAN-00073 : Effect of the ramp time weighting
+#prog_start.slope.acceleration                         2      ( P-CHAN-00001 : Effect of the acceleration weighting 
+#prog_start.feedrate_factor                          100      ( P-CHAN-00108 : Unit of the feedrate (0.1: m/min, 100: mm/min)
+#
+# Automatic circle center point correction
+# ===============================================================
+mittelpkt_faktor                                     50      ( P-CHAN-00060 : [0.1%] Maximum relative centre point deviation 
+mittelpkt_diff                                    20000      ( P-CHAN-00059 : [0.1um] Maximum center point offset
+#
+# Definition of dimensional units and resolutions of axes
+# ===============================================================
+mass_einh                                             0      ( P-CHAN-00054 : Dimensional unit for translatory axes (0: mm, 1: inch)   
+rund_mass_einh                                        0      ( P-CHAN-00079 : Dimensional unit for rotatory axes (0: degree, 1: new degree) 
+#
+resolution_factor                                 10000      ( P-CHAN-00315 : Resolution of all axes
+#
+#
+# Miscellaneous parameters
+# ===============================================================
+wrk_im_kanal_vorhanden                                1      ( P-CHAN-00092 : Tool radius compensation (TRC) is present
+versch_im_durchm                                      0      ( P-CHAN-00091 : Zero point offsets are acting in diameter (for face turning)
+display_diameter_pos                                  1      ( P-CHAN-00256 : Diameter display during G51 (for face turning).
+mode_implicite_sync_indp_asyn_axis                    1      ( P-CHAN-00451 : Implicit synchronizing of an independent axis.
+#
+p_param_haltend                                       0      ( P-CHAN-00067 : Main program modal effect of P parameters 
+einzelschrittmodus                                    0      ( P-CHAN-00015 : Single step operation mode (-1,0,1)
+auto_align_tracking_axis                              1      ( P-CHAN-00101 : Automatic orientation of a tracking axis
+#
+max_vb_override                                    1000      ( P-CHAN-00056 : [0.1%] Maximum channel override
+override_v_handwheel                                  1      ( P-CHAN-00186 : Feedrate weighting by override during handwheel operation.
+reset_no_axis_to_axv                                  1      ( P-CHAN-00075 : During reset all channel axes remain in channel
+#
+# Settings for syntax check
+# ===============================================================
+syn_chk.fehler_pro_zeile                              2      ( P-CHAN-00020 : Number of errors after that it is switched to the next NC block
+syn_chk.fehler_gesamt                                20      ( P-CHAN-00019 : Number of errors in a NC program after that decoding is aborted
+syn_chk.interaktiv                                    1      ( P-CHAN-00028 : Automatic continue (0), user signal expected (1)
+#
+# Settings for protocol log changes
+# ===============================================================
+aep.output_mode                                       1      ( P-CHAN-00024 : Protocolling mode (1: protocolling through BF-own display fields and display fifos)
+#
+aep.p_parameter                                       0      ( P-CHAN-00068 : Protocolling of P parameters
+#
+aep.v_eigendef                                        0      ( P-CHAN-00088 : Protocolling of self defined variables
+#
+aep.wz_daten                                          0      ( P-CHAN-00093 : Protocolling of tool data
+#
+aep.g_gruppe[0]                                       1      ( P-CHAN-00022 : AEP group 0  (G00,G01,G02,G03,G04,G33,G63,G74,G98,G99,G301,G302,G160)
+aep.g_gruppe[1]                                       0      ( P-CHAN-00022 : AEP group 1  (G08,G193)
+aep.g_gruppe[2]                                       0      ( P-CHAN-00022 : AEP group 2  (G09,G900,G901)
+aep.g_gruppe[3]                                       0      ( P-CHAN-00022 : AEP group 3  (G10,G11)
+aep.g_gruppe[4]                                       1      ( P-CHAN-00022 : AEP group 4  (G17,G18,G19)
+aep.g_gruppe[5]                                       1      ( P-CHAN-00022 : AEP group 5  (G20,G21,G22,G23,G24,G351)
+aep.g_gruppe[6]                                       0      ( P-CHAN-00022 : AEP group 6  (G25,G26)
+aep.g_gruppe[7]                                       1      ( P-CHAN-00022 : AEP group 7  (G40,G41,G42)
+aep.g_gruppe[8]                                       1      ( P-CHAN-00022 : AEP group 8  (G51,G52)     
+aep.g_gruppe[9]                                       1      ( P-CHAN-00022 : AEP group 9  (G53-G59,G159)
+aep.g_gruppe[10]                                      1      ( P-CHAN-00022 : AEP group 10 (G60,G359,G360,G61,G260,G261)
+aep.g_gruppe[11]                                      0      ( P-CHAN-00022 : AEP group 11 (G166)
+aep.g_gruppe[12]                                      0      ( P-CHAN-00022 : AEP group 12 (G70,G71)
+aep.g_gruppe[13]                                      0      ( P-CHAN-00022 : AEP group 13 (G80-G89,G800-G819)
+aep.g_gruppe[14]                                      1      ( P-CHAN-00022 : AEP group 14 (G90,G91)
+aep.g_gruppe[15]                                      1      ( P-CHAN-00022 : AEP group 15 (G92)
+aep.g_gruppe[16]                                      0      ( P-CHAN-00022 : AEP group 16 (G93,G94,G95,G194)
+aep.g_gruppe[17]                                      0      ( P-CHAN-00022 : AEP group 17 (G96,G97,G196)         
+aep.g_gruppe[18]                                      1      ( P-CHAN-00022 : AEP group 18 (G112)
+aep.g_gruppe[19]                                      0      ( P-CHAN-00022 : AEP group 19 (G115,G116,G117)
+aep.g_gruppe[20]                                      0      ( P-CHAN-00022 : AEP group 20 (G130,G131)
+aep.g_gruppe[21]                                      0      ( P-CHAN-00022 : AEP group 21 (G135,G136,G137)
+aep.g_gruppe[22]                                      0      ( P-CHAN-00022 : AEP group 22 (G05,G138,G139,G237,G238,G239)
+aep.g_gruppe[23]                                      0      ( P-CHAN-00022 : AEP group 23 (G161,G162)
+aep.g_gruppe[24]                                      0      ( P-CHAN-00022 : AEP group 24 (G163)
+aep.g_gruppe[25]                                      0      ( P-CHAN-00022 : AEP group 25 (G164,G165)
+aep.g_gruppe[26]                                      1      ( P-CHAN-00022 : AEP group 26 (G200,G201,G202)
+aep.g_gruppe[27]                                      1      ( P-CHAN-00022 : AEP group 27 (NOT AVAILABLE)
+aep.g_gruppe[28]                                      0      ( P-CHAN-00022 : AEP group 28 (G132,G133,G134)
+aep.g_gruppe[29]                                      1      ( P-CHAN-00022 : AEP group 29 (G150,G151)
+aep.g_gruppe[30]                                      1      ( P-CHAN-00022 : AEP group 30 (G100,G101,G102,G106,G107,G108)
+aep.g_gruppe[31]                                      1      ( P-CHAN-00022 : AEP group 31 (G12,G13)
+aep.g_gruppe[32]                                      0      ( P-CHAN-00022 : AEP group 32 (G140,G141)
+aep.g_gruppe[33]                                      0      ( P-CHAN-00022 : AEP group 33 (NOT AVAILABLE)
+aep.g_gruppe[34]                                      0      ( P-CHAN-00022 : AEP group 34 (G310)
+aep.g_gruppe[35]                                      0      ( P-CHAN-00022 : AEP group 35 (G167)
+aep.g_gruppe[36]                                      0      ( P-CHAN-00022 : AEP group 36 (NOT AVAILABLE) 
+aep.g_gruppe[37]                                      0      ( P-CHAN-00022 : AEP group 37 (G129)
+#
+# Default settings for HSC
+# ===============================================================
+hsc.gen.linear_segmentation                           0      ( P-CHAN-00132 : Segmentation of linear blocks
+hsc.gen.circular_segmentation                         0      ( P-CHAN-00137 : Segmentation of circular blocks 
+hsc.gen.filter_deviation                              0      ( P-CHAN-00139 : Handling of short blocks
+#
+check_jerk_on_poly_path                               1      ( P-CHAN-00110 : Limiting of geomtric jerk within the polynomial path   
+#
+Ende
+]]></Data>
+				<Data Name="Manual MDS" Offset="2"><![CDATA[# ****************************************
+#
+#TC_DEFAULT_MANUAL_DESC:    Manual_MDS-Parameter
+#
+# ****************************************
+#
+feedhold.hr_inkr_verwerfen                            0         ( P-MANU-00010 : Discard handwheel increments on feedhold 
+feedhold.jog_inkr_verwerfen                           0         ( P-MANU-00011 : Discard jog mode increments on feedhold
+#
+hr_anzahl                                             1         ( P-MANU-00001 : Number of physical handwheels
+#
+hr_data[0].log_hr_nr                                  1         ( P-MANU-00002 : Logical handwheel number
+hr_data[0].hr_aufl_z                                  400       ( P-MANU-00005 : Handwheel resolution numerator
+hr_data[0].hr_aufl_n                                  1         ( P-MANU-00006 : Handwheel resolution denominator
+hr_data[0].hr_zaehler_direct_access                   0         ( P-MANU-00003 : Handwheel counter hardware access / HLI access
+hr_data[0].adr_hr_zaehler                             0x0       ( P-MANU-00006 : Handwheel counter address / HLI index
+hr_data[0].max_inkr_pro_takt                          100       ( P-MANU-00007 : Upper limits for handwheel increments per cycle
+#
+tasten_anzahl                                         9         ( P-MANU-00008 : Number of inching key pairs    
+#
+tasten_data[0].log_tasten_nr                          1         ( P-MANU-00009 : Logical key number   
+tasten_data[1].log_tasten_nr                          2         ( P-MANU-00009 : Logical key number   
+tasten_data[2].log_tasten_nr                          3         ( P-MANU-00009 : Logical key number   
+tasten_data[3].log_tasten_nr                          4         ( P-MANU-00009 : Logical key number   
+tasten_data[4].log_tasten_nr                          5         ( P-MANU-00009 : Logical key number   
+tasten_data[5].log_tasten_nr                          6         ( P-MANU-00009 : Logical key number   
+tasten_data[6].log_tasten_nr                          7         ( P-MANU-00009 : Logical key number   
+tasten_data[7].log_tasten_nr                          8         ( P-MANU-00009 : Logical key number   
+tasten_data[8].log_tasten_nr                          9         ( P-MANU-00009 : Logical key number   
+#
+Ende
+]]></Data>
+				<DefaultAxis>
+					<Data Name="Parameter" Offset="3"><![CDATA[# ****************************************
+#
+#TC_DEFAULT_AXIS_DESC:    Default axis parameter
+#
+# ****************************************
+#
+kopf.mds_ident                                        1             ( P-AXIS-00110 : Identification of axis data 
+#
+kenngr.swe_toleranz                                   100           ( P-AXIS-00179 : Tolerance range for software limit switch
+kenngr.swe_pos                                        15000000      ( P-AXIS-00178 : [0.1um] or [10-4degree] Positive software limit switch 
+kenngr.swe_neg                                        -10000000     ( P-AXIS-00177 : [0.1um] or [10-4degree] Negative software limit switch
+
+kenngr.max_vb_override                                1000          ( P-AXIS-00109 : [0.1%] Maximum permissible velocity override
+kenngr.vb_prozent                                     10            ( P-AXIS-00217 : [0.1%] Tolerance band, factor for signal "speed-value attained"
+kenngr.getriebe_stufe                                 1             ( P-AXIS-00079 : Default gear step number  (Default-Getriebestufe
+kenngr.achs_mode                                      0x1           ( P-AXIS-00015 : Operating mode of an axis ;  mode 1=linear , mode 4=modulo
+kenngr.achs_typ                                       1             ( P-AXIS-00018 : Axis type 1=linear axis, 2=rotatary axis, 4=spindle/single axis
+
+# ----------------------------------------------------                measurement
+kenngr.hub_messtaster                                 20000         ( P-AXIS-00086 : [0.1um] or [10-4degree] Max. excursion of probe (deceleration distance)
+kenngr.vb_messen                                      20000         ( P-AXIS-00215 : [um/s] or [degree/s] Measurement speed, if not defined with Fxxx
+kenngr.mess_offset                                    100           ( P-AXIS-00114 : [0.1um] or [10-4degree] Measurement travel offset behind the target position
+kenngr.messachse                                      0             ( P-AXIS-00118 : Axis engaged in measurement travel
+kenngr.mess_signal_achs_steuer                        1             ( P-AXIS-00115 : Measurement signal via axis specific control bit mask
+kenngr.mess_signal_taster                             0             ( P-AXIS-00117 : Measurement signal from hardware-interface 
+kenngr.kasto_achse                                    0             ( P-AXIS-00098 : Measurement with edge banding 
+kenngr.mess_signal_sercos                             0             ( P-AXIS-00116 : Measurement with SERCOS-drives 
+kenngr.mess_neg_flanke                                0             ( P-AXIS-00113 : Edge of measurement signal 0=pos 1=neg
+kenngr.echtzeit_bit_nr                                0             ( P-AXIS-00060 : SERCOS-status/control bit for measurement
+
+# ----------------------------------------------------                Gantry functionality ( only configured in slave axis)
+kenngr.gantry_ax_nr                                   0             ( P-AXIS-00070 : Axis number of master axis 
+kenngr.gantry_max_diff_resetable                      0             ( P-AXIS-00072 : [0.1um] or [10-4degree] Resetable maximal path distance
+kenngr.gantry_max_diff_reset_locked                   0             ( P-AXIS-00071 : [0.1um] or [10-4degree] Not resetable maximal path distance
+kenngr.gantry_offset                                  0             ( P-AXIS-00073 : [0.1um] or [10-4degree] Static offset between master and slave axis
+kenngr.gantry_vb_korr                                 0             ( P-AXIS-00075 : [um/s] or [10-3degree/s] Velocity of correction
+
+# ----------------------------------------------------                Tracking mode
+kenngr.diff_pos_tracking                              10000         ( P-AXIS-00056 : [0.1um] or [10-4degree] Maximum difference after deactivation  ( limit of tracking)
+kenngr.vb_corr_tracking                               1000          ( P-AXIS-00208 : [um/s] or [degree/s] Velocity of tracking
+kenngr.max_diff_soll_ist                              10000         ( P-AXIS-00108 : [0.1um] or [10-4degree] Max. permissible position difference when enabling drive controller
+
+# ----------------------------------------------------                Collision monitoring
+kenngr.coll_check_ax_nr                               0             ( P-AXIS-00043 : Logical axis number of the axis to be monitored
+kenngr.coll_offset                                    0             ( P-AXIS-00045 : [0.1um] or [10-4degree] Security distance (Offset of the collision axes)
+kenngr.coll_decelerate_chan                           1             ( P-AXIS-00044 : Stopping in all channels (If a collision is detected with this axis the corresponding channel shall be stopped)
+
+kenngr.paar_ax_nr                                     0             ( P-AXIS-00143 : Physical number of axis pair - not used
+kenngr.paar_achse                                     0             ( P-AXIS-00142 : Axis pair present - not used
+kenngr.paar_ref_richt                                 0             ( P-AXIS-00144 : Homing direction for axis pair - not used
+kenngr.anzeige                                        1             ( P-AXIS-00023 : Activation of display function ( number of calls for updates)
+
+# ----------------------------------------------------                CNC controlled referencing
+kenngr.ref_richt                                      1             ( P-AXIS-00158 : Preferred direction of axis for homing (driving direction of the axis during homing when cam is not activated. 1=positive, 0=negative)
+kenngr.homing_without_zero_pulse                      1             ( P-AXIS-00084 : Homing only with cam (without zero pulse)
+kenngr.fast_from_cam                                  1             ( P-AXIS-00064 : Slow / fast movement away from cam. 1=yes, 0=no
+kenngr.ref_ohne_nocken                                0             ( P-AXIS-00156 : Homing without cam (only with zero pulse)
+kenngr.vorz_richtung                                  0             ( P-AXIS-00224 : Restriction of direction of rotation(only in one direction) 1=yes, 0=no
+kenngr.beweg_richt                                    0             ( P-AXIS-00031 : Definition of preferred direction of rotation , 1=positive, 0=negative (direction of rotation with restrictions)
+kenngr.ref_ohne_rev                                   0             ( P-AXIS-00157 : Homing without reverting with recognized cam
+
+kenngr.set_refpos_mode                             ABSOLUT          ( P-AXIS-00278 : Modes for setting the homing position (ABSOLUT / OFFSET /  PLC / PLC_OFFSET)
+kenngr.set_refpos_offset                              0             ( P-AXIS-00279 : [0.1um] or [10-4degree] Offset to the homing position
+kenngr.homing_type                              CNC_CONTROLLED      ( P-AXIS-00299 : Homing type (CNC_CONTROLLED / DRIVE_CONTROLLED )
+kenngr.homing_overflow_evaluation                     0             ( P-AXIS-00294 : Selection of the homing method , 0=no evaluation (default), 1=evaluation
+kenngr.ref_cam_is_limit_switch                        0             ( P-AXIS-00329 : Use of hardware limit switch as reference switch, 1=use a hardware switch, 0=no use of hardware switch
+
+kenngr.tendenz_pruef                                  0             ( P-AXIS-00189 : Tendency test of motion, 1=yes , 0=no
+kenngr.in_add_interface                               1             ( P-AXIS-00091 : Activation of (additional) interface for loading application-specific command values 1=enable, 0=disable
+kenngr.in_add_interface_pos_as_offset                 1             ( P-AXIS-00322 : Handling of the loaded position command values as offset 1=yes, 0=no
+kenngr.out_add_interface                              0             ( P-AXIS-00141 : Activation of (additional) interface for loading of command and actual values , not used
+kenngr.antr_typ                                       4             ( P-AXIS-00020 : Drive type 1=KONV, 2=SERCOS, 3=Profidrive, 4=SIMU, 7=Ethernet, 17=DSE 
+kenngr.def_cax_gear_st                                1             ( P-AXIS-00052 : Default gear step number for C-axis mode
+kenngr.abs_pos_gueltig                                0             ( P-AXIS-00014 : Identification code for absolute path measurement system
+kenngr.durchm_prog_abs                                1             ( P-AXIS-00058 : Absolute diameter programming (G51) with active G90 mode (only used for facing axis)
+kenngr.durchm_prog_rel                                1             ( P-AXIS-00059 : Relative diameter programming (G51) with active G91 mode (only used for facing axis)
+
+# ---------------------------------------------------                 Gearing data
+getriebe[0].nummer                                    1             ( P-AXIS-00135 :  Gear step number 
+
+# ---------------------------------------------------                 Parameter non-linear nichlineares velocity profile               
+getriebe[0].slope_profil.a_beschl                     1000          ( P-AXIS-00001 : [mm/s2] or [degree/s2] Acceleration at machining feed G1,G2,G3
+getriebe[0].slope_profil.a_brems                      1000          ( P-AXIS-00002 : [mm/s2] or [degree/s2] Deceleration at machining feed  G1,G2,G3
+getriebe[0].slope_profil.a_grenz                      2000          ( P-AXIS-00004 : [mm/s2] or [degree/s2] Acceleration at rapid movement G0
+getriebe[0].slope_profil.tr_beschl_zu                 300000        ( P-AXIS-00196 : [us] Ramp time for acceleration up-gradation at machining feed G1,G2,G3
+getriebe[0].slope_profil.tr_beschl_ab                 300000        ( P-AXIS-00195 : [us] Ramp time for acceleration down-gradation at machining feed G1,G2,G3
+getriebe[0].slope_profil.tr_brems_zu                  300000        ( P-AXIS-00198 : [us] Ramp time for deceleration up-gradation at machining feed G1,G2,G3
+getriebe[0].slope_profil.tr_brems_ab                  300000        ( P-AXIS-00197 : [us] Ramp time for deceleration down-gradation at machining feed G1,G2,G3
+getriebe[0].slope_profil.tr_grenz                     300000        ( P-AXIS-00200 : [us] Ramp time at rapid movement G0
+getriebe[0].dynamik.tr_min                            5000          ( P-AXIS-00201 : [us] Minimum permissible ramp time
+getriebe[0].dynamik.tr_geom                           300000        ( P-AXIS-00199 : [us] Geometric ramp time (ramp time of geometric contours)
+
+# ---------------------------------------------------                 Parameter linear velocity profile
+getriebe[0].lslope_profil.a_stufe_1                   1000          ( P-AXIS-00011 : [mm/s2] or [degree/s2] Acceleration/ deceleration of step 1 at machining feed G1,G2,G3
+getriebe[0].lslope_profil.a_stufe_2                   1000          ( P-AXIS-00012 : [mm/s2] or [degree/s2] Acceleration/ deceleration of step 2 at machining feed G1,G2,G3
+getriebe[0].lslope_profil.vb_stufe_1_2                100000        ( P-AXIS-00221 : [um/s] or [10-3degree/s] Changeover speed between step 1 and 2 at machining feed G1,G2,G3
+getriebe[0].lslope_profil.a_grenz_stufe_1             1000          ( P-AXIS-00005 : [mm/s2] or [degree/s2] Acceleration/ deceleration of step 1 in rapid mode G0
+getriebe[0].lslope_profil.a_grenz_stufe_2             1000          ( P-AXIS-00006 : [mm/s2] or [degree/s2] Acceleration/ deceleration of step 2 in rapid mode G0
+getriebe[0].lslope_profil.vb_grenz_stufe_1_2          100000        ( P-AXIS-00211 : [um/s] or [10-3degree/s] Changeover speed between ramp 1 and ramp2 in rapid mode G0 
+
+# ---------------------------------------------------                 Permitted axis dynamics
+getriebe[0].dynamik.vb_max                            100000        ( P-AXIS-00212 : [um/s] or [10-3degree/s] Maximum permissible axis velocity 
+getriebe[0].dynamik.a_max                             2000          ( P-AXIS-00008 : [mm/s2] or [degree/s2] Maximum permissible axis acceleration 
+getriebe[0].dynamik.a_emergency                       1750          ( P-AXIS-00003 : [mm/s2] or [degree/s2] Deceleration for an emergency stop 
+getriebe[0].dynamik.a_trans_weight                    0             ( P-AXIS-00013 : [0.1%] Weighting of acceleration at motion block transition
+getriebe[0].dynamik.r_trans_weight                    0             ( P-AXIS-00154 : [0.1%] Weighting of jerk at block transition 
+
+# ---------------------------------------------------                 Characteristics acceleration (spindle)
+getriebe[0].beschl_kennlinie.n_grenz                  0             ( P-AXIS-00130 : [10-3degree/s] Limit speed from which onwards the acceleration is specified in a polynomial form
+getriebe[0].beschl_kennlinie.a_konst                  0             ( P-AXIS-00007 : [degree/s2] Constant acceleration in the range n<n_grenz
+getriebe[0].beschl_kennlinie.typ                      0             ( P-AXIS-00202 : Type of the characteristic acceleration curve  0=not active, 1=hyperbola, 2=polynomial, 3=asynchronous drive
+getriebe[0].beschl_kennlinie.a_min                    0             ( P-AXIS-00010 : [degree/s2] Minimum value of acceleration for high speed
+getriebe[0].beschl_kennlinie.b1                       0             ( P-AXIS-00026 : [1/s] Parameter 1 of the a(n) polynomial
+getriebe[0].beschl_kennlinie.b2                       0             ( P-AXIS-00027 : [1/degree] Parameter 2 of the a(n) polynomial
+getriebe[0].beschl_kennlinie.b3                       0             ( P-AXIS-00028 : [1/degree2] Parameter 3 of the a(n) polynomial
+
+# ---------------------------------------------------                 Permitted axis velocities
+getriebe[0].vb_min_null                               10            ( P-AXIS-00216 : [10-3degree/s] Limit for spindle speed "zero"
+getriebe[0].vb_eilgang                                100000        ( P-AXIS-00209 : [um/s] or [10-3degree/s] Rapid mode velocity
+getriebe[0].vb_max_red                                5000          ( P-AXIS-00214 : [um/s] or [10-3degree/s] Reduced maximum speed at active G01,G2,G3
+getriebe[0].rapid_speed_red                           10000         ( P-AXIS-00155 : [um/s] or [10-3degree/s] Reduced maximum speed at active G00 
+getriebe[0].vb_refmax                                 20000         ( P-AXIS-00219 : [um/s] or [10-3degree/s] Maximum homing velocity 
+getriebe[0].vb_reflow                                 2000          ( P-AXIS-00218 : [um/s] or [10-3degree/s]Minimum homing velocity 
+getriebe[0].vb_regelgrenze                            3600000       ( P-AXIS-00220 : [um/s] or [10-3degree/s] Limiting velocity for the measuring system
+
+getriebe[0].kv                                        4000          ( P-AXIS-00099 : [0.01/s] Proportional factor kv for positional control in CNC
+getriebe[0].multi_gain_z                              1800          ( P-AXIS-00129 : Manipulated variable of drive (numerator)
+getriebe[0].multi_gain_n                              1             ( P-AXIS-00128 : Manipulated variable of drive (denominator)
+getriebe[0].wegaufz                                   1             ( P-AXIS-00234 : [Incr.] Path resolution of the measuring system  (numerator)
+getriebe[0].wegaufn                                   1             ( P-AXIS-00233 : [0.1um] or [10-4degree]Path resolution of the measuring system  (denominator)
+getriebe[0].window                                    100           ( P-AXIS-00236 : [0.1um] or [10-4degree] Control window at "Accuracy Stop" G60
+getriebe[0].pos_refpkt                                0             ( P-AXIS-00152 : [0.1um] or [10-4degree] Position of the reference point with CNC controlled homing
+getriebe[0].getr_schalt_pos                           0             ( P-AXIS-00078 : [0.1um] or [10-4degree] Gear change position, when switching is permitted
+getriebe[0].achs_position[0]                          0             ( P-AXIS-00017 : Special axis positions - not used at the moment
+getriebe[0].achs_position[1]                          0             ( P-AXIS-00017 : Special axis positions - not used at the moment
+getriebe[0].achs_position[2]                          0             ( P-AXIS-00017 : Special axis positions - not used at the moment
+getriebe[0].wsi_meldung                               0             ( P-AXIS-00237 : [mm] or [Degree] or [Rev.] Traverse distance 
+
+# ---------------------------------------------------                 Rotatary axis / spindle
+getriebe[0].moduloo                                   3600000       ( P-AXIS-00126 : [10-4degree] Upper modulo limit 
+getriebe[0].modulou                                   0             ( P-AXIS-00127 : [10-4degree] Lower modulo limit 
+getriebe[0].modulo_fehler                             0             ( P-AXIS-00124 : [Incr.] Error in modulo circle 
+getriebe[0].modulo_umdreh                             0             ( P-AXIS-00125 : Number of rotations in case of modulo error
+
+# ---------------------------------------------------                 Position lag monitoring
+getriebe[0].slep_ueberw_typ                           2             ( P-AXIS-00172 : Type of following error monitoring; 0=disable, 1=standard, 2=linear, 3=non-linear, 4=velocity independent
+getriebe[0].slep_min                                  15000         ( P-AXIS-00169 : [0.1um] or [10-4degree] Minimum following error on axis standstill
+getriebe[0].slep_max                                  100000        ( P-AXIS-00168 : [0.1um] or [10-4degree] Maximum following error
+getriebe[0].slep_dyn                                  1000          ( P-AXIS-00167 : Factor for dynamic following error monitoring
+getriebe[0].slep_abw                                  0             ( P-AXIS-00166 : Remaining deviation for non linear following error monitoring (only non-linear)
+
+getriebe[0].pos_einschw_zeit                          10000         ( P-AXIS-00151 : [ms] Maximum transient time 
+getriebe[0].lose                                      0             ( P-AXIS-00103 : [0.1um] or [10-4degree] Size of backlash 
+getriebe[0].reverse                                   0             ( P-AXIS-00159 : Reverse of sign for setpoint and actual value 
+getriebe[0].default_lr_hw_nbr                         0             ( P-AXIS-00054 : Number of selected hardware specific parameter set
+getriebe[0].incr_per_rev                              1024          ( P-AXIS-00092 : Position controller increments per revolution (only profibus)
+getriebe[0].vb_not_referenced                         2             ( P-AXIS-00268 : [um/s] Maximum velocity for unreferenced axes
+
+# ---------------------------------------------------                 Compensations and monitoring
+lr_param.slep_toleranz                                0             ( P-AXIS-00171 : Tolerance range monitoring for following error (commanded value/ current value)
+lr_param.anwahl_losekomp                              0             ( P-AXIS-00021 : Selection of backlash compensation 0=disable, 1=pos.direction, 2=neg.direction
+lr_param.ssfk                                         0             ( P-AXIS-00175 : Activation of SSFK - leadscrew error compensation (axis correction)
+lr_param.mod_komp                                     0             ( P-AXIS-00120 : Activation of modulo compensation
+lr_param.suppress_pos_lag_error                       0             ( P-AXIS-00176 : Suppression of position lag monitoring
+
+#
+lr_hw[0].nummer                                       1             ( P-AXIS-00136 : Identifier for hardware specific parameter set 
+lr_hw[0].drift_wert                                   0             ( P-AXIS-00057 : [Bit] Value of degradation compensation 
+lr_hw[0].regel_typ                                    0             ( P-AXIS-00163 : Control type 
+lr_hw[0].vz_stellgr                                   0             ( P-AXIS-00231 : Sign reversal of command value
+lr_hw[0].vz_istw                                      0             ( P-AXIS-00230 : Sign reversal of actual value
+
+# ---------------------------------------------------                 Feedforward control
+vorsteuer.vs_v_faktor                                 1             ( P-AXIS-00228 : Weighting factor for feedforward control (enumerator)
+vorsteuer.vs_v_nenner                                 1             ( P-AXIS-00229 : Weighting factor for feedforward control (denominator)
+vorsteuer.vs_a_faktor                                 1             ( P-AXIS-00225 : [us] Equivalent time constant for feedforward control of acceleration (enumerator)
+vorsteuer.vs_a_nenner                                 100           ( P-AXIS-00226 : Equivalent time constant for feedforward control of acceleration (denominator)
+vorsteuer.vorsteuerung                                0             ( P-AXIS-00223 : Feedforward control mode  ( bit coded mode)Bitcodierter Vorsteuermodus 0x0=disable, 0x1=velocity, ...
+vorsteuer.shift_time                                  3             ( P-AXIS-00165 : [Cycles] Time shift command value - feedforward values (balancing runtime of bus, only profibus)
+#
+
+# ----------------------------------------------------
+antr.abs_pos_offset                                   0             ( P-AXIS-00403 : [0.1um] or [10-4degree] Offset between drive position and CNC position 
+antr.ignore_unknown_telegram_elements                 0             ( P-AXIS-00358 : Ignore unknown entries in drive telegram 
+antr.use_drive_following_error                        0             ( P-AXIS-00466 : Drive based position lag calculation
+antr.probing_input_nbr                                0             ( P-AXIS-00430 : Number of probing input 
+antr.encoder_bit_range                                0             ( P-AXIS-00355 : Number of bits for evaluation of encoder overflow 
+antr.mode_cmd_pos                                     0             ( P-AXIS-00123 : Normalization of command position , 0=depending on axis type, 1=linear, 2=modulo
+antr.mode_act_pos                                     0             ( P-AXIS-00122 : Normalization of actual position , 0=depending on axis type, 1=linear, 2=modulo
+antr.v_reso_num                                       1             ( P-AXIS-00206 : [Incr.]Normalization of the velocity
+antr.v_reso_denom                                     36            ( P-AXIS-00205 : [um] or [10-3degree] Normalization of the velocity
+antr.operation_mode                             DRIVE_DEFAULT       ( P-AXIS-00320 : Operation mode of an axis ( DRIVE_DEFAULT / DRIVE_POSITION_CONTROL / CNC_POSITION_CONTROL  )
+antr.nbr_delay_cycles                                 4             ( P-AXIS-00191 : Delay between command value and actual value (This parameter is only active for digital drives )
+
+antr.canopen.probing_input_number                     0             ( P-AXIS-00295 : Number of probing input (EtherCAT)
+
+antr.profibus.s_ls_limit                              40            ( P-AXIS-00162 : Slave-life sign limit (only profibus)
+antr.profibus.feinaufloesung                          11            ( P-AXIS-00065 : Calculation of the position value (only profibus) - shift factor for sensor values 
+
+# ---------------------------------------------------                 Drive simulation / axis simulation
+antr.simu.zeitkonstante_z                             1             ( P-AXIS-00239 : Sample time constant for axis simulation (nominator)
+antr.simu.zeitkonstante_n                             100           ( P-AXIS-00238 : Sample time constant for axis simulation (denominator)
+antr.simu.daempfung_z                                 6             ( P-AXIS-00051 : Damping of axis simulation (nominator)
+antr.simu.daempfung_n                                 10            ( P-AXIS-00050 : Damping of axis simulation (denominator)
+antr.simu.eigenfrequenz_z                             100           ( P-AXIS-00062 : Natural frequency of axis simulation (nominator)
+antr.simu.eigenfrequenz_n                             1             ( P-AXIS-00061 : Natural frequency of axis simulation (denominator)
+antr.simu.totzeit                                     0             ( P-AXIS-00194 : [cycles] Dead time of control path
+antr.simu.rpf_weg_bis_nip                             100000        ( P-AXIS-00161 : [0.1um] or [10-4degree] Toolpath up to zero pulse during homing simulation
+antr.simu.ist_gleich_soll                             1             ( P-AXIS-00096 : Set actual position equal to command position (deactivation of the pt2 element of the position lag calculation 0=no, 1=yes)
+
+# ---------------------------------------------------                 Manual mode
+handbetrieb.default.after_g200_g201                   1             ( P-AXIS-00446 : Set default operation mode and control_element after each activation via G200/G201
+handbetrieb.default.operation_mode                    0             ( P-AXIS-00139 : Operation mode ,  1=handwheel, 2=continuous, 3=incremental
+handbetrieb.default.control_element                   0             ( P-AXIS-00046 : Logical identifier of control element 
+#
+handbetrieb.offsetgrenze_pos                          50000000      ( P-AXIS-00138 : [0.1um] or [10-4degree] Positive Offset limit
+handbetrieb.offsetgrenze_neg                          -50000000     ( P-AXIS-00137 : [0.1um] or [10-4degree] Negative Offset limit
+#
+handbetrieb.hr.aufl[0]                                10            ( P-AXIS-00025 : [0.1um/Rev] or [10-4degree/Rev] Handwheel resolutions  1
+handbetrieb.hr.aufl[1]                                20            ( P-AXIS-00025 :[0.1um/Rev] or [10-4degree/Rev]Handwheel resolutions  2
+handbetrieb.hr.aufl[2]                                30            ( P-AXIS-00025 :[0.1um/Rev] or [10-4degree/Rev]Handwheel resolutions  3
+handbetrieb.hr.filter_zeit                            10            ( P-AXIS-00069 : [cycles] Filter time constant  (time constante for smoothing)
+#
+handbetrieb.tipp.geschw[0]                            30000         ( P-AXIS-00077 : [um/s] or [10-3degree/s] Velocity for the continuous jog mode 1
+handbetrieb.tipp.geschw[1]                            30000         ( P-AXIS-00077 : [um/s] or [10-3degree/s] Velocity for the continuous jog mode 2
+handbetrieb.tipp.geschw[2]                            40000         ( P-AXIS-00077 : [um/s] or [10-3degree/s] Velocity for the continuous jog mode 3
+handbetrieb.tipp.vb_eilgang                           50000         ( P-AXIS-00210 : [um/s] or [10-3degree/s] Rapid mode velocity for continuous jog mode
+#
+handbetrieb.jog.weg[0]                                1000          ( P-AXIS-00232 : [0.1um] or [10-4degree] Jog incremental widths 1
+handbetrieb.jog.weg[1]                                2000          ( P-AXIS-00232 : [0.1um] or [10-4degree] Jog incremental widths  2
+handbetrieb.jog.weg[2]                                3000          ( P-AXIS-00232 : [0.1um] or [10-4degree] Jog incremental widths  3
+handbetrieb.jog.geschw[0]                             30000         ( P-AXIS-00076 : [um/s] or [10-3degree/s] Incremental jog velocities 1
+handbetrieb.jog.geschw[1]                             30000         ( P-AXIS-00076 : [um/s] or [10-3degree/s] Incremental jog velocities 2
+handbetrieb.jog.geschw[2]                             60000         ( P-AXIS-00076 : [um/s] or [10-3degree/s] Incremental jog velocities 3
+#
+handbetrieb.ipo.hb_proz_v_max                         30            ( P-AXIS-00083 : [%] Manual mode during interpolation, velocity part of manual operation  (G201)
+handbetrieb.ipo.hb_proz_a_max                         30            ( P-AXIS-00082 : [%] Manual mode during interpolation, acceleration part of manual operation (G201)
+handbetrieb.ipo.ipo_proz_v_max                        70            ( P-AXIS-00095 : [%] Manual mode during interpolation, velocity part of interpolation (G201)
+handbetrieb.ipo.ipo_proz_a_max                        70            ( P-AXIS-00094 : [%] Manual mode during interpolation, acceleration part of interpolation (G201)
+#
+handbetrieb.hb.vb_max                                 60000         ( P-AXIS-00213 : [um/s] or [10-4degree/s] Maximum velocity (G200)
+handbetrieb.hb.a_max                                  1000          ( P-AXIS-00009 : [mm/s2] or [degree/s2] Maximum acceleration (G200)
+handbetrieb.hb.tr                                     300000        ( P-AXIS-00359 : [µs] Ramp time during maximum acceleration
+
+# ---------------------------------------------------                 Measurement simulation
+meas_simu.meas_simu_mode                              1             ( P-AXIS-00112 : Measurement methods 1=axis position, 2=part distance, 3=counter reading
+meas_simu.parameter1                                  79000         ( P-AXIS-00145 : Setting of Parameter 1 dependent on the measurement mode
+
+# ---------------------------------------------------                 Axis filter
+filter[0].order                                       0             ( P-AXIS-00140 : Order of the axis filter , 0=  deactivate filter
+filter[0].prototype                                   1             ( P-AXIS-00153 : Definition of filter characteristics , 1="Critical damping", 2=Butherworth, 3=Bessel, 4=Chebychev, 5="HSC"
+filter[0].type                                        1             ( P-AXIS-00204 : Filter type, 1=lowpass, 2=highpass, 3=bandpass, 4=bandstop, 5=allpass
+filter[0].fg_f0                                       10            ( P-AXIS-00067 : Filter parameter (characterized frequency)
+filter[0].guete                                       1             ( P-AXIS-00080 : Filter parameter (quality)
+filter[0].share_percent                               100           ( P-AXIS-00164 : [%] Filter parameter (Part of the signal which is passed through the filter)
+# ---------------------------------------------------                 Axis specific transformation of actual values
+trafo.actual_pos.enable                               0             ( P-AXIS-00380 : Activation of actual value transformation , 0=disable, 1=enable
+trafo.actual_pos.id                                   0             ( P-AXIS-00381 : Transformation ID
+trafo.actual_pos.param[0]                             0             ( P-AXIS-00382 : Transformation parameters dependent on the transformation ID
+trafo.actual_pos.input[0].nr                          6             ( P-AXIS-00371 : Additional input axes  (logical axis number of the additional input axis of the transformation)
+# ---------------------------------------------------                 Axis specific transformation of commanded values
+trafo.command_pos.enable                              0             ( P-AXIS-00368 : Activation of transformation of commanded values, 0=disable, 1=enable
+trafo.command_pos.id                                  2             ( P-AXIS-00369 : Transformation ID , 1=e-function, 2=Crank function(lin to rot), 3=in preparation, 4=Crank kinematic(rot to lin)
+trafo.command_pos.param[0]                            1000000       ( P-AXIS-00370 : Transformation parameter dependent on the transformation ID
+trafo.command_pos.param[1]                            3000000       ( P-AXIS-00370 : Transformation parameter dependent on the transformation ID
+trafo.command_pos.param[2]                            0             ( P-AXIS-00370 : Transformation parameter dependent on the transformation ID
+trafo.command_pos.param[3]                            0             ( P-AXIS-00370 : Transformation parameter dependent on the transformation ID
+trafo.command_pos.param[4]                            0             ( P-AXIS-00370 : Transformation parameter dependent on the transformation ID
+
+# ---------------------------------------------------                 Camming / Gearing
+cam_gear.is_master                                    0             ( P-AXIS-00288 : Define axis as camming/gearing-master , 0 = not master , 1= master
+cam_gear.v_diff_percent                               100           ( P-AXIS-00289 : [%] Velocity tolerance range
+cam_gear.time_in_window                               8000          ( P-AXIS-00290 : [us] Minimum time in tolerance range for speed synchronisation
+cam_gear.time_out_in_window                           1000000       ( P-AXIS-00291 : [us] Maximum time for velocity synchronisation
+cam_gear.mv_type                                      0             ( P-AXIS-00300 : Average value filter for current master velocity
+cam_gear.mv_nbr_cycles                                0             ( P-AXIS-00301 : Number of scanning cycles for average value filter
+cam_gear.v_max_slave                                  1             ( P-AXIS-00303 : [um/s] Maximum commanded velocity for slave axis
+cam_gear.a_max_slave                                  1             ( P-AXIS-00304 : [um/s*s] Maximum commanded acceleration for slave axis
+cam_gear.delay_time                                   0             ( P-AXIS-00302 : [us] Delay time on gearing with current master velocity
+cam_gear.v_phasing                                    1             ( P-AXIS-00305 : [um/s] Velocity for phase synchronisation 
+cam_gear.a_phasing                                    1             ( P-AXIS-00306 : [mm/s*s] Acceleration for phase synchronisation
+cam_gear.d_phasing                                    1             ( P-AXIS-00307 : [mm/s*s] Deceleration for phase synchronisation
+cam_gear.j_vel_sync                                   1000          ( P-AXIS-00377 : [mm/s*s*s] Jerk for velocity synchronisation
+cam_gear.j_phasing                                    10            ( P-AXIS-00376 : [mm/s*s*s] Jerk for phase synchronisation
+cam_gear.keep_coupling_on_lr_error                    0             ( P-AXIS-00308 : Coupling behaviour on error from position control
+cam_gear.keep_coupling_on_fe_drop                     0             ( P-AXIS-00308 : Coupling behaviour on feed enable drop
+
+#
+dynamic_weighting.enable                              0             ( P-AXIS-00431 : Activation of dynamic weighting , 0=disable, 1=enable
+dynamic_weighting.param[0].path_limit                 50000         ( P-AXIS-00432 : [0.1um] or [10-4degree] Path distance limit 
+dynamic_weighting.param[0].velocity_fact              100           ( P-AXIS-00433 : [0.1%] Weighting factor for rapid feed velocity 
+dynamic_weighting.param[0].acceleration_fact          100           ( P-AXIS-00434 : [0.1%] Weighting factor for rapid feed acceleration 
+dynamic_weighting.param[0].ramp_time_fact             10000         ( P-AXIS-00435 : [0.1%] Weighting factor for rapid feed ramp time
+#
+Ende
+]]></Data>
+				</DefaultAxis>
+				<Axis Id="1" AxisPara="4" DefaultIndex="-1">
+					<Name>Axis_1</Name>
+					<ImageId>171</ImageId>
+					<Vars VarGrpType="1">
+						<Name>Inputs</Name>
+					</Vars>
+					<Vars VarGrpType="2">
+						<Name>Outputs</Name>
+					</Vars>
+					<Data Name="Parameter" Offset="4"><![CDATA[# ****************************************
+#
+#TC_AXIS_DESC:    Axis Parameter
+#
+# ****************************************
+#
+kopf.achs_nr                                          1
+kopf.mds_ident                                        1             ( P-AXIS-00110 : Identification of axis data 
+kopf.log_achs_name                                           Axis_1
+antr.addroffs.input                                          0
+antr.addroffs.output                                         0
+#
+kenngr.nocken_laenge                                  0             ( P-AXIS-00133 : Cam length , not used
+kenngr.virtuel_rad                                    0             ( P-AXIS-00222 : Virtual radius , not used
+kenngr.swe_toleranz                                   100           ( P-AXIS-00179 : Tolerance range for software limit switch
+kenngr.swe_pos                                        15000000      ( P-AXIS-00178 : [0.1um] or [10-4degree] Positive software limit switch 
+kenngr.swe_neg                                        -10000000     ( P-AXIS-00177 : [0.1um] or [10-4degree] Negative software limit switch
+
+kenngr.max_vb_override                                1000          ( P-AXIS-00109 : [0.1%] Maximum permissible velocity override
+kenngr.vb_prozent                                     10            ( P-AXIS-00217 : [0.1%] Tolerance band, factor for signal "speed-value attained"
+kenngr.getriebe_stufe                                 1             ( P-AXIS-00079 : Default gear step number  (Default-Getriebestufe
+kenngr.achs_mode                                      0x1           ( P-AXIS-00015 : Operating mode of an axis ;  mode 1=linear , mode 4=modulo
+kenngr.achs_typ                                       1             ( P-AXIS-00018 : Axis type 1=linear axis, 2=rotatary axis, 4=spindle/single axis
+
+# ----------------------------------------------------                measurement
+kenngr.hub_messtaster                                 20000         ( P-AXIS-00086 : [0.1um] or [10-4degree] Max. excursion of probe (deceleration distance)
+kenngr.vb_messen                                      20000         ( P-AXIS-00215 : [um/s] or [degree/s] Measurement speed, if not defined with Fxxx
+kenngr.mess_offset                                    100           ( P-AXIS-00114 : [0.1um] or [10-4degree] Measurement travel offset behind the target position
+kenngr.messachse                                      0             ( P-AXIS-00118 : Axis engaged in measurement travel
+kenngr.mess_signal_achs_steuer                        1             ( P-AXIS-00115 : Measurement signal via axis specific control bit mask
+kenngr.mess_signal_taster                             0             ( P-AXIS-00117 : Measurement signal from hardware-interface 
+kenngr.kasto_achse                                    0             ( P-AXIS-00098 : Measurement with edge banding 
+kenngr.mess_signal_sercos                             0             ( P-AXIS-00116 : Measurement with SERCOS-drives 
+kenngr.mess_neg_flanke                                0             ( P-AXIS-00113 : Edge of measurement signal 0=pos 1=neg
+kenngr.echtzeit_bit_nr                                0             ( P-AXIS-00060 : SERCOS-status/control bit for measurement
+
+# ----------------------------------------------------                Gantry functionality ( only configured in slave axis)
+kenngr.gantry_ax_nr                                   0             ( P-AXIS-00070 : Axis number of master axis 
+kenngr.gantry_max_diff_resetable                      0             ( P-AXIS-00072 : [0.1um] or [10-4degree] Resetable maximal path distance
+kenngr.gantry_max_diff_reset_locked                   0             ( P-AXIS-00071 : [0.1um] or [10-4degree] Not resetable maximal path distance
+kenngr.gantry_offset                                  0             ( P-AXIS-00073 : [0.1um] or [10-4degree] Static offset between master and slave axis
+kenngr.gantry_vb_korr                              1000             ( P-AXIS-00075 : [um/s] or [10-3degree/s] Velocity of correction
+
+# ----------------------------------------------------                Tracking mode
+kenngr.diff_pos_tracking                              10000         ( P-AXIS-00056 : [0.1um] or [10-4degree] Maximum difference after deactivation  ( limit of tracking)
+kenngr.vb_corr_tracking                               1000          ( P-AXIS-00208 : [um/s] or [degree/s] Velocity of tracking
+kenngr.max_diff_soll_ist                              10000         ( P-AXIS-00108 : [0.1um] or [10-4degree] Max. permissible position difference when enabling drive controller
+
+# ----------------------------------------------------                Collision monitoring
+kenngr.coll_check_ax_nr                               0             ( P-AXIS-00043 : Logical axis number of the axis to be monitored
+kenngr.coll_offset                                    0             ( P-AXIS-00045 : [0.1um] or [10-4degree] Security distance (Offset of the collision axes)
+kenngr.coll_decelerate_chan                           1             ( P-AXIS-00044 : Stopping in all channels (If a collision is detected with this axis the corresponding channel shall be stopped)
+
+kenngr.paar_ax_nr                                     0             ( P-AXIS-00143 : Physical number of axis pair - not used
+kenngr.paar_achse                                     0             ( P-AXIS-00142 : Axis pair present - not used
+kenngr.paar_ref_richt                                 0             ( P-AXIS-00144 : Homing direction for axis pair - not used
+kenngr.anzeige                                        1             ( P-AXIS-00023 : Activation of display function ( number of calls for updates)
+
+# ----------------------------------------------------                CNC controlled referencing
+kenngr.ref_richt                                      1             ( P-AXIS-00158 : Preferred direction of axis for homing (driving direction of the axis during homing when cam is not activated. 1=positive, 0=negative)
+kenngr.homing_without_zero_pulse                      1             ( P-AXIS-00084 : Homing only with cam (without zero pulse)
+kenngr.fast_from_cam                                  1             ( P-AXIS-00064 : Slow / fast movement away from cam. 1=yes, 0=no
+kenngr.ref_ohne_nocken                                0             ( P-AXIS-00156 : Homing without cam (only with zero pulse)
+kenngr.vorz_richtung                                  0             ( P-AXIS-00224 : Restriction of direction of rotation(only in one direction) 1=yes, 0=no
+kenngr.beweg_richt                                    0             ( P-AXIS-00031 : Definition of preferred direction of rotation , 1=positive, 0=negative (direction of rotation with restrictions)
+kenngr.ref_ohne_rev                                   0             ( P-AXIS-00157 : Homing without reverting with recognized cam
+
+kenngr.set_refpos_mode                             ABSOLUT          ( P-AXIS-00278 : Modes for setting the homing position (ABSOLUT / OFFSET /  PLC / PLC_OFFSET)
+kenngr.set_refpos_offset                              0             ( P-AXIS-00279 : [0.1um] or [10-4degree] Offset to the homing position
+kenngr.homing_type                              CNC_CONTROLLED      ( P-AXIS-00299 : Homing type (CNC_CONTROLLED / DRIVE_CONTROLLED )
+kenngr.homing_overflow_evaluation                     0             ( P-AXIS-00294 : Selection of the homing method , 0=no evaluation (default), 1=evaluation
+kenngr.ref_cam_is_limit_switch                        0             ( P-AXIS-00329 : Use of hardware limit switch as reference switch, 1=use a hardware switch, 0=no use of hardware switch
+kenngr.prog_move_requires_homing                      0             ( P-AXIS-00277 : 0=Moving of the axis is possible without preceding homing, 1=Before a programmed movement the axis has to be homed.
+
+kenngr.mod_rechng                                     0             ( P-AXIS-00121 : Activation of modulo calculation - not used
+kenngr.tendenz_pruef                                  0             ( P-AXIS-00189 : Tendency test of motion, 1=yes , 0=no
+kenngr.in_add_interface                               1             ( P-AXIS-00091 : Activation of (additional) interface for loading application-specific command values 1=enable, 0=disable
+kenngr.out_add_interface                              0             ( P-AXIS-00141 : Activation of (additional) interface for loading of command and actual values , not used
+kenngr.antr_typ                                       4
+kenngr.def_cax_gear_st                                1             ( P-AXIS-00052 : Default gear step number for C-axis mode
+kenngr.feininterpolation                              1             ( P-AXIS-00066 : Selection of fine interpolation - not used
+kenngr.abs_pos_gueltig                                0             ( P-AXIS-00014 : Identification code for absolute path measurement system
+
+# ---------------------------------------------------                 Gearing data
+getriebe[0].nummer                                    1              ( P-AXIS-00135 :  Gear step number 
+
+# ---------------------------------------------------                 Parameter non-linear nichlineares velocity profile               
+getriebe[0].slope_profil.a_beschl                     P-AXIS-00008.0 ( P-AXIS-00001 : [mm/s2] or [degree/s2] Acceleration at machining feed G1,G2,G3
+getriebe[0].slope_profil.a_brems                      P-AXIS-00008.0 ( P-AXIS-00002 : [mm/s2] or [degree/s2] Deceleration at machining feed  G1,G2,G3
+getriebe[0].slope_profil.a_grenz                      P-AXIS-00008.0 ( P-AXIS-00004 : [mm/s2] or [degree/s2] Acceleration at rapid movement G0
+getriebe[0].slope_profil.tr_beschl_zu                 300000         ( P-AXIS-00196 : [us] Ramp time for acceleration up-gradation at machining feed G1,G2,G3
+getriebe[0].slope_profil.tr_beschl_ab                 P-AXIS-00196.0 ( P-AXIS-00195 : [us] Ramp time for acceleration down-gradation at machining feed G1,G2,G3
+getriebe[0].slope_profil.tr_brems_zu                  P-AXIS-00196.0 ( P-AXIS-00198 : [us] Ramp time for deceleration up-gradation at machining feed G1,G2,G3
+getriebe[0].slope_profil.tr_brems_ab                  P-AXIS-00196.0 ( P-AXIS-00197 : [us] Ramp time for deceleration down-gradation at machining feed G1,G2,G3
+getriebe[0].slope_profil.tr_grenz                     P-AXIS-00196.0 ( P-AXIS-00200 : [us] Ramp time at rapid movement G0
+getriebe[0].dynamik.tr_min                            5000           ( P-AXIS-00201 : [us] Minimum permissible ramp time
+getriebe[0].dynamik.tr_geom                           P-AXIS-00196.0 ( P-AXIS-00199 : [us] Geometric ramp time (ramp time of geometric contours)
+
+# ---------------------------------------------------                 Parameter linear velocity profile
+getriebe[0].lslope_profil.a_stufe_1                   P-AXIS-00008.0 ( P-AXIS-00011 : [mm/s2] or [degree/s2] Acceleration/ deceleration of step 1 at machining feed G1,G2,G3
+getriebe[0].lslope_profil.a_stufe_2                   P-AXIS-00008.0 ( P-AXIS-00012 : [mm/s2] or [degree/s2] Acceleration/ deceleration of step 2 at machining feed G1,G2,G3
+getriebe[0].lslope_profil.vb_stufe_1_2                P-AXIS-00212.0 ( P-AXIS-00221 : [um/s] or [10-3degree/s] Changeover speed between step 1 and 2 at machining feed G1,G2,G3
+getriebe[0].lslope_profil.a_grenz_stufe_1             P-AXIS-00008.0 ( P-AXIS-00005 : [mm/s2] or [degree/s2] Acceleration/ deceleration of step 1 in rapid mode G0
+getriebe[0].lslope_profil.a_grenz_stufe_2             P-AXIS-00008.0 ( P-AXIS-00006 : [mm/s2] or [degree/s2] Acceleration/ deceleration of step 2 in rapid mode G0
+getriebe[0].lslope_profil.vb_grenz_stufe_1_2          P-AXIS-00212.0 ( P-AXIS-00211 : [um/s] or [10-3degree/s] Changeover speed between ramp 1 and ramp2 in rapid mode G0 
+
+# ---------------------------------------------------                 Permitted axis dynamics
+getriebe[0].dynamik.vb_max                            100000         ( P-AXIS-00212 : [um/s] or [10-3degree/s] Maximum permissible axis velocity 
+getriebe[0].dynamik.a_max                             2000           ( P-AXIS-00008 : [mm/s2] or [degree/s2] Maximum permissible axis acceleration 
+getriebe[0].dynamik.a_emergency                       1750           ( P-AXIS-00003 : [mm/s2] or [degree/s2] Deceleration for an emergency stop 
+getriebe[0].dynamik.a_trans_weight                    0              ( P-AXIS-00013 : [0.1%] Weighting of acceleration at motion block transition
+getriebe[0].dynamik.r_trans_weight                    0              ( P-AXIS-00154 : [0.1%] Weighting of jerk at block transition 
+
+# ---------------------------------------------------                 Characteristics acceleration (spindle)
+getriebe[0].beschl_kennlinie.n_grenz                  0              ( P-AXIS-00130 : [10-3degree/s] Limit speed from which onwards the acceleration is specified in a polynomial form
+getriebe[0].beschl_kennlinie.a_konst                  0              ( P-AXIS-00007 : [degree/s2] Constant acceleration in the range n<n_grenz
+getriebe[0].beschl_kennlinie.typ                      0              ( P-AXIS-00202 : Type of the characteristic acceleration curve  0=not active, 1=hyperbola, 2=polynomial, 3=asynchronous drive
+getriebe[0].beschl_kennlinie.a_min                    0              ( P-AXIS-00010 : [degree/s2] Minimum value of acceleration for high speed
+getriebe[0].beschl_kennlinie.b1                       0              ( P-AXIS-00026 : [1/s] Parameter 1 of the a(n) polynomial
+getriebe[0].beschl_kennlinie.b2                       0              ( P-AXIS-00027 : [1/degree] Parameter 2 of the a(n) polynomial
+getriebe[0].beschl_kennlinie.b3                       0              ( P-AXIS-00028 : [1/degree2] Parameter 3 of the a(n) polynomial
+
+# ---------------------------------------------------                 Permitted axis velocities
+getriebe[0].vb_min_null                               10             ( P-AXIS-00216 : [10-3degree/s] Limit for spindle speed "zero"
+getriebe[0].vb_eilgang                                P-AXIS-00212.0 ( P-AXIS-00209 : [um/s] or [10-3degree/s] Rapid mode velocity
+getriebe[0].vb_max_red                                5000           ( P-AXIS-00214 : [um/s] or [10-3degree/s] Reduced maximum speed at active G01,G2,G3
+getriebe[0].rapid_speed_red                           10000          ( P-AXIS-00155 : [um/s] or [10-3degree/s] Reduced maximum speed at active G00 
+getriebe[0].vb_refmax                                 20000          ( P-AXIS-00219 : [um/s] or [10-3degree/s] Maximum homing velocity 
+getriebe[0].vb_reflow                                 2000           ( P-AXIS-00218 : [um/s] or [10-3degree/s]Minimum homing velocity 
+getriebe[0].vb_regelgrenze                            P-AXIS-00212.0 ( P-AXIS-00220 : [um/s] or [10-3degree/s] Limiting velocity for the measuring system
+getriebe[0].kv                                        4000           ( P-AXIS-00099 : [0.01/s] Proportional factor kv for positional control in CNC
+getriebe[0].multi_gain_z                              1800           ( P-AXIS-00129 : Manipulated variable of drive (numerator)
+getriebe[0].multi_gain_n                              1              ( P-AXIS-00128 : Manipulated variable of drive (denominator)
+getriebe[0].wegaufz                                   1              ( P-AXIS-00234 : [Incr.] Path resolution of the measuring system  (numerator)
+getriebe[0].wegaufn                                   1              ( P-AXIS-00233 : [0.1um] or [10-4degree]Path resolution of the measuring system  (denominator)
+getriebe[0].window                                    100            ( P-AXIS-00236 : [0.1um] or [10-4degree] Control window at "Accuracy Stop" G60
+getriebe[0].pos_refpkt                                0              ( P-AXIS-00152 : [0.1um] or [10-4degree] Position of the reference point with CNC controlled homing
+getriebe[0].getr_schalt_pos                           0              ( P-AXIS-00078 : [0.1um] or [10-4degree] Gear change position, when switching is permitted
+getriebe[0].achs_position[0]                          0              ( P-AXIS-00017 : Special axis positions - not used at the moment
+getriebe[0].achs_position[1]                          0              ( P-AXIS-00017 : Special axis positions - not used at the moment
+getriebe[0].achs_position[2]                          0              ( P-AXIS-00017 : Special axis positions - not used at the moment
+getriebe[0].wsi_meldung                               0              ( P-AXIS-00237 : [mm] or [Degree] or [Rev.] Traverse distance 
+
+# ---------------------------------------------------                 Rotatary axis / spindle
+getriebe[0].moduloo                                   3600000       ( P-AXIS-00126 : [10-4degree] Upper modulo limit 
+getriebe[0].modulou                                   0             ( P-AXIS-00127 : [10-4degree] Lower modulo limit 
+getriebe[0].modulo_fehler                             0             ( P-AXIS-00124 : [Incr.] Error in modulo circle 
+getriebe[0].modulo_umdreh                             0             ( P-AXIS-00125 : Number of rotations in case of modulo error
+
+# ---------------------------------------------------                 Position lag monitoring
+getriebe[0].slep_ueberw_typ                           2             ( P-AXIS-00172 : Type of following error monitoring; 0=disable, 1=standard, 2=linear, 3=non-linear, 4=velocity independent
+getriebe[0].slep_min                                  15000         ( P-AXIS-00169 : [0.1um] or [10-4degree] Minimum following error on axis standstill
+getriebe[0].slep_max                                  100000        ( P-AXIS-00168 : [0.1um] or [10-4degree] Maximum following error
+getriebe[0].slep_dyn                                  1000          ( P-AXIS-00167 : Factor for dynamic following error monitoring
+getriebe[0].slep_abw                                  0             ( P-AXIS-00166 : Remaining deviation for non linear following error monitoring (only non-linear)
+
+getriebe[0].pos_einschw_zeit                          10000         ( P-AXIS-00151 : [ms] Maximum transient time 
+getriebe[0].lose                                      0             ( P-AXIS-00103 : [0.1um] or [10-4degree] Size of backlash 
+getriebe[0].reverse                                   0             ( P-AXIS-00159 : Reverse of sign for setpoint and actual value 
+getriebe[0].default_lr_hw_nbr                         0             ( P-AXIS-00054 : Number of selected hardware specific parameter set
+getriebe[0].incr_per_rev                              1024          ( P-AXIS-00092 : Position controller increments per revolution (only profibus)
+getriebe[0].vb_not_referenced                         2             ( P-AXIS-00268 : [um/s] Maximum velocity for unreferenced axes
+
+# ---------------------------------------------------                 Compensations and monitoring
+lr_param.slep_toleranz                                0             ( P-AXIS-00171 : Tolerance range monitoring for following error (commanded value/ current value)
+lr_param.anwahl_losekomp                              0             ( P-AXIS-00021 : Selection of backlash compensation 0=disable, 1=pos.direction, 2=neg.direction
+lr_param.ssfk                                         0             ( P-AXIS-00175 : Activation of SSFK - leadscrew error compensation (axis correction)
+lr_param.mod_komp                                     0             ( P-AXIS-00120 : Activation of modulo compensation
+lr_param.suppress_pos_lag_error                       0             ( P-AXIS-00176 : Suppression of position lag monitoring
+lr_param.vol_comp.s_limit                             10000         ( P-AXIS-00525 : max. compensation value for Volumetric Compensation
+
+#
+lr_hw[0].nummer                                       1             ( P-AXIS-00136 : Identifier for hardware specific parameter set 
+lr_hw[0].drift_wert                                   0             ( P-AXIS-00057 : [Bit] Value of degradation compensation 
+lr_hw[0].regel_typ                                    0             ( P-AXIS-00163 : Control type 
+lr_hw[0].vz_stellgr                                   0             ( P-AXIS-00231 : Sign reversal of command value
+lr_hw[0].vz_istw                                      0             ( P-AXIS-00230 : Sign reversal of actual value
+
+# ---------------------------------------------------                 Feedforward control
+vorsteuer.vs_v_faktor                                 1             ( P-AXIS-00228 : Weighting factor for feedforward control (enumerator)
+vorsteuer.vs_v_nenner                                 1             ( P-AXIS-00229 : Weighting factor for feedforward control (denominator)
+vorsteuer.vs_a_faktor                                 1             ( P-AXIS-00225 : [us] Equivalent time constant for feedforward control of acceleration (enumerator)
+vorsteuer.vs_a_nenner                                 100           ( P-AXIS-00226 : Equivalent time constant for feedforward control of acceleration (denominator)
+vorsteuer.vs_max_sprung                               1             ( P-AXIS-00227 : Max. permis. jump in the down-gradation of feed forward  - not used
+vorsteuer.delay_time                                  1             ( P-AXIS-00055 : [Cycle] Time shift between command actual values
+vorsteuer.vorsteuerung                                0             ( P-AXIS-00223 : Feedforward control mode  ( bit coded mode)Bitcodierter Vorsteuermodus 0x0=disable, 0x1=velocity, ...
+vorsteuer.shift_time                                  3             ( P-AXIS-00165 : [Cycles] Time shift command value - feedforward values (balancing runtime of bus, only profibus)
+vorsteuer.default_active                              0             ( P-AXIS-00255 : Permanent activation of feedforward control
+
+# ----------------------------------------------------
+antr.abs_pos_offset                                   0             ( P-AXIS-00403 : [0.1um] or [10-4degree] Offset between drive position and CNC position 
+antr.ignore_unknown_telegram_elements                 0             ( P-AXIS-00358 : Ignore unknown entries in drive telegram 
+antr.use_drive_following_error                        0             ( P-AXIS-00466 : Drive based position lag calculation
+antr.probing_input_nbr                                0             ( P-AXIS-00430 : Number of probing input 
+antr.encoder_bit_range                                0             ( P-AXIS-00355 : Number of bits for evaluation of encoder overflow 
+antr.mode_cmd_pos                                     0             ( P-AXIS-00123 : Normalization of command position , 0=depending on axis type, 1=linear, 2=modulo
+antr.mode_act_pos                                     0             ( P-AXIS-00122 : Normalization of actual position , 0=depending on axis type, 1=linear, 2=modulo
+antr.v_reso_num                                       1             ( P-AXIS-00206 : [Incr.]Normalization of the velocity
+antr.v_reso_denom                                     36            ( P-AXIS-00205 : [um] or [10-3degree] Normalization of the velocity
+antr.operation_mode                             DRIVE_DEFAULT       ( P-AXIS-00320 : Operation mode of an axis ( DRIVE_DEFAULT / DRIVE_POSITION_CONTROL / CNC_POSITION_CONTROL  )
+antr.nbr_delay_cycles                                 4             ( P-AXIS-00191 : Delay between command value and actual value (This parameter is only active for digital drives )
+antr.canopen.probing_input_number                     0             ( P-AXIS-00295 : Number of probing input (EtherCAT)
+antr.profibus.s_ls_limit                              40            ( P-AXIS-00162 : Slave-life sign limit (only profibus)
+antr.profibus.feinaufloesung                          11            ( P-AXIS-00065 : Calculation of the position value (only profibus) - shift factor for sensor values 
+
+# ---------------------------------------------------                 Drive simulation / axis simulation
+antr.simu.zeitkonstante_z                             1             ( P-AXIS-00239 : Sample time constant for axis simulation (nominator)
+antr.simu.zeitkonstante_n                             100           ( P-AXIS-00238 : Sample time constant for axis simulation (denominator)
+antr.simu.daempfung_z                                 6             ( P-AXIS-00051 : Damping of axis simulation (nominator)
+antr.simu.daempfung_n                                 10            ( P-AXIS-00050 : Damping of axis simulation (denominator)
+antr.simu.eigenfrequenz_z                             100           ( P-AXIS-00062 : Natural frequency of axis simulation (nominator)
+antr.simu.eigenfrequenz_n                             1             ( P-AXIS-00061 : Natural frequency of axis simulation (denominator)
+antr.simu.totzeit                                     0             ( P-AXIS-00194 : [cycles] Dead time of control path
+antr.simu.rpf_weg_bis_nip                             100000        ( P-AXIS-00161 : [0.1um] or [10-4degree] Toolpath up to zero pulse during homing simulation
+antr.simu.ist_gleich_soll                             1             ( P-AXIS-00096 : Set actual position equal to command position (deactivation of the pt2 element of the position lag calculation 0=no, 1=yes)
+
+# ---------------------------------------------------                 Manual mode
+handbetrieb.default.after_g200_g201                   1              ( P-AXIS-00446 : Set default operation mode and control_element after each activation via G200/G201
+handbetrieb.default.operation_mode                    0              ( P-AXIS-00139 : Operation mode ,  1=handwheel, 2=continuous, 3=incremental
+handbetrieb.default.control_element                   0              ( P-AXIS-00046 : Logical identifier of control element 
+handbetrieb.offsetgrenze_pos                          50000000       ( P-AXIS-00138 : [0.1um] or [10-4degree] Positive Offset limit
+handbetrieb.offsetgrenze_neg                          -50000000      ( P-AXIS-00137 : [0.1um] or [10-4degree] Negative Offset limit
+#                                                                    
+handbetrieb.hr.aufl[0]                                10             ( P-AXIS-00025 : [0.1um/Rev] or [10-4degree/Rev] Handwheel resolutions  1
+handbetrieb.hr.aufl[1]                                20             ( P-AXIS-00025 :[0.1um/Rev] or [10-4degree/Rev]Handwheel resolutions  2
+handbetrieb.hr.aufl[2]                                30             ( P-AXIS-00025 :[0.1um/Rev] or [10-4degree/Rev]Handwheel resolutions  3
+handbetrieb.hr.filter_zeit                            10             ( P-AXIS-00069 : [cycles] Filter time constant  (time constante for smoothing)
+#                                                                    
+handbetrieb.tipp.geschw[0]                            30000          ( P-AXIS-00077 : [um/s] or [10-3degree/s] Velocity for the continuous jog mode 1
+handbetrieb.tipp.geschw[1]                            30000          ( P-AXIS-00077 : [um/s] or [10-3degree/s] Velocity for the continuous jog mode 2
+handbetrieb.tipp.geschw[2]                            40000          ( P-AXIS-00077 : [um/s] or [10-3degree/s] Velocity for the continuous jog mode 3
+handbetrieb.tipp.vb_eilgang                           50000          ( P-AXIS-00210 : [um/s] or [10-3degree/s] Rapid mode velocity for continuous jog mode
+#                                                                    
+handbetrieb.jog.weg[0]                                1000           ( P-AXIS-00232 : [0.1um] or [10-4degree] Jog incremental widths 1
+handbetrieb.jog.weg[1]                                2000           ( P-AXIS-00232 : [0.1um] or [10-4degree] Jog incremental widths  2
+handbetrieb.jog.weg[2]                                3000           ( P-AXIS-00232 : [0.1um] or [10-4degree] Jog incremental widths  3
+handbetrieb.jog.geschw[0]                             30000          ( P-AXIS-00076 : [um/s] or [10-3degree/s] Incremental jog velocities 1
+handbetrieb.jog.geschw[1]                             30000          ( P-AXIS-00076 : [um/s] or [10-3degree/s] Incremental jog velocities 2
+handbetrieb.jog.geschw[2]                             60000          ( P-AXIS-00076 : [um/s] or [10-3degree/s] Incremental jog velocities 3
+#                                                                    
+handbetrieb.ipo.hb_proz_v_max                         30             ( P-AXIS-00083 : [%] Manual mode during interpolation, velocity part of manual operation  (G201)
+handbetrieb.ipo.hb_proz_a_max                         30             ( P-AXIS-00082 : [%] Manual mode during interpolation, acceleration part of manual operation (G201)
+handbetrieb.ipo.ipo_proz_v_max                        70             ( P-AXIS-00095 : [%] Manual mode during interpolation, velocity part of interpolation (G201)
+handbetrieb.ipo.ipo_proz_a_max                        70             ( P-AXIS-00094 : [%] Manual mode during interpolation, acceleration part of interpolation (G201)
+#                                                                    
+handbetrieb.hb.vb_max                                 P-AXIS-00212.0 ( P-AXIS-00213 : [µm/s] or [10-4degree/s] Maximum velocity (G200)
+handbetrieb.hb.a_max                                  P-AXIS-00008.0 ( P-AXIS-00009 : [mm/s2] or [degree/s2] Maximum acceleration (G200)
+handbetrieb.hb.tr                                     P-AXIS-00196.0 ( P-AXIS-00359 : [µs] Ramp time during maximum acceleration
+# ---------------------------------------------------                 Axis filter
+filter[0].order                                       0             ( P-AXIS-00140 : Order of the axis filter , 0=  deactivate filter
+filter[0].prototype                                   1             ( P-AXIS-00153 : Definition of filter characteristics , 1="Critical damping", 2=Butherworth, 3=Bessel, 4=Chebychev, 5="HSC
+filter[0].type                                        1             ( P-AXIS-00204 : Filter type, 1=lowpass, 2=highpass, 3=bandpass, 4=bandstop, 5=allpass
+filter[0].fg_f0                                       10            ( P-AXIS-00067 : Filter parameter (characterized frequency)
+filter[0].guete                                       1             ( P-AXIS-00080 : Filter parameter (quality)
+filter[0].share_percent                               100           ( P-AXIS-00164 : [%] Filter parameter (Part of the signal which is passed through the filter)
+#
+Ende
+
+]]></Data>
+				</Axis>
+				<Axis Id="2" AxisPara="4" DefaultIndex="-1">
+					<Name>Axis_2</Name>
+					<ImageId>171</ImageId>
+					<Vars VarGrpType="1">
+						<Name>Inputs</Name>
+					</Vars>
+					<Vars VarGrpType="2">
+						<Name>Outputs</Name>
+					</Vars>
+					<Data Name="Parameter" Offset="5"><![CDATA[# ****************************************
+#
+#TC_AXIS_DESC:    Axis Parameter
+#
+# ****************************************
+#
+kopf.achs_nr                                          2
+kopf.mds_ident                                        1             ( P-AXIS-00110 : Identification of axis data 
+kopf.log_achs_name                                           Axis_2
+antr.addroffs.input                                          0
+antr.addroffs.output                                         0
+#
+kenngr.nocken_laenge                                  0             ( P-AXIS-00133 : Cam length , not used
+kenngr.virtuel_rad                                    0             ( P-AXIS-00222 : Virtual radius , not used
+kenngr.swe_toleranz                                   100           ( P-AXIS-00179 : Tolerance range for software limit switch
+kenngr.swe_pos                                        15000000      ( P-AXIS-00178 : [0.1um] or [10-4degree] Positive software limit switch 
+kenngr.swe_neg                                        -10000000     ( P-AXIS-00177 : [0.1um] or [10-4degree] Negative software limit switch
+
+kenngr.max_vb_override                                1000          ( P-AXIS-00109 : [0.1%] Maximum permissible velocity override
+kenngr.vb_prozent                                     10            ( P-AXIS-00217 : [0.1%] Tolerance band, factor for signal "speed-value attained"
+kenngr.getriebe_stufe                                 1             ( P-AXIS-00079 : Default gear step number  (Default-Getriebestufe
+kenngr.achs_mode                                      0x1           ( P-AXIS-00015 : Operating mode of an axis ;  mode 1=linear , mode 4=modulo
+kenngr.achs_typ                                       1             ( P-AXIS-00018 : Axis type 1=linear axis, 2=rotatary axis, 4=spindle/single axis
+
+# ----------------------------------------------------                measurement
+kenngr.hub_messtaster                                 20000         ( P-AXIS-00086 : [0.1um] or [10-4degree] Max. excursion of probe (deceleration distance)
+kenngr.vb_messen                                      20000         ( P-AXIS-00215 : [um/s] or [degree/s] Measurement speed, if not defined with Fxxx
+kenngr.mess_offset                                    100           ( P-AXIS-00114 : [0.1um] or [10-4degree] Measurement travel offset behind the target position
+kenngr.messachse                                      0             ( P-AXIS-00118 : Axis engaged in measurement travel
+kenngr.mess_signal_achs_steuer                        1             ( P-AXIS-00115 : Measurement signal via axis specific control bit mask
+kenngr.mess_signal_taster                             0             ( P-AXIS-00117 : Measurement signal from hardware-interface 
+kenngr.kasto_achse                                    0             ( P-AXIS-00098 : Measurement with edge banding 
+kenngr.mess_signal_sercos                             0             ( P-AXIS-00116 : Measurement with SERCOS-drives 
+kenngr.mess_neg_flanke                                0             ( P-AXIS-00113 : Edge of measurement signal 0=pos 1=neg
+kenngr.echtzeit_bit_nr                                0             ( P-AXIS-00060 : SERCOS-status/control bit for measurement
+
+# ----------------------------------------------------                Gantry functionality ( only configured in slave axis)
+kenngr.gantry_ax_nr                                   0             ( P-AXIS-00070 : Axis number of master axis 
+kenngr.gantry_max_diff_resetable                      0             ( P-AXIS-00072 : [0.1um] or [10-4degree] Resetable maximal path distance
+kenngr.gantry_max_diff_reset_locked                   0             ( P-AXIS-00071 : [0.1um] or [10-4degree] Not resetable maximal path distance
+kenngr.gantry_offset                                  0             ( P-AXIS-00073 : [0.1um] or [10-4degree] Static offset between master and slave axis
+kenngr.gantry_vb_korr                              1000             ( P-AXIS-00075 : [um/s] or [10-3degree/s] Velocity of correction
+
+# ----------------------------------------------------                Tracking mode
+kenngr.diff_pos_tracking                              10000         ( P-AXIS-00056 : [0.1um] or [10-4degree] Maximum difference after deactivation  ( limit of tracking)
+kenngr.vb_corr_tracking                               1000          ( P-AXIS-00208 : [um/s] or [degree/s] Velocity of tracking
+kenngr.max_diff_soll_ist                              10000         ( P-AXIS-00108 : [0.1um] or [10-4degree] Max. permissible position difference when enabling drive controller
+
+# ----------------------------------------------------                Collision monitoring
+kenngr.coll_check_ax_nr                               0             ( P-AXIS-00043 : Logical axis number of the axis to be monitored
+kenngr.coll_offset                                    0             ( P-AXIS-00045 : [0.1um] or [10-4degree] Security distance (Offset of the collision axes)
+kenngr.coll_decelerate_chan                           1             ( P-AXIS-00044 : Stopping in all channels (If a collision is detected with this axis the corresponding channel shall be stopped)
+
+kenngr.paar_ax_nr                                     0             ( P-AXIS-00143 : Physical number of axis pair - not used
+kenngr.paar_achse                                     0             ( P-AXIS-00142 : Axis pair present - not used
+kenngr.paar_ref_richt                                 0             ( P-AXIS-00144 : Homing direction for axis pair - not used
+kenngr.anzeige                                        1             ( P-AXIS-00023 : Activation of display function ( number of calls for updates)
+
+# ----------------------------------------------------                CNC controlled referencing
+kenngr.ref_richt                                      1             ( P-AXIS-00158 : Preferred direction of axis for homing (driving direction of the axis during homing when cam is not activated. 1=positive, 0=negative)
+kenngr.homing_without_zero_pulse                      1             ( P-AXIS-00084 : Homing only with cam (without zero pulse)
+kenngr.fast_from_cam                                  1             ( P-AXIS-00064 : Slow / fast movement away from cam. 1=yes, 0=no
+kenngr.ref_ohne_nocken                                0             ( P-AXIS-00156 : Homing without cam (only with zero pulse)
+kenngr.vorz_richtung                                  0             ( P-AXIS-00224 : Restriction of direction of rotation(only in one direction) 1=yes, 0=no
+kenngr.beweg_richt                                    0             ( P-AXIS-00031 : Definition of preferred direction of rotation , 1=positive, 0=negative (direction of rotation with restrictions)
+kenngr.ref_ohne_rev                                   0             ( P-AXIS-00157 : Homing without reverting with recognized cam
+
+kenngr.set_refpos_mode                             ABSOLUT          ( P-AXIS-00278 : Modes for setting the homing position (ABSOLUT / OFFSET /  PLC / PLC_OFFSET)
+kenngr.set_refpos_offset                              0             ( P-AXIS-00279 : [0.1um] or [10-4degree] Offset to the homing position
+kenngr.homing_type                              CNC_CONTROLLED      ( P-AXIS-00299 : Homing type (CNC_CONTROLLED / DRIVE_CONTROLLED )
+kenngr.homing_overflow_evaluation                     0             ( P-AXIS-00294 : Selection of the homing method , 0=no evaluation (default), 1=evaluation
+kenngr.ref_cam_is_limit_switch                        0             ( P-AXIS-00329 : Use of hardware limit switch as reference switch, 1=use a hardware switch, 0=no use of hardware switch
+kenngr.prog_move_requires_homing                      0             ( P-AXIS-00277 : 0=Moving of the axis is possible without preceding homing, 1=Before a programmed movement the axis has to be homed.
+
+kenngr.mod_rechng                                     0             ( P-AXIS-00121 : Activation of modulo calculation - not used
+kenngr.tendenz_pruef                                  0             ( P-AXIS-00189 : Tendency test of motion, 1=yes , 0=no
+kenngr.in_add_interface                               1             ( P-AXIS-00091 : Activation of (additional) interface for loading application-specific command values 1=enable, 0=disable
+kenngr.out_add_interface                              0             ( P-AXIS-00141 : Activation of (additional) interface for loading of command and actual values , not used
+kenngr.antr_typ                                       4
+kenngr.def_cax_gear_st                                1             ( P-AXIS-00052 : Default gear step number for C-axis mode
+kenngr.feininterpolation                              1             ( P-AXIS-00066 : Selection of fine interpolation - not used
+kenngr.abs_pos_gueltig                                0             ( P-AXIS-00014 : Identification code for absolute path measurement system
+
+# ---------------------------------------------------                 Gearing data
+getriebe[0].nummer                                    1              ( P-AXIS-00135 :  Gear step number 
+
+# ---------------------------------------------------                 Parameter non-linear nichlineares velocity profile               
+getriebe[0].slope_profil.a_beschl                     P-AXIS-00008.0 ( P-AXIS-00001 : [mm/s2] or [degree/s2] Acceleration at machining feed G1,G2,G3
+getriebe[0].slope_profil.a_brems                      P-AXIS-00008.0 ( P-AXIS-00002 : [mm/s2] or [degree/s2] Deceleration at machining feed  G1,G2,G3
+getriebe[0].slope_profil.a_grenz                      P-AXIS-00008.0 ( P-AXIS-00004 : [mm/s2] or [degree/s2] Acceleration at rapid movement G0
+getriebe[0].slope_profil.tr_beschl_zu                 300000         ( P-AXIS-00196 : [us] Ramp time for acceleration up-gradation at machining feed G1,G2,G3
+getriebe[0].slope_profil.tr_beschl_ab                 P-AXIS-00196.0 ( P-AXIS-00195 : [us] Ramp time for acceleration down-gradation at machining feed G1,G2,G3
+getriebe[0].slope_profil.tr_brems_zu                  P-AXIS-00196.0 ( P-AXIS-00198 : [us] Ramp time for deceleration up-gradation at machining feed G1,G2,G3
+getriebe[0].slope_profil.tr_brems_ab                  P-AXIS-00196.0 ( P-AXIS-00197 : [us] Ramp time for deceleration down-gradation at machining feed G1,G2,G3
+getriebe[0].slope_profil.tr_grenz                     P-AXIS-00196.0 ( P-AXIS-00200 : [us] Ramp time at rapid movement G0
+getriebe[0].dynamik.tr_min                            5000           ( P-AXIS-00201 : [us] Minimum permissible ramp time
+getriebe[0].dynamik.tr_geom                           P-AXIS-00196.0 ( P-AXIS-00199 : [us] Geometric ramp time (ramp time of geometric contours)
+
+# ---------------------------------------------------                 Parameter linear velocity profile
+getriebe[0].lslope_profil.a_stufe_1                   P-AXIS-00008.0 ( P-AXIS-00011 : [mm/s2] or [degree/s2] Acceleration/ deceleration of step 1 at machining feed G1,G2,G3
+getriebe[0].lslope_profil.a_stufe_2                   P-AXIS-00008.0 ( P-AXIS-00012 : [mm/s2] or [degree/s2] Acceleration/ deceleration of step 2 at machining feed G1,G2,G3
+getriebe[0].lslope_profil.vb_stufe_1_2                P-AXIS-00212.0 ( P-AXIS-00221 : [um/s] or [10-3degree/s] Changeover speed between step 1 and 2 at machining feed G1,G2,G3
+getriebe[0].lslope_profil.a_grenz_stufe_1             P-AXIS-00008.0 ( P-AXIS-00005 : [mm/s2] or [degree/s2] Acceleration/ deceleration of step 1 in rapid mode G0
+getriebe[0].lslope_profil.a_grenz_stufe_2             P-AXIS-00008.0 ( P-AXIS-00006 : [mm/s2] or [degree/s2] Acceleration/ deceleration of step 2 in rapid mode G0
+getriebe[0].lslope_profil.vb_grenz_stufe_1_2          P-AXIS-00212.0 ( P-AXIS-00211 : [um/s] or [10-3degree/s] Changeover speed between ramp 1 and ramp2 in rapid mode G0 
+
+# ---------------------------------------------------                 Permitted axis dynamics
+getriebe[0].dynamik.vb_max                            100000         ( P-AXIS-00212 : [um/s] or [10-3degree/s] Maximum permissible axis velocity 
+getriebe[0].dynamik.a_max                             2000           ( P-AXIS-00008 : [mm/s2] or [degree/s2] Maximum permissible axis acceleration 
+getriebe[0].dynamik.a_emergency                       1750           ( P-AXIS-00003 : [mm/s2] or [degree/s2] Deceleration for an emergency stop 
+getriebe[0].dynamik.a_trans_weight                    0              ( P-AXIS-00013 : [0.1%] Weighting of acceleration at motion block transition
+getriebe[0].dynamik.r_trans_weight                    0              ( P-AXIS-00154 : [0.1%] Weighting of jerk at block transition 
+
+# ---------------------------------------------------                 Characteristics acceleration (spindle)
+getriebe[0].beschl_kennlinie.n_grenz                  0              ( P-AXIS-00130 : [10-3degree/s] Limit speed from which onwards the acceleration is specified in a polynomial form
+getriebe[0].beschl_kennlinie.a_konst                  0              ( P-AXIS-00007 : [degree/s2] Constant acceleration in the range n<n_grenz
+getriebe[0].beschl_kennlinie.typ                      0              ( P-AXIS-00202 : Type of the characteristic acceleration curve  0=not active, 1=hyperbola, 2=polynomial, 3=asynchronous drive
+getriebe[0].beschl_kennlinie.a_min                    0              ( P-AXIS-00010 : [degree/s2] Minimum value of acceleration for high speed
+getriebe[0].beschl_kennlinie.b1                       0              ( P-AXIS-00026 : [1/s] Parameter 1 of the a(n) polynomial
+getriebe[0].beschl_kennlinie.b2                       0              ( P-AXIS-00027 : [1/degree] Parameter 2 of the a(n) polynomial
+getriebe[0].beschl_kennlinie.b3                       0              ( P-AXIS-00028 : [1/degree2] Parameter 3 of the a(n) polynomial
+
+# ---------------------------------------------------                 Permitted axis velocities
+getriebe[0].vb_min_null                               10             ( P-AXIS-00216 : [10-3degree/s] Limit for spindle speed "zero"
+getriebe[0].vb_eilgang                                P-AXIS-00212.0 ( P-AXIS-00209 : [um/s] or [10-3degree/s] Rapid mode velocity
+getriebe[0].vb_max_red                                5000           ( P-AXIS-00214 : [um/s] or [10-3degree/s] Reduced maximum speed at active G01,G2,G3
+getriebe[0].rapid_speed_red                           10000          ( P-AXIS-00155 : [um/s] or [10-3degree/s] Reduced maximum speed at active G00 
+getriebe[0].vb_refmax                                 20000          ( P-AXIS-00219 : [um/s] or [10-3degree/s] Maximum homing velocity 
+getriebe[0].vb_reflow                                 2000           ( P-AXIS-00218 : [um/s] or [10-3degree/s]Minimum homing velocity 
+getriebe[0].vb_regelgrenze                            P-AXIS-00212.0 ( P-AXIS-00220 : [um/s] or [10-3degree/s] Limiting velocity for the measuring system
+getriebe[0].kv                                        4000           ( P-AXIS-00099 : [0.01/s] Proportional factor kv for positional control in CNC
+getriebe[0].multi_gain_z                              1800           ( P-AXIS-00129 : Manipulated variable of drive (numerator)
+getriebe[0].multi_gain_n                              1              ( P-AXIS-00128 : Manipulated variable of drive (denominator)
+getriebe[0].wegaufz                                   1              ( P-AXIS-00234 : [Incr.] Path resolution of the measuring system  (numerator)
+getriebe[0].wegaufn                                   1              ( P-AXIS-00233 : [0.1um] or [10-4degree]Path resolution of the measuring system  (denominator)
+getriebe[0].window                                    100            ( P-AXIS-00236 : [0.1um] or [10-4degree] Control window at "Accuracy Stop" G60
+getriebe[0].pos_refpkt                                0              ( P-AXIS-00152 : [0.1um] or [10-4degree] Position of the reference point with CNC controlled homing
+getriebe[0].getr_schalt_pos                           0              ( P-AXIS-00078 : [0.1um] or [10-4degree] Gear change position, when switching is permitted
+getriebe[0].achs_position[0]                          0              ( P-AXIS-00017 : Special axis positions - not used at the moment
+getriebe[0].achs_position[1]                          0              ( P-AXIS-00017 : Special axis positions - not used at the moment
+getriebe[0].achs_position[2]                          0              ( P-AXIS-00017 : Special axis positions - not used at the moment
+getriebe[0].wsi_meldung                               0              ( P-AXIS-00237 : [mm] or [Degree] or [Rev.] Traverse distance 
+
+# ---------------------------------------------------                 Rotatary axis / spindle
+getriebe[0].moduloo                                   3600000       ( P-AXIS-00126 : [10-4degree] Upper modulo limit 
+getriebe[0].modulou                                   0             ( P-AXIS-00127 : [10-4degree] Lower modulo limit 
+getriebe[0].modulo_fehler                             0             ( P-AXIS-00124 : [Incr.] Error in modulo circle 
+getriebe[0].modulo_umdreh                             0             ( P-AXIS-00125 : Number of rotations in case of modulo error
+
+# ---------------------------------------------------                 Position lag monitoring
+getriebe[0].slep_ueberw_typ                           2             ( P-AXIS-00172 : Type of following error monitoring; 0=disable, 1=standard, 2=linear, 3=non-linear, 4=velocity independent
+getriebe[0].slep_min                                  15000         ( P-AXIS-00169 : [0.1um] or [10-4degree] Minimum following error on axis standstill
+getriebe[0].slep_max                                  100000        ( P-AXIS-00168 : [0.1um] or [10-4degree] Maximum following error
+getriebe[0].slep_dyn                                  1000          ( P-AXIS-00167 : Factor for dynamic following error monitoring
+getriebe[0].slep_abw                                  0             ( P-AXIS-00166 : Remaining deviation for non linear following error monitoring (only non-linear)
+
+getriebe[0].pos_einschw_zeit                          10000         ( P-AXIS-00151 : [ms] Maximum transient time 
+getriebe[0].lose                                      0             ( P-AXIS-00103 : [0.1um] or [10-4degree] Size of backlash 
+getriebe[0].reverse                                   0             ( P-AXIS-00159 : Reverse of sign for setpoint and actual value 
+getriebe[0].default_lr_hw_nbr                         0             ( P-AXIS-00054 : Number of selected hardware specific parameter set
+getriebe[0].incr_per_rev                              1024          ( P-AXIS-00092 : Position controller increments per revolution (only profibus)
+getriebe[0].vb_not_referenced                         2             ( P-AXIS-00268 : [um/s] Maximum velocity for unreferenced axes
+
+# ---------------------------------------------------                 Compensations and monitoring
+lr_param.slep_toleranz                                0             ( P-AXIS-00171 : Tolerance range monitoring for following error (commanded value/ current value)
+lr_param.anwahl_losekomp                              0             ( P-AXIS-00021 : Selection of backlash compensation 0=disable, 1=pos.direction, 2=neg.direction
+lr_param.ssfk                                         0             ( P-AXIS-00175 : Activation of SSFK - leadscrew error compensation (axis correction)
+lr_param.mod_komp                                     0             ( P-AXIS-00120 : Activation of modulo compensation
+lr_param.suppress_pos_lag_error                       0             ( P-AXIS-00176 : Suppression of position lag monitoring
+lr_param.vol_comp.s_limit                             10000         ( P-AXIS-00525 : max. compensation value for Volumetric Compensation
+
+#
+lr_hw[0].nummer                                       1             ( P-AXIS-00136 : Identifier for hardware specific parameter set 
+lr_hw[0].drift_wert                                   0             ( P-AXIS-00057 : [Bit] Value of degradation compensation 
+lr_hw[0].regel_typ                                    0             ( P-AXIS-00163 : Control type 
+lr_hw[0].vz_stellgr                                   0             ( P-AXIS-00231 : Sign reversal of command value
+lr_hw[0].vz_istw                                      0             ( P-AXIS-00230 : Sign reversal of actual value
+
+# ---------------------------------------------------                 Feedforward control
+vorsteuer.vs_v_faktor                                 1             ( P-AXIS-00228 : Weighting factor for feedforward control (enumerator)
+vorsteuer.vs_v_nenner                                 1             ( P-AXIS-00229 : Weighting factor for feedforward control (denominator)
+vorsteuer.vs_a_faktor                                 1             ( P-AXIS-00225 : [us] Equivalent time constant for feedforward control of acceleration (enumerator)
+vorsteuer.vs_a_nenner                                 100           ( P-AXIS-00226 : Equivalent time constant for feedforward control of acceleration (denominator)
+vorsteuer.vs_max_sprung                               1             ( P-AXIS-00227 : Max. permis. jump in the down-gradation of feed forward  - not used
+vorsteuer.delay_time                                  1             ( P-AXIS-00055 : [Cycle] Time shift between command actual values
+vorsteuer.vorsteuerung                                0             ( P-AXIS-00223 : Feedforward control mode  ( bit coded mode)Bitcodierter Vorsteuermodus 0x0=disable, 0x1=velocity, ...
+vorsteuer.shift_time                                  3             ( P-AXIS-00165 : [Cycles] Time shift command value - feedforward values (balancing runtime of bus, only profibus)
+vorsteuer.default_active                              0             ( P-AXIS-00255 : Permanent activation of feedforward control
+
+# ----------------------------------------------------
+antr.abs_pos_offset                                   0             ( P-AXIS-00403 : [0.1um] or [10-4degree] Offset between drive position and CNC position 
+antr.ignore_unknown_telegram_elements                 0             ( P-AXIS-00358 : Ignore unknown entries in drive telegram 
+antr.use_drive_following_error                        0             ( P-AXIS-00466 : Drive based position lag calculation
+antr.probing_input_nbr                                0             ( P-AXIS-00430 : Number of probing input 
+antr.encoder_bit_range                                0             ( P-AXIS-00355 : Number of bits for evaluation of encoder overflow 
+antr.mode_cmd_pos                                     0             ( P-AXIS-00123 : Normalization of command position , 0=depending on axis type, 1=linear, 2=modulo
+antr.mode_act_pos                                     0             ( P-AXIS-00122 : Normalization of actual position , 0=depending on axis type, 1=linear, 2=modulo
+antr.v_reso_num                                       1             ( P-AXIS-00206 : [Incr.]Normalization of the velocity
+antr.v_reso_denom                                     36            ( P-AXIS-00205 : [um] or [10-3degree] Normalization of the velocity
+antr.operation_mode                             DRIVE_DEFAULT       ( P-AXIS-00320 : Operation mode of an axis ( DRIVE_DEFAULT / DRIVE_POSITION_CONTROL / CNC_POSITION_CONTROL  )
+antr.nbr_delay_cycles                                 4             ( P-AXIS-00191 : Delay between command value and actual value (This parameter is only active for digital drives )
+antr.canopen.probing_input_number                     0             ( P-AXIS-00295 : Number of probing input (EtherCAT)
+antr.profibus.s_ls_limit                              40            ( P-AXIS-00162 : Slave-life sign limit (only profibus)
+antr.profibus.feinaufloesung                          11            ( P-AXIS-00065 : Calculation of the position value (only profibus) - shift factor for sensor values 
+
+# ---------------------------------------------------                 Drive simulation / axis simulation
+antr.simu.zeitkonstante_z                             1             ( P-AXIS-00239 : Sample time constant for axis simulation (nominator)
+antr.simu.zeitkonstante_n                             100           ( P-AXIS-00238 : Sample time constant for axis simulation (denominator)
+antr.simu.daempfung_z                                 6             ( P-AXIS-00051 : Damping of axis simulation (nominator)
+antr.simu.daempfung_n                                 10            ( P-AXIS-00050 : Damping of axis simulation (denominator)
+antr.simu.eigenfrequenz_z                             100           ( P-AXIS-00062 : Natural frequency of axis simulation (nominator)
+antr.simu.eigenfrequenz_n                             1             ( P-AXIS-00061 : Natural frequency of axis simulation (denominator)
+antr.simu.totzeit                                     0             ( P-AXIS-00194 : [cycles] Dead time of control path
+antr.simu.rpf_weg_bis_nip                             100000        ( P-AXIS-00161 : [0.1um] or [10-4degree] Toolpath up to zero pulse during homing simulation
+antr.simu.ist_gleich_soll                             1             ( P-AXIS-00096 : Set actual position equal to command position (deactivation of the pt2 element of the position lag calculation 0=no, 1=yes)
+
+# ---------------------------------------------------                 Manual mode
+handbetrieb.default.after_g200_g201                   1              ( P-AXIS-00446 : Set default operation mode and control_element after each activation via G200/G201
+handbetrieb.default.operation_mode                    0              ( P-AXIS-00139 : Operation mode ,  1=handwheel, 2=continuous, 3=incremental
+handbetrieb.default.control_element                   0              ( P-AXIS-00046 : Logical identifier of control element 
+handbetrieb.offsetgrenze_pos                          50000000       ( P-AXIS-00138 : [0.1um] or [10-4degree] Positive Offset limit
+handbetrieb.offsetgrenze_neg                          -50000000      ( P-AXIS-00137 : [0.1um] or [10-4degree] Negative Offset limit
+#                                                                    
+handbetrieb.hr.aufl[0]                                10             ( P-AXIS-00025 : [0.1um/Rev] or [10-4degree/Rev] Handwheel resolutions  1
+handbetrieb.hr.aufl[1]                                20             ( P-AXIS-00025 :[0.1um/Rev] or [10-4degree/Rev]Handwheel resolutions  2
+handbetrieb.hr.aufl[2]                                30             ( P-AXIS-00025 :[0.1um/Rev] or [10-4degree/Rev]Handwheel resolutions  3
+handbetrieb.hr.filter_zeit                            10             ( P-AXIS-00069 : [cycles] Filter time constant  (time constante for smoothing)
+#                                                                    
+handbetrieb.tipp.geschw[0]                            30000          ( P-AXIS-00077 : [um/s] or [10-3degree/s] Velocity for the continuous jog mode 1
+handbetrieb.tipp.geschw[1]                            30000          ( P-AXIS-00077 : [um/s] or [10-3degree/s] Velocity for the continuous jog mode 2
+handbetrieb.tipp.geschw[2]                            40000          ( P-AXIS-00077 : [um/s] or [10-3degree/s] Velocity for the continuous jog mode 3
+handbetrieb.tipp.vb_eilgang                           50000          ( P-AXIS-00210 : [um/s] or [10-3degree/s] Rapid mode velocity for continuous jog mode
+#                                                                    
+handbetrieb.jog.weg[0]                                1000           ( P-AXIS-00232 : [0.1um] or [10-4degree] Jog incremental widths 1
+handbetrieb.jog.weg[1]                                2000           ( P-AXIS-00232 : [0.1um] or [10-4degree] Jog incremental widths  2
+handbetrieb.jog.weg[2]                                3000           ( P-AXIS-00232 : [0.1um] or [10-4degree] Jog incremental widths  3
+handbetrieb.jog.geschw[0]                             30000          ( P-AXIS-00076 : [um/s] or [10-3degree/s] Incremental jog velocities 1
+handbetrieb.jog.geschw[1]                             30000          ( P-AXIS-00076 : [um/s] or [10-3degree/s] Incremental jog velocities 2
+handbetrieb.jog.geschw[2]                             60000          ( P-AXIS-00076 : [um/s] or [10-3degree/s] Incremental jog velocities 3
+#                                                                    
+handbetrieb.ipo.hb_proz_v_max                         30             ( P-AXIS-00083 : [%] Manual mode during interpolation, velocity part of manual operation  (G201)
+handbetrieb.ipo.hb_proz_a_max                         30             ( P-AXIS-00082 : [%] Manual mode during interpolation, acceleration part of manual operation (G201)
+handbetrieb.ipo.ipo_proz_v_max                        70             ( P-AXIS-00095 : [%] Manual mode during interpolation, velocity part of interpolation (G201)
+handbetrieb.ipo.ipo_proz_a_max                        70             ( P-AXIS-00094 : [%] Manual mode during interpolation, acceleration part of interpolation (G201)
+#                                                                    
+handbetrieb.hb.vb_max                                 P-AXIS-00212.0 ( P-AXIS-00213 : [µm/s] or [10-4degree/s] Maximum velocity (G200)
+handbetrieb.hb.a_max                                  P-AXIS-00008.0 ( P-AXIS-00009 : [mm/s2] or [degree/s2] Maximum acceleration (G200)
+handbetrieb.hb.tr                                     P-AXIS-00196.0 ( P-AXIS-00359 : [µs] Ramp time during maximum acceleration
+# ---------------------------------------------------                 Axis filter
+filter[0].order                                       0             ( P-AXIS-00140 : Order of the axis filter , 0=  deactivate filter
+filter[0].prototype                                   1             ( P-AXIS-00153 : Definition of filter characteristics , 1="Critical damping", 2=Butherworth, 3=Bessel, 4=Chebychev, 5="HSC
+filter[0].type                                        1             ( P-AXIS-00204 : Filter type, 1=lowpass, 2=highpass, 3=bandpass, 4=bandstop, 5=allpass
+filter[0].fg_f0                                       10            ( P-AXIS-00067 : Filter parameter (characterized frequency)
+filter[0].guete                                       1             ( P-AXIS-00080 : Filter parameter (quality)
+filter[0].share_percent                               100           ( P-AXIS-00164 : [%] Filter parameter (Part of the signal which is passed through the filter)
+#
+Ende
+
+]]></Data>
+				</Axis>
+				<Axis Id="3" AxisPara="4" DefaultIndex="-1">
+					<Name>Axis_3</Name>
+					<ImageId>171</ImageId>
+					<Vars VarGrpType="1">
+						<Name>Inputs</Name>
+					</Vars>
+					<Vars VarGrpType="2">
+						<Name>Outputs</Name>
+					</Vars>
+					<Data Name="Parameter" Offset="6"><![CDATA[# ****************************************
+#
+#TC_AXIS_DESC:    Axis Parameter
+#
+# ****************************************
+#
+kopf.achs_nr                                          3
+kopf.mds_ident                                        1             ( P-AXIS-00110 : Identification of axis data 
+kopf.log_achs_name                                           Axis_3
+antr.addroffs.input                                          0
+antr.addroffs.output                                         0
+#
+kenngr.nocken_laenge                                  0             ( P-AXIS-00133 : Cam length , not used
+kenngr.virtuel_rad                                    0             ( P-AXIS-00222 : Virtual radius , not used
+kenngr.swe_toleranz                                   100           ( P-AXIS-00179 : Tolerance range for software limit switch
+kenngr.swe_pos                                        15000000      ( P-AXIS-00178 : [0.1um] or [10-4degree] Positive software limit switch 
+kenngr.swe_neg                                        -10000000     ( P-AXIS-00177 : [0.1um] or [10-4degree] Negative software limit switch
+
+kenngr.max_vb_override                                1000          ( P-AXIS-00109 : [0.1%] Maximum permissible velocity override
+kenngr.vb_prozent                                     10            ( P-AXIS-00217 : [0.1%] Tolerance band, factor for signal "speed-value attained"
+kenngr.getriebe_stufe                                 1             ( P-AXIS-00079 : Default gear step number  (Default-Getriebestufe
+kenngr.achs_mode                                      0x1           ( P-AXIS-00015 : Operating mode of an axis ;  mode 1=linear , mode 4=modulo
+kenngr.achs_typ                                       1             ( P-AXIS-00018 : Axis type 1=linear axis, 2=rotatary axis, 4=spindle/single axis
+
+# ----------------------------------------------------                measurement
+kenngr.hub_messtaster                                 20000         ( P-AXIS-00086 : [0.1um] or [10-4degree] Max. excursion of probe (deceleration distance)
+kenngr.vb_messen                                      20000         ( P-AXIS-00215 : [um/s] or [degree/s] Measurement speed, if not defined with Fxxx
+kenngr.mess_offset                                    100           ( P-AXIS-00114 : [0.1um] or [10-4degree] Measurement travel offset behind the target position
+kenngr.messachse                                      0             ( P-AXIS-00118 : Axis engaged in measurement travel
+kenngr.mess_signal_achs_steuer                        1             ( P-AXIS-00115 : Measurement signal via axis specific control bit mask
+kenngr.mess_signal_taster                             0             ( P-AXIS-00117 : Measurement signal from hardware-interface 
+kenngr.kasto_achse                                    0             ( P-AXIS-00098 : Measurement with edge banding 
+kenngr.mess_signal_sercos                             0             ( P-AXIS-00116 : Measurement with SERCOS-drives 
+kenngr.mess_neg_flanke                                0             ( P-AXIS-00113 : Edge of measurement signal 0=pos 1=neg
+kenngr.echtzeit_bit_nr                                0             ( P-AXIS-00060 : SERCOS-status/control bit for measurement
+
+# ----------------------------------------------------                Gantry functionality ( only configured in slave axis)
+kenngr.gantry_ax_nr                                   0             ( P-AXIS-00070 : Axis number of master axis 
+kenngr.gantry_max_diff_resetable                      0             ( P-AXIS-00072 : [0.1um] or [10-4degree] Resetable maximal path distance
+kenngr.gantry_max_diff_reset_locked                   0             ( P-AXIS-00071 : [0.1um] or [10-4degree] Not resetable maximal path distance
+kenngr.gantry_offset                                  0             ( P-AXIS-00073 : [0.1um] or [10-4degree] Static offset between master and slave axis
+kenngr.gantry_vb_korr                              1000             ( P-AXIS-00075 : [um/s] or [10-3degree/s] Velocity of correction
+
+# ----------------------------------------------------                Tracking mode
+kenngr.diff_pos_tracking                              10000         ( P-AXIS-00056 : [0.1um] or [10-4degree] Maximum difference after deactivation  ( limit of tracking)
+kenngr.vb_corr_tracking                               1000          ( P-AXIS-00208 : [um/s] or [degree/s] Velocity of tracking
+kenngr.max_diff_soll_ist                              10000         ( P-AXIS-00108 : [0.1um] or [10-4degree] Max. permissible position difference when enabling drive controller
+
+# ----------------------------------------------------                Collision monitoring
+kenngr.coll_check_ax_nr                               0             ( P-AXIS-00043 : Logical axis number of the axis to be monitored
+kenngr.coll_offset                                    0             ( P-AXIS-00045 : [0.1um] or [10-4degree] Security distance (Offset of the collision axes)
+kenngr.coll_decelerate_chan                           1             ( P-AXIS-00044 : Stopping in all channels (If a collision is detected with this axis the corresponding channel shall be stopped)
+
+kenngr.paar_ax_nr                                     0             ( P-AXIS-00143 : Physical number of axis pair - not used
+kenngr.paar_achse                                     0             ( P-AXIS-00142 : Axis pair present - not used
+kenngr.paar_ref_richt                                 0             ( P-AXIS-00144 : Homing direction for axis pair - not used
+kenngr.anzeige                                        1             ( P-AXIS-00023 : Activation of display function ( number of calls for updates)
+
+# ----------------------------------------------------                CNC controlled referencing
+kenngr.ref_richt                                      1             ( P-AXIS-00158 : Preferred direction of axis for homing (driving direction of the axis during homing when cam is not activated. 1=positive, 0=negative)
+kenngr.homing_without_zero_pulse                      1             ( P-AXIS-00084 : Homing only with cam (without zero pulse)
+kenngr.fast_from_cam                                  1             ( P-AXIS-00064 : Slow / fast movement away from cam. 1=yes, 0=no
+kenngr.ref_ohne_nocken                                0             ( P-AXIS-00156 : Homing without cam (only with zero pulse)
+kenngr.vorz_richtung                                  0             ( P-AXIS-00224 : Restriction of direction of rotation(only in one direction) 1=yes, 0=no
+kenngr.beweg_richt                                    0             ( P-AXIS-00031 : Definition of preferred direction of rotation , 1=positive, 0=negative (direction of rotation with restrictions)
+kenngr.ref_ohne_rev                                   0             ( P-AXIS-00157 : Homing without reverting with recognized cam
+
+kenngr.set_refpos_mode                             ABSOLUT          ( P-AXIS-00278 : Modes for setting the homing position (ABSOLUT / OFFSET /  PLC / PLC_OFFSET)
+kenngr.set_refpos_offset                              0             ( P-AXIS-00279 : [0.1um] or [10-4degree] Offset to the homing position
+kenngr.homing_type                              CNC_CONTROLLED      ( P-AXIS-00299 : Homing type (CNC_CONTROLLED / DRIVE_CONTROLLED )
+kenngr.homing_overflow_evaluation                     0             ( P-AXIS-00294 : Selection of the homing method , 0=no evaluation (default), 1=evaluation
+kenngr.ref_cam_is_limit_switch                        0             ( P-AXIS-00329 : Use of hardware limit switch as reference switch, 1=use a hardware switch, 0=no use of hardware switch
+kenngr.prog_move_requires_homing                      0             ( P-AXIS-00277 : 0=Moving of the axis is possible without preceding homing, 1=Before a programmed movement the axis has to be homed.
+
+kenngr.mod_rechng                                     0             ( P-AXIS-00121 : Activation of modulo calculation - not used
+kenngr.tendenz_pruef                                  0             ( P-AXIS-00189 : Tendency test of motion, 1=yes , 0=no
+kenngr.in_add_interface                               1             ( P-AXIS-00091 : Activation of (additional) interface for loading application-specific command values 1=enable, 0=disable
+kenngr.out_add_interface                              0             ( P-AXIS-00141 : Activation of (additional) interface for loading of command and actual values , not used
+kenngr.antr_typ                                       4
+kenngr.def_cax_gear_st                                1             ( P-AXIS-00052 : Default gear step number for C-axis mode
+kenngr.feininterpolation                              1             ( P-AXIS-00066 : Selection of fine interpolation - not used
+kenngr.abs_pos_gueltig                                0             ( P-AXIS-00014 : Identification code for absolute path measurement system
+
+# ---------------------------------------------------                 Gearing data
+getriebe[0].nummer                                    1              ( P-AXIS-00135 :  Gear step number 
+
+# ---------------------------------------------------                 Parameter non-linear nichlineares velocity profile               
+getriebe[0].slope_profil.a_beschl                     P-AXIS-00008.0 ( P-AXIS-00001 : [mm/s2] or [degree/s2] Acceleration at machining feed G1,G2,G3
+getriebe[0].slope_profil.a_brems                      P-AXIS-00008.0 ( P-AXIS-00002 : [mm/s2] or [degree/s2] Deceleration at machining feed  G1,G2,G3
+getriebe[0].slope_profil.a_grenz                      P-AXIS-00008.0 ( P-AXIS-00004 : [mm/s2] or [degree/s2] Acceleration at rapid movement G0
+getriebe[0].slope_profil.tr_beschl_zu                 300000         ( P-AXIS-00196 : [us] Ramp time for acceleration up-gradation at machining feed G1,G2,G3
+getriebe[0].slope_profil.tr_beschl_ab                 P-AXIS-00196.0 ( P-AXIS-00195 : [us] Ramp time for acceleration down-gradation at machining feed G1,G2,G3
+getriebe[0].slope_profil.tr_brems_zu                  P-AXIS-00196.0 ( P-AXIS-00198 : [us] Ramp time for deceleration up-gradation at machining feed G1,G2,G3
+getriebe[0].slope_profil.tr_brems_ab                  P-AXIS-00196.0 ( P-AXIS-00197 : [us] Ramp time for deceleration down-gradation at machining feed G1,G2,G3
+getriebe[0].slope_profil.tr_grenz                     P-AXIS-00196.0 ( P-AXIS-00200 : [us] Ramp time at rapid movement G0
+getriebe[0].dynamik.tr_min                            5000           ( P-AXIS-00201 : [us] Minimum permissible ramp time
+getriebe[0].dynamik.tr_geom                           P-AXIS-00196.0 ( P-AXIS-00199 : [us] Geometric ramp time (ramp time of geometric contours)
+
+# ---------------------------------------------------                 Parameter linear velocity profile
+getriebe[0].lslope_profil.a_stufe_1                   P-AXIS-00008.0 ( P-AXIS-00011 : [mm/s2] or [degree/s2] Acceleration/ deceleration of step 1 at machining feed G1,G2,G3
+getriebe[0].lslope_profil.a_stufe_2                   P-AXIS-00008.0 ( P-AXIS-00012 : [mm/s2] or [degree/s2] Acceleration/ deceleration of step 2 at machining feed G1,G2,G3
+getriebe[0].lslope_profil.vb_stufe_1_2                P-AXIS-00212.0 ( P-AXIS-00221 : [um/s] or [10-3degree/s] Changeover speed between step 1 and 2 at machining feed G1,G2,G3
+getriebe[0].lslope_profil.a_grenz_stufe_1             P-AXIS-00008.0 ( P-AXIS-00005 : [mm/s2] or [degree/s2] Acceleration/ deceleration of step 1 in rapid mode G0
+getriebe[0].lslope_profil.a_grenz_stufe_2             P-AXIS-00008.0 ( P-AXIS-00006 : [mm/s2] or [degree/s2] Acceleration/ deceleration of step 2 in rapid mode G0
+getriebe[0].lslope_profil.vb_grenz_stufe_1_2          P-AXIS-00212.0 ( P-AXIS-00211 : [um/s] or [10-3degree/s] Changeover speed between ramp 1 and ramp2 in rapid mode G0 
+
+# ---------------------------------------------------                 Permitted axis dynamics
+getriebe[0].dynamik.vb_max                            100000         ( P-AXIS-00212 : [um/s] or [10-3degree/s] Maximum permissible axis velocity 
+getriebe[0].dynamik.a_max                             2000           ( P-AXIS-00008 : [mm/s2] or [degree/s2] Maximum permissible axis acceleration 
+getriebe[0].dynamik.a_emergency                       1750           ( P-AXIS-00003 : [mm/s2] or [degree/s2] Deceleration for an emergency stop 
+getriebe[0].dynamik.a_trans_weight                    0              ( P-AXIS-00013 : [0.1%] Weighting of acceleration at motion block transition
+getriebe[0].dynamik.r_trans_weight                    0              ( P-AXIS-00154 : [0.1%] Weighting of jerk at block transition 
+
+# ---------------------------------------------------                 Characteristics acceleration (spindle)
+getriebe[0].beschl_kennlinie.n_grenz                  0              ( P-AXIS-00130 : [10-3degree/s] Limit speed from which onwards the acceleration is specified in a polynomial form
+getriebe[0].beschl_kennlinie.a_konst                  0              ( P-AXIS-00007 : [degree/s2] Constant acceleration in the range n<n_grenz
+getriebe[0].beschl_kennlinie.typ                      0              ( P-AXIS-00202 : Type of the characteristic acceleration curve  0=not active, 1=hyperbola, 2=polynomial, 3=asynchronous drive
+getriebe[0].beschl_kennlinie.a_min                    0              ( P-AXIS-00010 : [degree/s2] Minimum value of acceleration for high speed
+getriebe[0].beschl_kennlinie.b1                       0              ( P-AXIS-00026 : [1/s] Parameter 1 of the a(n) polynomial
+getriebe[0].beschl_kennlinie.b2                       0              ( P-AXIS-00027 : [1/degree] Parameter 2 of the a(n) polynomial
+getriebe[0].beschl_kennlinie.b3                       0              ( P-AXIS-00028 : [1/degree2] Parameter 3 of the a(n) polynomial
+
+# ---------------------------------------------------                 Permitted axis velocities
+getriebe[0].vb_min_null                               10             ( P-AXIS-00216 : [10-3degree/s] Limit for spindle speed "zero"
+getriebe[0].vb_eilgang                                P-AXIS-00212.0 ( P-AXIS-00209 : [um/s] or [10-3degree/s] Rapid mode velocity
+getriebe[0].vb_max_red                                5000           ( P-AXIS-00214 : [um/s] or [10-3degree/s] Reduced maximum speed at active G01,G2,G3
+getriebe[0].rapid_speed_red                           10000          ( P-AXIS-00155 : [um/s] or [10-3degree/s] Reduced maximum speed at active G00 
+getriebe[0].vb_refmax                                 20000          ( P-AXIS-00219 : [um/s] or [10-3degree/s] Maximum homing velocity 
+getriebe[0].vb_reflow                                 2000           ( P-AXIS-00218 : [um/s] or [10-3degree/s]Minimum homing velocity 
+getriebe[0].vb_regelgrenze                            P-AXIS-00212.0 ( P-AXIS-00220 : [um/s] or [10-3degree/s] Limiting velocity for the measuring system
+getriebe[0].kv                                        4000           ( P-AXIS-00099 : [0.01/s] Proportional factor kv for positional control in CNC
+getriebe[0].multi_gain_z                              1800           ( P-AXIS-00129 : Manipulated variable of drive (numerator)
+getriebe[0].multi_gain_n                              1              ( P-AXIS-00128 : Manipulated variable of drive (denominator)
+getriebe[0].wegaufz                                   1              ( P-AXIS-00234 : [Incr.] Path resolution of the measuring system  (numerator)
+getriebe[0].wegaufn                                   1              ( P-AXIS-00233 : [0.1um] or [10-4degree]Path resolution of the measuring system  (denominator)
+getriebe[0].window                                    100            ( P-AXIS-00236 : [0.1um] or [10-4degree] Control window at "Accuracy Stop" G60
+getriebe[0].pos_refpkt                                0              ( P-AXIS-00152 : [0.1um] or [10-4degree] Position of the reference point with CNC controlled homing
+getriebe[0].getr_schalt_pos                           0              ( P-AXIS-00078 : [0.1um] or [10-4degree] Gear change position, when switching is permitted
+getriebe[0].achs_position[0]                          0              ( P-AXIS-00017 : Special axis positions - not used at the moment
+getriebe[0].achs_position[1]                          0              ( P-AXIS-00017 : Special axis positions - not used at the moment
+getriebe[0].achs_position[2]                          0              ( P-AXIS-00017 : Special axis positions - not used at the moment
+getriebe[0].wsi_meldung                               0              ( P-AXIS-00237 : [mm] or [Degree] or [Rev.] Traverse distance 
+
+# ---------------------------------------------------                 Rotatary axis / spindle
+getriebe[0].moduloo                                   3600000       ( P-AXIS-00126 : [10-4degree] Upper modulo limit 
+getriebe[0].modulou                                   0             ( P-AXIS-00127 : [10-4degree] Lower modulo limit 
+getriebe[0].modulo_fehler                             0             ( P-AXIS-00124 : [Incr.] Error in modulo circle 
+getriebe[0].modulo_umdreh                             0             ( P-AXIS-00125 : Number of rotations in case of modulo error
+
+# ---------------------------------------------------                 Position lag monitoring
+getriebe[0].slep_ueberw_typ                           2             ( P-AXIS-00172 : Type of following error monitoring; 0=disable, 1=standard, 2=linear, 3=non-linear, 4=velocity independent
+getriebe[0].slep_min                                  15000         ( P-AXIS-00169 : [0.1um] or [10-4degree] Minimum following error on axis standstill
+getriebe[0].slep_max                                  100000        ( P-AXIS-00168 : [0.1um] or [10-4degree] Maximum following error
+getriebe[0].slep_dyn                                  1000          ( P-AXIS-00167 : Factor for dynamic following error monitoring
+getriebe[0].slep_abw                                  0             ( P-AXIS-00166 : Remaining deviation for non linear following error monitoring (only non-linear)
+
+getriebe[0].pos_einschw_zeit                          10000         ( P-AXIS-00151 : [ms] Maximum transient time 
+getriebe[0].lose                                      0             ( P-AXIS-00103 : [0.1um] or [10-4degree] Size of backlash 
+getriebe[0].reverse                                   0             ( P-AXIS-00159 : Reverse of sign for setpoint and actual value 
+getriebe[0].default_lr_hw_nbr                         0             ( P-AXIS-00054 : Number of selected hardware specific parameter set
+getriebe[0].incr_per_rev                              1024          ( P-AXIS-00092 : Position controller increments per revolution (only profibus)
+getriebe[0].vb_not_referenced                         2             ( P-AXIS-00268 : [um/s] Maximum velocity for unreferenced axes
+
+# ---------------------------------------------------                 Compensations and monitoring
+lr_param.slep_toleranz                                0             ( P-AXIS-00171 : Tolerance range monitoring for following error (commanded value/ current value)
+lr_param.anwahl_losekomp                              0             ( P-AXIS-00021 : Selection of backlash compensation 0=disable, 1=pos.direction, 2=neg.direction
+lr_param.ssfk                                         0             ( P-AXIS-00175 : Activation of SSFK - leadscrew error compensation (axis correction)
+lr_param.mod_komp                                     0             ( P-AXIS-00120 : Activation of modulo compensation
+lr_param.suppress_pos_lag_error                       0             ( P-AXIS-00176 : Suppression of position lag monitoring
+lr_param.vol_comp.s_limit                             10000         ( P-AXIS-00525 : max. compensation value for Volumetric Compensation
+
+#
+lr_hw[0].nummer                                       1             ( P-AXIS-00136 : Identifier for hardware specific parameter set 
+lr_hw[0].drift_wert                                   0             ( P-AXIS-00057 : [Bit] Value of degradation compensation 
+lr_hw[0].regel_typ                                    0             ( P-AXIS-00163 : Control type 
+lr_hw[0].vz_stellgr                                   0             ( P-AXIS-00231 : Sign reversal of command value
+lr_hw[0].vz_istw                                      0             ( P-AXIS-00230 : Sign reversal of actual value
+
+# ---------------------------------------------------                 Feedforward control
+vorsteuer.vs_v_faktor                                 1             ( P-AXIS-00228 : Weighting factor for feedforward control (enumerator)
+vorsteuer.vs_v_nenner                                 1             ( P-AXIS-00229 : Weighting factor for feedforward control (denominator)
+vorsteuer.vs_a_faktor                                 1             ( P-AXIS-00225 : [us] Equivalent time constant for feedforward control of acceleration (enumerator)
+vorsteuer.vs_a_nenner                                 100           ( P-AXIS-00226 : Equivalent time constant for feedforward control of acceleration (denominator)
+vorsteuer.vs_max_sprung                               1             ( P-AXIS-00227 : Max. permis. jump in the down-gradation of feed forward  - not used
+vorsteuer.delay_time                                  1             ( P-AXIS-00055 : [Cycle] Time shift between command actual values
+vorsteuer.vorsteuerung                                0             ( P-AXIS-00223 : Feedforward control mode  ( bit coded mode)Bitcodierter Vorsteuermodus 0x0=disable, 0x1=velocity, ...
+vorsteuer.shift_time                                  3             ( P-AXIS-00165 : [Cycles] Time shift command value - feedforward values (balancing runtime of bus, only profibus)
+vorsteuer.default_active                              0             ( P-AXIS-00255 : Permanent activation of feedforward control
+
+# ----------------------------------------------------
+antr.abs_pos_offset                                   0             ( P-AXIS-00403 : [0.1um] or [10-4degree] Offset between drive position and CNC position 
+antr.ignore_unknown_telegram_elements                 0             ( P-AXIS-00358 : Ignore unknown entries in drive telegram 
+antr.use_drive_following_error                        0             ( P-AXIS-00466 : Drive based position lag calculation
+antr.probing_input_nbr                                0             ( P-AXIS-00430 : Number of probing input 
+antr.encoder_bit_range                                0             ( P-AXIS-00355 : Number of bits for evaluation of encoder overflow 
+antr.mode_cmd_pos                                     0             ( P-AXIS-00123 : Normalization of command position , 0=depending on axis type, 1=linear, 2=modulo
+antr.mode_act_pos                                     0             ( P-AXIS-00122 : Normalization of actual position , 0=depending on axis type, 1=linear, 2=modulo
+antr.v_reso_num                                       1             ( P-AXIS-00206 : [Incr.]Normalization of the velocity
+antr.v_reso_denom                                     36            ( P-AXIS-00205 : [um] or [10-3degree] Normalization of the velocity
+antr.operation_mode                             DRIVE_DEFAULT       ( P-AXIS-00320 : Operation mode of an axis ( DRIVE_DEFAULT / DRIVE_POSITION_CONTROL / CNC_POSITION_CONTROL  )
+antr.nbr_delay_cycles                                 4             ( P-AXIS-00191 : Delay between command value and actual value (This parameter is only active for digital drives )
+antr.canopen.probing_input_number                     0             ( P-AXIS-00295 : Number of probing input (EtherCAT)
+antr.profibus.s_ls_limit                              40            ( P-AXIS-00162 : Slave-life sign limit (only profibus)
+antr.profibus.feinaufloesung                          11            ( P-AXIS-00065 : Calculation of the position value (only profibus) - shift factor for sensor values 
+
+# ---------------------------------------------------                 Drive simulation / axis simulation
+antr.simu.zeitkonstante_z                             1             ( P-AXIS-00239 : Sample time constant for axis simulation (nominator)
+antr.simu.zeitkonstante_n                             100           ( P-AXIS-00238 : Sample time constant for axis simulation (denominator)
+antr.simu.daempfung_z                                 6             ( P-AXIS-00051 : Damping of axis simulation (nominator)
+antr.simu.daempfung_n                                 10            ( P-AXIS-00050 : Damping of axis simulation (denominator)
+antr.simu.eigenfrequenz_z                             100           ( P-AXIS-00062 : Natural frequency of axis simulation (nominator)
+antr.simu.eigenfrequenz_n                             1             ( P-AXIS-00061 : Natural frequency of axis simulation (denominator)
+antr.simu.totzeit                                     0             ( P-AXIS-00194 : [cycles] Dead time of control path
+antr.simu.rpf_weg_bis_nip                             100000        ( P-AXIS-00161 : [0.1um] or [10-4degree] Toolpath up to zero pulse during homing simulation
+antr.simu.ist_gleich_soll                             1             ( P-AXIS-00096 : Set actual position equal to command position (deactivation of the pt2 element of the position lag calculation 0=no, 1=yes)
+
+# ---------------------------------------------------                 Manual mode
+handbetrieb.default.after_g200_g201                   1              ( P-AXIS-00446 : Set default operation mode and control_element after each activation via G200/G201
+handbetrieb.default.operation_mode                    0              ( P-AXIS-00139 : Operation mode ,  1=handwheel, 2=continuous, 3=incremental
+handbetrieb.default.control_element                   0              ( P-AXIS-00046 : Logical identifier of control element 
+handbetrieb.offsetgrenze_pos                          50000000       ( P-AXIS-00138 : [0.1um] or [10-4degree] Positive Offset limit
+handbetrieb.offsetgrenze_neg                          -50000000      ( P-AXIS-00137 : [0.1um] or [10-4degree] Negative Offset limit
+#                                                                    
+handbetrieb.hr.aufl[0]                                10             ( P-AXIS-00025 : [0.1um/Rev] or [10-4degree/Rev] Handwheel resolutions  1
+handbetrieb.hr.aufl[1]                                20             ( P-AXIS-00025 :[0.1um/Rev] or [10-4degree/Rev]Handwheel resolutions  2
+handbetrieb.hr.aufl[2]                                30             ( P-AXIS-00025 :[0.1um/Rev] or [10-4degree/Rev]Handwheel resolutions  3
+handbetrieb.hr.filter_zeit                            10             ( P-AXIS-00069 : [cycles] Filter time constant  (time constante for smoothing)
+#                                                                    
+handbetrieb.tipp.geschw[0]                            30000          ( P-AXIS-00077 : [um/s] or [10-3degree/s] Velocity for the continuous jog mode 1
+handbetrieb.tipp.geschw[1]                            30000          ( P-AXIS-00077 : [um/s] or [10-3degree/s] Velocity for the continuous jog mode 2
+handbetrieb.tipp.geschw[2]                            40000          ( P-AXIS-00077 : [um/s] or [10-3degree/s] Velocity for the continuous jog mode 3
+handbetrieb.tipp.vb_eilgang                           50000          ( P-AXIS-00210 : [um/s] or [10-3degree/s] Rapid mode velocity for continuous jog mode
+#                                                                    
+handbetrieb.jog.weg[0]                                1000           ( P-AXIS-00232 : [0.1um] or [10-4degree] Jog incremental widths 1
+handbetrieb.jog.weg[1]                                2000           ( P-AXIS-00232 : [0.1um] or [10-4degree] Jog incremental widths  2
+handbetrieb.jog.weg[2]                                3000           ( P-AXIS-00232 : [0.1um] or [10-4degree] Jog incremental widths  3
+handbetrieb.jog.geschw[0]                             30000          ( P-AXIS-00076 : [um/s] or [10-3degree/s] Incremental jog velocities 1
+handbetrieb.jog.geschw[1]                             30000          ( P-AXIS-00076 : [um/s] or [10-3degree/s] Incremental jog velocities 2
+handbetrieb.jog.geschw[2]                             60000          ( P-AXIS-00076 : [um/s] or [10-3degree/s] Incremental jog velocities 3
+#                                                                    
+handbetrieb.ipo.hb_proz_v_max                         30             ( P-AXIS-00083 : [%] Manual mode during interpolation, velocity part of manual operation  (G201)
+handbetrieb.ipo.hb_proz_a_max                         30             ( P-AXIS-00082 : [%] Manual mode during interpolation, acceleration part of manual operation (G201)
+handbetrieb.ipo.ipo_proz_v_max                        70             ( P-AXIS-00095 : [%] Manual mode during interpolation, velocity part of interpolation (G201)
+handbetrieb.ipo.ipo_proz_a_max                        70             ( P-AXIS-00094 : [%] Manual mode during interpolation, acceleration part of interpolation (G201)
+#                                                                    
+handbetrieb.hb.vb_max                                 P-AXIS-00212.0 ( P-AXIS-00213 : [µm/s] or [10-4degree/s] Maximum velocity (G200)
+handbetrieb.hb.a_max                                  P-AXIS-00008.0 ( P-AXIS-00009 : [mm/s2] or [degree/s2] Maximum acceleration (G200)
+handbetrieb.hb.tr                                     P-AXIS-00196.0 ( P-AXIS-00359 : [µs] Ramp time during maximum acceleration
+# ---------------------------------------------------                 Axis filter
+filter[0].order                                       0             ( P-AXIS-00140 : Order of the axis filter , 0=  deactivate filter
+filter[0].prototype                                   1             ( P-AXIS-00153 : Definition of filter characteristics , 1="Critical damping", 2=Butherworth, 3=Bessel, 4=Chebychev, 5="HSC
+filter[0].type                                        1             ( P-AXIS-00204 : Filter type, 1=lowpass, 2=highpass, 3=bandpass, 4=bandstop, 5=allpass
+filter[0].fg_f0                                       10            ( P-AXIS-00067 : Filter parameter (characterized frequency)
+filter[0].guete                                       1             ( P-AXIS-00080 : Filter parameter (quality)
+filter[0].share_percent                               100           ( P-AXIS-00164 : [%] Filter parameter (Part of the signal which is passed through the filter)
+#
+Ende
+
+]]></Data>
+				</Axis>
+			</CNC>
+		</Motion>
 		<Plc>
 			<Project GUID="{3863E7E1-422F-4D5C-92F7-9F7CE21F2FF0}" Name="MyPlc" PrjFilePath="MyPlc\MyPlc.plcproj" TmcFilePath="MyPlc\MyPlc.tmc" ReloadTmc="true" AmsPort="851" FileArchiveSettings="#x000e" SymbolicMapping="true">
-				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="MyPlc\MyPlc.tmc" TmcHash="{62405FD2-918A-1091-9334-E0E0D728B265}">
 					<Name>MyPlc Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
 					<Contexts>
 						<Context>
-							<Id>1</Id>
-							<Name>Default</Name>
+							<Id NeedCalleeCall="true">0</Id>
+							<Name>PlcTask</Name>
+							<ManualConfig>
+								<OTCID>#x02010030</OTCID>
+							</ManualConfig>
+							<Priority>20</Priority>
+							<CycleTime>10000000</CycleTime>
 						</Context>
 					</Contexts>
+					<TaskPouOids>
+						<TaskPouOid Prio="20" OTCID="#x08502001"/>
+					</TaskPouOids>
 				</Instance>
 			</Project>
 		</Plc>
 		<Io>
-			<Device Id="1" DevType="111" DevFlags="#x0003" AmsPort="28673" AmsNetId="172.27.80.1.2.1" RemoteName="Device 1 (EtherCAT)" InfoImageId="2">
+			<Device Id="1" Disabled="true" DevType="111" DevFlags="#x0003" AmsPort="28673" AmsNetId="172.27.80.1.2.1" RemoteName="Device 1 (EtherCAT)" InfoImageId="2">
 				<Name>Device 1 (EtherCAT)</Name>
 				<AddressInfo>
 					<Pnp>
@@ -568,6 +1974,11 @@ Bit1: Value bigger/equal Limit2]]></Comment>
 				</Box>
 				<EtherCAT/>
 			</Device>
+			<Device File="Device 2 (EtherCAT).xti" Id="2"/>
 		</Io>
 	</Project>
+	<Mappings>
+		<MappingInfo Identifier="{00000000-0030-0304-5000-040330000403}" Id="#x02030010"/>
+		<MappingInfo Identifier="{00000000-0040-0304-5000-040341000403}" Id="#x02030020"/>
+	</Mappings>
 </TcSmProject>
