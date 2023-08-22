@@ -2,9 +2,7 @@
 
 This repository contains a small set of tools for developing TwinCAT projects.
 
-## Tools
-
-### XML Sorter
+## XML Sorter
 
 TwinCAT saves its project files somewhat arbitrarily, the order of elements is changed seemingly at random.
 Use this XML sorter before committing your changes to fix the XML layout and keep your Git history more clean.
@@ -17,7 +15,11 @@ python -m tctools.xml_sort [FILE/FOLDER, ...] -r --ext tsproj xti plcproj --skip
 
 Add `--help` for full instructions.
 
-#### Differences with Ruud's XmlSorter
+### Notes
+
+* Nodes with the attribute `xml:space="preserve"` are not touched
+
+### Differences with Ruud's XmlSorter
 
 The precursor of this script is the XmlSorter made by Ruud, written in C#:
 https://github.com/DEMCON/XmlSorter
@@ -35,7 +37,7 @@ There are a couple of difference between this sorter and Ruud's:
 **None** is these appear problematic for TwinCAT.
 Projects can be opened and built again as expected, and when saved again the file will be as TwinCAT likes it.
 
-### Auto Formatter
+## Auto Formatter
 
 Use this to to make consistent use of spaces/tabs.
 

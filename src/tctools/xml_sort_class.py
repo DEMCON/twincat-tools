@@ -70,6 +70,9 @@ class XmlSorter:
         if node.tag in self.skip_nodes:
             return  # Stop here
 
+        if node.get("{http://www.w3.org/XML/1998/namespace}space") == "preserve":
+            return  # Do not touch with `xml:space="preserve"`
+
         # Also sort the attributes - but this won't work flawlessly, since dicts are
         # inherently unsorted
         self.sort_attributes(node)
