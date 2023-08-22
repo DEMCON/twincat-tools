@@ -1,9 +1,8 @@
 import pytest
-import xml.etree.ElementTree as ET
 
 import tctools
 
-from .conftest import compare_without_whitespace, check_order_of_lines_in_file
+from .conftest import assert_order_of_lines_in_file
 
 
 def test_help(capsys):
@@ -34,15 +33,29 @@ def test_single_file_plain_xml(plc_code):
         "<AVAILABILITY>051799</AVAILABILITY>",
     ]
 
-    assert not check_order_of_lines_in_file(expected, file, is_substring=True)
-
+    assert_order_of_lines_in_file(expected, file, is_substring=True, check_true=False)
     tctools.xml_sort_main("--file", str(file))
+    assert_order_of_lines_in_file(expected, file, is_substring=True)
 
-    assert check_order_of_lines_in_file(expected, file, is_substring=True)
+
+def test_use_attributes(plc_code):
+    """Test how attributes are used to sort nodes."""
+    file = plc_code / "books.xml"
+
+    expected = [
+        '<book letter="a">',
+        '<book letter="b">',
+        '<book letter="c">',
+    ]
+    # <name>*</name> is not used for sorting
+
+    assert_order_of_lines_in_file(expected, file, is_substring=True, check_true=False)
+    tctools.xml_sort_main("--file", str(file))
+    assert_order_of_lines_in_file(expected, file, is_substring=True)
 
 
-# def test_single_file(plc_code):
-#     """Test XML sort on a single target file."""
-#     file = plc_code / "TwinCAT Project1" / "TwinCAT Project1.tsproj"
-#     tctools.xml_sort_main("--file", str(file))
-#     return
+def test_single_file(plc_code):
+    """Test XML sort on a single target file."""
+    file = plc_code / "TwinCAT Project1" / "TwinCAT Project1.tsproj"
+    tctools.xml_sort_main("--file", str(file))
+    return

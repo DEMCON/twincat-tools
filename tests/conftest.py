@@ -21,15 +21,9 @@ def plc_code(tmp_path):
     yield target
 
 
-def compare_without_whitespace(before: List[str], after: List[str]) -> bool:
-    """Compare two lists of strings with all whitespace removed."""
-    before_str = "".join([item.strip() for item in before])
-    after_str = "".join([item.strip() for item in after])
-
-    return before_str != after_str
-
-
-def check_order_of_lines_in_file(expected: List[str], file: str, is_substring=False) -> bool:
+def assert_order_of_lines_in_file(
+    expected: List[str], file: str, is_substring=False, check_true=True
+):
     """Assert the expected lines occur in the given order in the file.
 
     Leading and trailing whitespace is ignored.
@@ -37,6 +31,7 @@ def check_order_of_lines_in_file(expected: List[str], file: str, is_substring=Fa
     :param expected:
     :param file:
     :param is_substring: When True, use ``... in ...`` instead of equal
+    :param check_true: Set to False to assert the opposite
     """
     idx = 0
 
@@ -62,6 +57,8 @@ def check_order_of_lines_in_file(expected: List[str], file: str, is_substring=Fa
                     if i == idx:
                         continue
                     if check_line(ex_line, line):
-                        return False
+                        assert not check_true
 
-    return idx == len(expected)
+    assert (
+        idx == len(expected)
+    ) == check_true, "Did not encounter right number of expected lines"

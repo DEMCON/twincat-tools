@@ -1,5 +1,6 @@
 from lxml import etree
 import re
+from typing import Optional
 
 
 class XmlSorter:
@@ -36,6 +37,8 @@ class XmlSorter:
         except etree.XMLSyntaxError:
             return False
 
+        header_before = self.get_xml_header(path)
+
         self.files_checked += 1
 
         root = tree.getroot()
@@ -49,8 +52,15 @@ class XmlSorter:
             print(f"Processed file `{path}`")
 
         if not self.dry:
-            tree.write(path, xml_declaration=True, encoding=tree.docinfo.encoding)
-            self.files_altered += 1
+            with open(path, "wb") as fh:
+                fh.write(
+                    etree.tostring(
+                        root,
+                        doctype=header_before or '<?xml version="1.0"?>'
+                    )
+                )
+                # Write by hand (instead of `tree.write()` so we can control the header
+                self.files_altered += 1
 
         return True
 
@@ -91,3 +101,15 @@ class XmlSorter:
         key = re.sub(r"\s+", "", key, flags=re.UNICODE)
 
         return key
+
+    @staticmethod
+    def get_xml_header(file: str) -> Optional[str]:
+        """Get raw XML header as string."""
+        with open(file, "r") as fh:
+            # Search only the start of the file, otherwise give up
+            for _ in range(100):
+                line = fh.readline()
+                if line.startswith("<?xml") and line.rstrip().endswith("?>"):
+                    return line.strip()
+
+        return None
