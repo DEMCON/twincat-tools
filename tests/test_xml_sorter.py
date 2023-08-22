@@ -1,6 +1,9 @@
 import pytest
+import xml.etree.ElementTree as ET
 
 import tctools
+
+from .conftest import compare_without_whitespace, check_order_of_lines_in_file
 
 
 def test_help(capsys):
@@ -18,8 +21,24 @@ def test_help(capsys):
 def test_single_file_plain_xml(plc_code):
     """Test how a plain XML file gets sorted."""
     file = plc_code / "plant_catalog.xml"
+
+    expected = [
+        "<AVAILABILITY>010299</AVAILABILITY>",
+        "<AVAILABILITY>012099</AVAILABILITY>",
+        "<AVAILABILITY>012699</AVAILABILITY>",
+        "<AVAILABILITY>020199</AVAILABILITY>",
+        "<AVAILABILITY>030699</AVAILABILITY>",
+        "<AVAILABILITY>030699</AVAILABILITY>",
+        "<AVAILABILITY>031599</AVAILABILITY>",
+        "<AVAILABILITY>041899</AVAILABILITY>",
+        "<AVAILABILITY>051799</AVAILABILITY>",
+    ]
+
+    assert not check_order_of_lines_in_file(expected, file, is_substring=True)
+
     tctools.xml_sort_main("--file", str(file))
-    return
+
+    assert check_order_of_lines_in_file(expected, file, is_substring=True)
 
 
 # def test_single_file(plc_code):
