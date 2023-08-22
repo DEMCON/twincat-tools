@@ -1,6 +1,10 @@
 from lxml import etree
 import re
 from typing import Optional
+from logging import getLogger
+
+
+logger = getLogger("xml_sort")
 
 
 class XmlSorter:
@@ -52,7 +56,7 @@ class XmlSorter:
         etree.indent(tree, space="  ", level=0)
 
         if not self.quiet:
-            print(f"Processing file `{path}`...")
+            logger.debug(f"Processing file `{path}`...")
 
         tree_bytes = etree.tostring(root, doctype=header_before)
 
@@ -64,7 +68,7 @@ class XmlSorter:
         if current_bytes != tree_bytes:
             self.files_to_alter += 1
             if self.report:
-                print("Old file contents:")
+                print(f"Old file contents of `{path}`:")
                 print("-" * 50)
                 print(current_bytes.decode("utf-8"))
                 print("-" * 50)
@@ -72,12 +76,11 @@ class XmlSorter:
                 print("-" * 50)
                 print(tree_bytes.decode("utf-8"))
                 print("-" * 50)
-            elif not self.resave:
-                print(f"File can be re-sorted: `{path}`")
+
+            logger.debug(f"File can be re-sorted: `{path}`")
         else:
             if self.report:
-                print()
-                print("<content identical>")
+                print("Content identical> for `{path}`")
                 print()
 
         if self.resave:

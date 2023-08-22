@@ -34,5 +34,13 @@ def common_argparser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
         nargs="+",
         default=["*.xml"],
     )
+    parser.add_argument(
+        "-l",
+        "--log",
+        dest="loglevel",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        default="INFO",
+        help="Set the print level verbosity",
+    )
 
     return parser

@@ -1,8 +1,9 @@
 import sys
 from pathlib import Path
+import logging
 
 from .common import common_argparser
-from .xml_sort_class import XmlSorter
+from .xml_sort_class import XmlSorter, logger
 
 
 def parse_arguments(args):
@@ -40,6 +41,10 @@ def parse_arguments(args):
 def main(*args) -> int:
     arguments = parse_arguments(args)
 
+    logging.basicConfig(stream=sys.stdout)
+    if arguments.loglevel:
+        logger.setLevel(arguments.loglevel)
+
     sorter = XmlSorter(
         quiet=arguments.quiet,
         resave=not arguments.dry and not arguments.check,
@@ -66,17 +71,17 @@ def main(*args) -> int:
     for path in files:
         sorter.sort_file(str(path))
 
-    print(f"Checked {sorter.files_checked} file(s)")
+    logger.info(f"Checked {sorter.files_checked} file(s)")
 
     if arguments.check:
         if sorter.files_to_alter == 0:
-            print(f"No changes to be made in checked files!")
+            logger.info(f"No changes to be made in checked files!")
             return 0
 
-        print(f"{sorter.files_to_alter} file(s) can be re-sorted")
+        logger.info(f"{sorter.files_to_alter} file(s) can be re-sorted")
         return 1
 
-    print(f"Re-saved {sorter.files_resaved} file(s)")
+    logger.info(f"Re-saved {sorter.files_resaved} file(s)")
     return 0
 
 
