@@ -1,5 +1,6 @@
-from typing import Optional
+from typing import Optional, List
 from argparse import ArgumentParser
+from pathlib import Path
 
 
 def common_argparser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
@@ -44,3 +45,29 @@ def common_argparser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
     )
 
     return parser
+
+
+def find_files(args: "Namespace") -> List[str]:
+    """User argparse arguments to get a set of target files."""
+    files = []
+    if not args.target:
+        return files
+
+    for target in args.target:
+        path = Path(target).resolve()
+        if path.is_file():
+            files.append(path)
+        elif path.is_dir():
+            if args.filter:
+                for filt in args.filter:
+                    if args.recursive:
+                        filt = f"**/{filt}"
+                    files += path.glob(filt)
+        else:
+            raise ValueError(f"Could not find file or folder: `{target}`")
+
+    return files
+
+
+class TcTool:
+    """Base class for tools with shared functionality."""

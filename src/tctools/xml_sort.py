@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 import logging
 
-from .common import common_argparser
+from .common import common_argparser, find_files
 from .xml_sort_class import XmlSorter, logger
 
 
@@ -52,24 +52,10 @@ def main(*args) -> int:
         skip_nodes=arguments.skip_nodes,
     )
 
-    files = []
+    files = find_files(arguments)
 
-    if arguments.target:
-        for target in arguments.target:
-            path = Path(target).resolve()
-            if path.is_file():
-                files.append(path)
-            elif path.is_dir():
-                if arguments.filter:
-                    for filt in arguments.filter:
-                        if arguments.recursive:
-                            filt = f"**/{filt}"
-                        files += path.glob(filt)
-            else:
-                raise ValueError(f"Could not find file or folder: `{target}`")
-
-    for path in files:
-        sorter.sort_file(str(path))
+    for file in files:
+        sorter.sort_file(file)
 
     logger.info(f"Checked {sorter.files_checked} file(s)")
 

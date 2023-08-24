@@ -3,11 +3,13 @@ import re
 from typing import Optional
 from logging import getLogger
 
+from .common import TcTool
+
 
 logger = getLogger("xml_sort")
 
 
-class XmlSorter:
+class XmlSorter(TcTool):
     """Tool to sort XML files.
 
     Use one instance for a sequence of files.

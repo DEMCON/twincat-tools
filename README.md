@@ -10,7 +10,7 @@ Use this XML sorter before committing your changes to fix the XML layout and kee
 Usage:
 
 ```cmd
-python -m tctools.xml_sort [FILE/FOLDER, ...] -r --ext tsproj xti plcproj --skip-nodes Device DeploymentEvents TcSmItem DataType
+python -m tctools.xml_sort [file or folder, ...] -r --ext tsproj xti plcproj --skip-nodes Device DeploymentEvents TcSmItem DataType
 ```
 
 Add `--help` for full instructions.
@@ -34,17 +34,29 @@ There are a couple of difference between this sorter and Ruud's:
 * Unicode characters are written as `#...;` instead of literals.
   * Something `lxml` just seems to do.
 
-**None** is these appear problematic for TwinCAT.
+**None** of these appear problematic for TwinCAT.
 Projects can be opened and built again as expected, and when saved again the file will be as TwinCAT likes it.
 
 ## Auto Formatter
 
-Use this to to make consistent use of spaces/tabs.
+Use this to make consistent use of spaces/tabs.
+Visual Studio with PLC doesn't do a lot of the things that other IDEs do, like removing trailing whitespace and making 
+consistent usage of spaces / tabs.
+This tool is meant to supplement this.
+
+Specify your preferences with an `.editorconfig` [file](https://editorconfig.org/), as you would for other projects.
+An example:
+
+```
+[*.TcPOU]
+indent_style = space
+indent_size = 4
+```
 
 Usage:
 
 ```cmd
-python -m tctools.format [--project=<file>] [--file=<files>]
+python -m tctools.format [file or folder, ...] [--check]
 ```
 
 Add `--help` for full instructions.

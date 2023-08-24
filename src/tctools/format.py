@@ -12,9 +12,11 @@ def parse_arguments(args):
     return parser.parse_args(args if args else sys.argv)
 
 
-def main(*args):
+def main(*args) -> int:
     arguments = parse_arguments(args)
+    return 0
 
 
 if __name__ == "__main__":
-    main(sys.argv)
+    exit_code = main(*sys.argv[1:])  # Skip script name
+    exit(exit_code)
