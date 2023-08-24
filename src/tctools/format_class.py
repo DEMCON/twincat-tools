@@ -1,6 +1,6 @@
 from editorconfig import get_properties
 from logging import getLogger
-from typing import Optional
+from typing import Optional, List
 from collections import OrderedDict
 import re
 
@@ -9,7 +9,7 @@ from .common import TcTool
 
 logger = getLogger("formatter")
 
-re_trailing_ws = re.compile("\s+$")
+re_trailing_ws = re.compile(r"\s+$")
 
 
 class Formatter(TcTool):
@@ -53,20 +53,24 @@ class Formatter(TcTool):
         return
 
     @classmethod
-    def get_code_segments(cls, parent):
+    def get_code_segments(cls, parent, name_chain: str = ""):
         """Use recursion to dig into an XML element to find all PLC code.
 
         :param parent: XML element to search in and under
+        :param name_chain: List of name elements
+        :return: Tuple[string, Element]
         """
+        if "Name" in parent.attrib:
+            name_chain = name_chain + "." + parent.attrib["Name"]
         for element in parent:
             if element.tag == "Declaration":
-                yield (parent.get("Name", "<unknown>") + " [declaration]", element)
-            if element.tag == "Implementation":
+                yield name_chain + "[declaration]", element
+            elif element.tag == "Implementation":
                 st = element.find("ST")
                 if st is not None:
-                    yield (parent.get("Name", "<unknown>") + " [implementation]", st)
+                    yield name_chain + "[implementation]", st
             else:
-                yield from cls.get_code_segments(element)
+                yield from cls.get_code_segments(element, name_chain=name_chain)
 
     def add_correction(self, message: str):
         """Register a formatting correction."""
