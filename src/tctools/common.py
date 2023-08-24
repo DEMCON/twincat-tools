@@ -1,6 +1,8 @@
 from typing import Optional, List
 from argparse import ArgumentParser
 from pathlib import Path
+from lxml import etree
+from abc import ABC
 
 
 def common_argparser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
@@ -69,5 +71,32 @@ def find_files(args: "Namespace") -> List[str]:
     return files
 
 
-class TcTool:
+class TcTool(ABC):
     """Base class for tools with shared functionality."""
+
+    def __init__(self):
+
+        # Preserve `CDATA` XML flags
+        self.parser = etree.XMLParser(strip_cdata=False)
+
+        self.header_before: Optional[str]  # Header of the last XML file
+
+    @staticmethod
+    def get_xml_header(file: str) -> Optional[str]:
+        """Get raw XML header as string."""
+        with open(file, "r") as fh:
+            # Search only the start of the file, otherwise give up
+            for _ in range(100):
+                line = fh.readline()
+                if line.startswith("<?xml") and line.rstrip().endswith("?>"):
+                    return line.strip()
+
+        return None
+
+    def get_xml_tree(self, path: str):
+        """Get parsed XML file."""
+        tree = etree.parse(path, self.parser)
+
+        self.header_before = self.get_xml_header(path)
+
+        return tree

@@ -35,18 +35,11 @@ class XmlSorter(TcTool):
         self.files_to_alter = 0  # Files that seem to require changes
         self.files_resaved = 0  # Files actually re-saved to disk
 
-        # Preserve `CDATA` XML flags
-        self.parser = etree.XMLParser(strip_cdata=False)
+        super().__init__()
 
     def sort_file(self, path: str):
         """Sort a single file."""
-
-        try:
-            tree = etree.parse(path, self.parser)
-        except etree.XMLSyntaxError:
-            return False
-
-        header_before = self.get_xml_header(path)
+        tree = self.get_xml_tree(path)
 
         self.files_checked += 1
 
@@ -60,7 +53,7 @@ class XmlSorter(TcTool):
         if not self.quiet:
             logger.debug(f"Processing file `{path}`...")
 
-        tree_bytes = etree.tostring(root, doctype=header_before)
+        tree_bytes = etree.tostring(root, doctype=self.header_before)
 
         with open(path, "rb") as fh:
             current_contents = fh.readlines()
@@ -128,15 +121,3 @@ class XmlSorter(TcTool):
         key = re.sub(r"\s+", "", key, flags=re.UNICODE)
 
         return key
-
-    @staticmethod
-    def get_xml_header(file: str) -> Optional[str]:
-        """Get raw XML header as string."""
-        with open(file, "r") as fh:
-            # Search only the start of the file, otherwise give up
-            for _ in range(100):
-                line = fh.readline()
-                if line.startswith("<?xml") and line.rstrip().endswith("?>"):
-                    return line.strip()
-
-        return None

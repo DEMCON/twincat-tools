@@ -3,14 +3,32 @@
   <POU Name="FB_Example" Id="{bebb6320-5f8d-442b-bc9e-479d8a85bedf}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_Example
 VAR_INPUT
+    someInput               : LREAL;	// Comment
+    otherInput:INT;
 END_VAR
 VAR_OUTPUT
 END_VAR
 VAR
+    flag            : BOOL;
+	i				: USINT;
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[]]></ST>
+      <ST><![CDATA[FOR i := 1 TO 5 DO
+			
+    IF otherInput < 1.0 THEN
+    	flag := someInput;
+	END_IF
+
+
+// Trailing spaces:
+flag := FALSE;         
+
+// Trailing tabs:
+flag := TRUE;			
+
+END_FOR
+]]></ST>
     </Implementation>
   </POU>
 </TcPlcObject>

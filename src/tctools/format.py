@@ -1,6 +1,8 @@
 import sys
+import logging
 
-from .common import common_argparser
+from .common import common_argparser, find_files
+from .format_class import Formatter, logger
 
 
 def parse_arguments(args):
@@ -14,6 +16,18 @@ def parse_arguments(args):
 
 def main(*args) -> int:
     arguments = parse_arguments(args)
+
+    logging.basicConfig(stream=sys.stdout)
+    if arguments.loglevel:
+        logger.setLevel(arguments.loglevel)
+
+    formatter = Formatter()
+
+    files = find_files(arguments)
+
+    for file in files:
+        formatter.format(file)
+
     return 0
 
 
