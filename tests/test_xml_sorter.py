@@ -139,7 +139,12 @@ def test_project(plc_code, caplog):
 
     result = "\n".join([rec.msg for rec in caplog.records])
 
-    expected = ["TwinCAT Project1.tsproj", "MyPlc.plcproj", "Device 2 (EtherCAT).xti", "NC.xti"]
+    expected = [
+        "TwinCAT Project1.tsproj",
+        "MyPlc.plcproj",
+        "Device 2 (EtherCAT).xti",
+        "NC.xti",
+    ]
 
     for exp in expected:
         assert exp in result

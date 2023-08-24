@@ -62,3 +62,55 @@ def assert_order_of_lines_in_file(
     assert (
         idx == len(expected)
     ) == check_true, "Did not encounter right number of expected lines"
+
+
+def assert_warnings(expected: dict, actual: List[str]):
+    """Assert expected formatting warnings in real output."""
+
+    def check_line(line):
+        """Check if any of the expected messages are in a line."""
+        for warning, files in expected.items():
+            if warning not in line:
+                continue
+            for file, blocks in files.items():
+                if file not in line:
+                    continue
+                for block, nrs in blocks.items():
+                    if f"[{block}]" not in line:
+                        continue
+                    for number in nrs:
+                        if f":{number}" in line:
+                            return [warning, file, block, number]
+
+        return None
+
+    # left_overs = [line for line in actual if line and not check_line(line)]
+
+    # assert (
+    #     len(left_overs) == 0
+    #     and f"Expected warnings do not match list exactly: {left_overs}"
+    # )
+
+    i = 0
+    while i < len(actual):
+        line = actual[i]
+        if not line:
+            actual.pop(i)
+            continue
+
+        idx = check_line(line)
+        if idx is not None:
+            actual.pop(i)
+            expected[idx[0]][idx[1]][idx[2]].remove(idx[3])
+            if not expected[idx[0]][idx[1]][idx[2]]:
+                expected[idx[0]][idx[1]].pop(idx[2])
+            if not expected[idx[0]][idx[1]]:
+                expected[idx[0]].pop(idx[1])
+            if not expected[idx[0]]:
+                expected.pop(idx[0])
+            continue
+
+        i += 1  # Old-fashioned looping so we can modify the list as we go
+
+    assert len(actual) == 0 and f"Actual warnings list is not fully covered: {actual}"
+    assert len(expected) == 0 and f"Expected warnings not all covered: {expected}"

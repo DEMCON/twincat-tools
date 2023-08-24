@@ -89,7 +89,7 @@ class Formatter(TcTool):
             if tab in line:
                 self.add_correction("Line contains indent that should be a tab")
 
-        elif tab == "space":
+        elif style == "space":
             if "\t" in line:
                 self.add_correction("Line contains tab character")
 
