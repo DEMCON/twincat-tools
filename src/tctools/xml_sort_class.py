@@ -35,6 +35,9 @@ class XmlSorter(TcTool):
         self.files_to_alter = 0  # Files that seem to require changes
         self.files_resaved = 0  # Files actually re-saved to disk
 
+        self._file_changed = False  # True if any change is made in the current file
+        # This is a property to avoid passing around booleans between recursive calls
+
         super().__init__()
 
     def sort_file(self, path: str):
@@ -42,9 +45,9 @@ class XmlSorter(TcTool):
         tree = self.get_xml_tree(path)
 
         self.files_checked += 1
+        self._file_changed = False  # Reset
 
         root = tree.getroot()
-
         self.sort_node_recursively(root)
 
         # Re-indent by a double space
@@ -60,8 +63,10 @@ class XmlSorter(TcTool):
 
         current_bytes = b"".join(current_contents)
 
-        if current_bytes != tree_bytes:
+        if self._file_changed:
             self.files_to_alter += 1
+
+        if current_bytes != tree_bytes:
             if self.report:
                 print(f"Old file contents of `{path}`:")
                 print("-" * 50)
@@ -95,20 +100,31 @@ class XmlSorter(TcTool):
 
         # Also sort the attributes - but this won't work flawlessly, since dicts are
         # inherently unsorted
-        self.sort_attributes(node)
+        if self.sort_attributes(node):
+            self._file_changed = True
 
         # First sort the next level of children, necessary to sort the current node too
         for child in node:
             self.sort_node_recursively(child)
 
-        node[:] = sorted(node, key=self.get_node_sorting_key)
+        new_children = sorted(node, key=self.get_node_sorting_key)
+
+        if new_children != node[:]:
+            self._file_changed = True
+
+        node[:] = new_children  # Replace children in place
 
     @staticmethod
-    def sort_attributes(node):
-        """Sort the attributes of a node."""
+    def sort_attributes(node) -> bool:
+        """Sort the attributes of a node.
+
+        :returns: True if any changes were really made
+        """
         sorted_attrs = sorted(node.attrib.items())
+        changed = (sorted_attrs != node.attrib.items())
         node.attrib.clear()
         node.attrib.update(sorted_attrs)
+        return changed
 
     @staticmethod
     def get_node_sorting_key(node):

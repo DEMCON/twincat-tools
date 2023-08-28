@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<library>
+    <book c="1" a="2" b="3">
+        <title>Bravo</title>
+    </book>
+    <book b="3" c="1" a="2">
+        <title>Alpha</title>
+    </book>
+</library>

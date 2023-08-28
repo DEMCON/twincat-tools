@@ -54,6 +54,22 @@ def test_use_attributes(plc_code):
     assert_order_of_lines_in_file(expected, file, is_substring=True)
 
 
+def test_sort_attributes(plc_code):
+    """Test how attributes themselves are sorted."""
+    file = plc_code / "books_attributes.xml"
+
+    expected = [
+        '<book a="2" b="3" c="1">',
+        "<title>Alpha</title>",
+        '<book a="2" b="3" c="1">',
+        "<title>Bravo</title>",
+    ]
+    # Attributes are ordered differently
+    assert_order_of_lines_in_file(expected, file, is_substring=True, check_true=False)
+    tctools.xml_sort.main(str(file))
+    assert_order_of_lines_in_file(expected, file, is_substring=True)
+
+
 def test_single_file_dry(plc_code, capsys):
     """Test using dry run."""
     file = plc_code / "books.xml"
@@ -84,6 +100,14 @@ def test_single_file_check(plc_code):
 
     code2 = tctools.xml_sort.main(str(file), "--check")
     assert code2 == 0
+
+
+def test_single_file_check_already_sorted(plc_code):
+    """Test check flag when file would be reformatted but not resorted."""
+    file = plc_code / "books_sorted.xml"
+
+    code = tctools.xml_sort.main(str(file), "--check")
+    assert code == 0
 
 
 def test_single_project_file(plc_code):
