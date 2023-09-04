@@ -146,13 +146,11 @@ class Formatter(TcTool):
         machine.parse(content)
 
         regions = machine.regions
-        regions.append(
-            ((len(content), len(content[-1])), Kind.XML)  # Add end-of-file
-        )
+        regions.append(((len(content), len(content[-1])), Kind.XML))  # Add end-of-file
 
         # Iterate over pairs of regions so we got the start and end together
         for (rowcol_prev, kind_prev), (rowcol, kind) in zip(regions[:-1], regions[1:]):
-            lines = content[rowcol_prev[0]: (rowcol[0] + 1)]  # Inclusive range
+            lines = content[rowcol_prev[0] : (rowcol[0] + 1)]  # Inclusive range
 
             if rowcol_prev[1] > 0:
                 lines[0] = lines[0][rowcol_prev[1] :]

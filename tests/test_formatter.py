@@ -20,11 +20,13 @@ def test_help(capsys):
 def test_check_no_tab_char(plc_code, capsys):
     """Test finding illegal tab characters."""
     config = plc_code / "TwinCAT Project1" / ".editorconfig"
-    config.write_text("""root = true
+    config.write_text(
+        """root = true
 [*.TcPOU]
 indent_style = space
 indent_size = 4
-""")
+"""
+    )
     file = plc_code / "TwinCAT Project1" / "MyPlc" / "POUs" / "FB_Example.TcPOU"
     tctools.format.main(str(file))
 
@@ -44,11 +46,13 @@ indent_size = 4
 def test_check_tab_spaces(plc_code, capsys):
     """Test finding illegal spaces."""
     config = plc_code / "TwinCAT Project1" / ".editorconfig"
-    config.write_text("""root = true
+    config.write_text(
+        """root = true
 [*.TcPOU]
 indent_style = tab
 indent_size = 4
-""")
+"""
+    )
     file = plc_code / "TwinCAT Project1" / "MyPlc" / "POUs" / "FB_Example.TcPOU"
     tctools.format.main(str(file))
 
@@ -68,10 +72,12 @@ indent_size = 4
 def test_check_trailing_ws(plc_code, capsys):
     """Test finding illegal ws."""
     config = plc_code / "TwinCAT Project1" / ".editorconfig"
-    config.write_text("""root = true
+    config.write_text(
+        """root = true
 [*.TcPOU]
 trim_trailing_whitespace = true
-""")
+"""
+    )
     file = plc_code / "TwinCAT Project1" / "MyPlc" / "POUs" / "FB_Example.TcPOU"
     tctools.format.main(str(file))
 
@@ -90,11 +96,13 @@ trim_trailing_whitespace = true
 def test_reformat_resave(plc_code):
     """Test reformatting, making sure the XML remains untouched."""
     config = plc_code / "TwinCAT Project1" / ".editorconfig"
-    config.write_text("""root = true
+    config.write_text(
+        """root = true
 [*.TcPOU]
 indent_style = space
 indent_size = 4
-""")
+"""
+    )
     file = plc_code / "TwinCAT Project1" / "MyPlc" / "POUs" / "FB_Example.TcPOU"
 
     content_before = file.read_text()
@@ -113,11 +121,13 @@ indent_size = 4
 def test_reformat_no_tab_char(plc_code):
     """Test reformatting for illegal tab characters."""
     config = plc_code / "TwinCAT Project1" / ".editorconfig"
-    config.write_text("""root = true
+    config.write_text(
+        """root = true
 [*.TcPOU]
 indent_style = space
 indent_size = 4
-""")
+"""
+    )
     file = plc_code / "TwinCAT Project1" / "MyPlc" / "POUs" / "FB_Example.TcPOU"
 
     tctools.format.main(str(file))
@@ -129,10 +139,12 @@ indent_size = 4
 def test_reformat_trailing_ws(plc_code):
     """Test reformatting for illegal tab characters."""
     config = plc_code / "TwinCAT Project1" / ".editorconfig"
-    config.write_text("""root = true
+    config.write_text(
+        """root = true
 [*.TcPOU]
 trim_trailing_whitespace = true
-""")
+"""
+    )
     file = plc_code / "TwinCAT Project1" / "MyPlc" / "POUs" / "FB_Example.TcPOU"
 
     tctools.format.main(str(file))

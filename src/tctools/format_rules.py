@@ -1,6 +1,7 @@
 from typing import List, OrderedDict
 from abc import ABC, abstractmethod
 import re
+import math
 
 
 class FormattingRule(ABC):
@@ -27,25 +28,44 @@ class FormatTabs(FormattingRule):
     """Check usage of tab character."""
 
     _re_tab = re.compile(r"\t")
+    _re_spaces = re.compile(r"  +")  # Match two spaces or more
 
     def __init__(self, *args):
         super().__init__(*args)
 
         self._style = self._properties.get("indent_style", None)
-        self._indent = " " * int(self._properties.get("tab_width", "4"))
+        self._indent_size = int(self._properties.get("tab_width", "4"))
+        self._indent = " " * self._indent_size
         self._re_indent = re.compile(self._indent)
 
     def format(self, content: List[str]):
-        # TODO: Honour actual tab index (some tabs are shorter)
         for i, line in enumerate(content):
             if self._style == "tab":
-                line, count = re.subn(self._re_indent, "\t", line)
+                pos = 0
+                count = 0
+                while (matches := self._re_spaces.search(line, pos)) is not None:
+                    pos = matches.end()
+                    num_tabs = int(math.ceil((matches.end() - matches.start()) / 4))
+                    line = (
+                        line[: matches.start()]
+                        + "\t" * num_tabs
+                        + line[matches.end() :]
+                    )
+                    count += 1
+
                 if count:
                     content[i] = line
                     # self.add_correction("Line contains indent that should be a tab")
 
             elif self._style == "space":
-                line, count = re.subn(self._re_tab, self._indent, line)
+                pos = 0
+                count = 0
+                while (pos := line.find("\t", pos)) >= 0:
+                    # Number of spaces to the next tab index:
+                    num_spaces = self._indent_size - (pos % self._indent_size)
+                    line = line[:pos] + " " * num_spaces + line[pos + 1 :]
+                    count += 1
+
                 if count:
                     content[i] = line
                     # self.add_correction("Line contains tab character")

@@ -8,38 +8,42 @@ from tctools import format_rules
 def test_replace_tab():
     """Replace tab by spaces."""
     content = [
-        "    var             : BOOL; // Spaces\n",
-        "\tother_var\t\t: USINT; // Tabs\n",
-    ]
+        "    var             : BOOL;\n",
+        "\tother_var\t\t: USINT;\n",
+        "\tanother_var\t\t: USINT;\n",
+        "\tsome_var1   \t: USINT;\n",
+    ]  # < These look aligned
 
     properties = {"indent_style": "space"}
 
     formatter = format_rules.FormatTabs(properties)
     formatter.format(content)
 
-    # TODO: Fix alignment
     assert content == [
-        "    var             : BOOL; // Spaces\n",
-        "    other_var        : USINT; // Tabs\n",
+        "    var             : BOOL;\n",
+        "    other_var       : USINT;\n",
+        "    another_var     : USINT;\n",
+        "    some_var1       : USINT;\n",
     ]
 
 
 def test_replace_spaces():
     """Replace spaces by tabs."""
     content = [
-        "    var             : BOOL; // Spaces\n",
-        "\tother_var\t\t: USINT; // Tabs\n",
-    ]
+        "    var             : BOOL;\n",
+        "\tother_var\t\t: USINT;\n",
+        "\tsome_var1   \t: USINT;\n",
+    ]  # < These look aligned
 
     properties = {"indent_style": "tab"}
 
     formatter = format_rules.FormatTabs(properties)
     formatter.format(content)
 
-    # TODO: Fix alignment
     assert content == [
-        "\tvar\t\t\t : BOOL; // Spaces\n",
-        "\tother_var\t\t: USINT; // Tabs\n",
+        "\tvar\t\t\t\t: BOOL;\n",
+        "\tother_var\t\t: USINT;\n",
+        "\tsome_var1\t\t: USINT;\n",
     ]
 
 
@@ -60,7 +64,6 @@ def test_trailing_ws():
     formatter = format_rules.FormatTrailingWhitespace(properties)
     formatter.format(content)
 
-    # TODO: Fix alignment
     assert content == [
         "flag1 := FALSE;\n",
         "       flag2 := FALSE;\n",
