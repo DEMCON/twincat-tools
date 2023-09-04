@@ -1,6 +1,6 @@
 from editorconfig import get_properties
 from logging import getLogger
-from typing import Optional, List, Tuple, Dict, Type
+from typing import List, Tuple, Type
 from collections import OrderedDict
 from enum import Enum
 
@@ -173,39 +173,6 @@ class Formatter(TcTool):
         else:
             for rule in self._rules:
                 rule.format(content)
-
-    # def add_correction(self, message: str):
-    #     """Register a formatting correction."""
-    #     print(f"{self._file}\t{self._tag}:{self._line_number}\t{message}")
-    #
-    # def check_line(self, line: str):
-    #     """Check a single line for formatting."""
-    #     if line == "":
-    #         return
-    #
-    #     self._check_line_tabs(line)
-    #     self._check_trailing_whitespace(line)
-    #
-    # def _check_line_tabs(self, line: str):
-    #     """Check for occurrences of the tab character."""
-    #     style = self._properties.get("indent_style", None)
-    #
-    #     if style == "tab":
-    #         tab = " " * int(self._properties.get("tab_width", "4"))
-    #         if tab in line:
-    #             self.add_correction("Line contains indent that should be a tab")
-    #
-    #     elif style == "space":
-    #         if "\t" in line:
-    #             self.add_correction("Line contains tab character")
-    #
-    # def _check_trailing_whitespace(self, line: str):
-    #     """Check whitespace at the end of lines."""
-    #     if self._properties.get("trim_trailing_whitespace", "false") != "true":
-    #         return
-    #
-    #     if re_trailing_ws.search(line):
-    #         self.add_correction("Line contains trailing whitespace")
 
 
 Formatter.register_rule(FormatTabs)

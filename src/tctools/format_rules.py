@@ -1,7 +1,12 @@
-from typing import List, OrderedDict
+from typing import List, OrderedDict, NamedTuple
 from abc import ABC, abstractmethod
 import re
 import math
+
+
+class Correction(NamedTuple):
+    message: str
+    line_number: int
 
 
 class FormattingRule(ABC):
@@ -14,6 +19,7 @@ class FormattingRule(ABC):
 
     def __init__(self, properties: OrderedDict):
         self._properties = properties
+        self._corrections: List[Correction] = []
 
     @abstractmethod
     def format(self, content: List[str]):
@@ -22,6 +28,13 @@ class FormattingRule(ABC):
         :param content: Text to format (changed in place!)
         """
         pass
+
+    def add_correction(self, *args):
+        """Register a formatting correction.
+
+        See :class:`Correction`.
+        """
+        self._corrections.append(Correction(*args))
 
 
 class FormatTabs(FormattingRule):
@@ -40,35 +53,35 @@ class FormatTabs(FormattingRule):
 
     def format(self, content: List[str]):
         for i, line in enumerate(content):
+
             if self._style == "tab":
-                pos = 0
-                count = 0
-                while (matches := self._re_spaces.search(line, pos)) is not None:
-                    pos = matches.end()
-                    num_tabs = int(math.ceil((matches.end() - matches.start()) / 4))
-                    line = (
-                        line[: matches.start()]
-                        + "\t" * num_tabs
-                        + line[matches.end() :]
-                    )
-                    count += 1
-
-                if count:
-                    content[i] = line
-                    # self.add_correction("Line contains indent that should be a tab")
-
+                re_search = self._re_spaces
+                new_char = "\t"
             elif self._style == "space":
-                pos = 0
-                count = 0
-                while (pos := line.find("\t", pos)) >= 0:
-                    # Number of spaces to the next tab index:
-                    num_spaces = self._indent_size - (pos % self._indent_size)
-                    line = line[:pos] + " " * num_spaces + line[pos + 1 :]
-                    count += 1
+                re_search = self._re_tab
+                new_char = " "
+            else:
+                continue
 
-                if count:
-                    content[i] = line
-                    # self.add_correction("Line contains tab character")
+            pos = 0
+            count = 0
+            while (matches := re_search.search(line, pos)) is not None:
+                pos = matches.end()
+                num_chars = 0
+                if new_char == " ":  # Tab > spaces
+                    num_chars = self._indent_size - (
+                                matches.start() % self._indent_size)
+                elif new_char == "\t":  # Spaces > tabs
+                    num_chars = int(math.ceil((matches.end() - matches.start()) / 4))
+                line = (
+                        line[: matches.start()]
+                        + new_char * num_chars
+                        + line[matches.end():]
+                )
+                count += 1
+
+            if count > 0:
+                content[i] = line
 
 
 class FormatTrailingWhitespace(FormattingRule):
