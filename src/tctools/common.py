@@ -75,7 +75,6 @@ class TcTool(ABC):
     """Base class for tools with shared functionality."""
 
     def __init__(self):
-
         # Preserve `CDATA` XML flags
         self.parser = etree.XMLParser(strip_cdata=False)
 

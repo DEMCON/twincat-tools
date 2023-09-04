@@ -121,7 +121,7 @@ class XmlSorter(TcTool):
         :returns: True if any changes were really made
         """
         sorted_attrs = sorted(node.attrib.items())
-        changed = (sorted_attrs != node.attrib.items())
+        changed = sorted_attrs != node.attrib.items()
         node.attrib.clear()
         node.attrib.update(sorted_attrs)
         return changed

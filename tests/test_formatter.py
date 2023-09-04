@@ -85,3 +85,56 @@ trim_trailing_whitespace = true
 
     result = capsys.readouterr().out.split("\n")
     assert_warnings(expected, result)
+
+
+def test_reformat_resave(plc_code):
+    """Test reformatting, making sure the XML remains untouched."""
+    config = plc_code / "TwinCAT Project1" / ".editorconfig"
+    config.write_text("""root = true
+[*.TcPOU]
+indent_style = space
+indent_size = 4
+""")
+    file = plc_code / "TwinCAT Project1" / "MyPlc" / "POUs" / "FB_Example.TcPOU"
+
+    content_before = file.read_text()
+
+    tctools.format.main(str(file))
+
+    content_after = file.read_text()
+
+    # Make sure the XML bits are the same
+    assert content_after[:243] == content_before[:243]
+    assert content_after[-54:] == content_before[-54:]
+
+    assert content_after != content_before
+
+
+def test_reformat_no_tab_char(plc_code):
+    """Test reformatting for illegal tab characters."""
+    config = plc_code / "TwinCAT Project1" / ".editorconfig"
+    config.write_text("""root = true
+[*.TcPOU]
+indent_style = space
+indent_size = 4
+""")
+    file = plc_code / "TwinCAT Project1" / "MyPlc" / "POUs" / "FB_Example.TcPOU"
+
+    tctools.format.main(str(file))
+
+    content_after = file.read_text()
+    assert "\t" not in content_after
+
+
+def test_reformat_trailing_ws(plc_code):
+    """Test reformatting for illegal tab characters."""
+    config = plc_code / "TwinCAT Project1" / ".editorconfig"
+    config.write_text("""root = true
+[*.TcPOU]
+trim_trailing_whitespace = true
+""")
+    file = plc_code / "TwinCAT Project1" / "MyPlc" / "POUs" / "FB_Example.TcPOU"
+
+    tctools.format.main(str(file))
+
+    content_after = file.read_text()

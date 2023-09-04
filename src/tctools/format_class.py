@@ -2,27 +2,22 @@ from editorconfig import get_properties
 from logging import getLogger
 from typing import Optional, List, Tuple, Dict, Type
 from collections import OrderedDict
-import re
 from enum import Enum
 
 from .common import TcTool
-from .format_rules import FormattingRule, CheckTabs
+from .format_rules import FormattingRule, FormatTabs, FormatTrailingWhitespace
 
 
 logger = getLogger("formatter")
 
-re_trailing_ws = re.compile(r"\s+$")
-
-
-RowCol = Tuple[int, int]
-
 
 class Kind(Enum):
-    NORMAL = 0,
-    DECLARATION = 1,
+    XML = (0,)
+    DECLARATION = (1,)
     IMPLEMENTATION = 2
 
 
+RowCol = Tuple[int, int]
 Segment = Tuple[Kind, List[str]]
 
 
@@ -30,18 +25,18 @@ class XmlMachine:
     """Helper class to identify code bits inside an XML file."""
 
     def __init__(self):
-        self._kind = Kind.NORMAL
+        self._kind = Kind.XML
         self._row = 0  # Line number inside file
         self._col = 0  # Position inside line
 
-        self.regions: Dict[RowCol, Kind] = {}
+        self.regions: List[Tuple[RowCol, Kind]] = []
 
     def parse(self, content: List[str]):
         """Progress machine line by line."""
-        self._kind = Kind.NORMAL
+        self._kind = Kind.XML
         self._row = 0
         self._col = 0
-        self.regions = {(self._row, self._col): Kind.NORMAL.name}
+        self.regions = [((self._row, self._col), Kind.XML)]
         for self._row, line in enumerate(content):
             self._col = 0
             while self._col < len(line):
@@ -53,24 +48,34 @@ class XmlMachine:
         :param line:
         """
         pos_before = self._col
-        if self._kind == Kind.NORMAL:
+        if self._kind == Kind.XML:
             self._find_state_in_line(line, "<Declaration><![CDATA[", Kind.DECLARATION)
             self._find_state_in_line(line, "<ST><![CDATA[", Kind.IMPLEMENTATION)
         elif self._kind == Kind.DECLARATION:
-            self._find_state_in_line(line, "]]></Declaration>", Kind.NORMAL)
+            self._find_state_in_line(line, "]]></Declaration>", Kind.XML, True)
         elif self._kind == Kind.IMPLEMENTATION:
-            self._find_state_in_line(line, "]]></ST>", Kind.NORMAL)
+            self._find_state_in_line(line, "]]></ST>", Kind.XML, True)
 
         if self._col == pos_before:
             self._col = len(line)  # Nothing found, continue to next line
 
-    def _find_state_in_line(self, line, key: str, new_state: Kind):
-        """Find key elements inside a line to advance the states."""
+    def _find_state_in_line(
+        self, line, key: str, new_state: Kind, include_key: bool = False
+    ):
+        """Find key elements inside a line to advance the states.
+
+        When ``include_key`` is True, the text of the key is considered part of the new
+        state.
+        """
         pos = line.find(key, self._col)
         if pos >= 0:
             self._kind = new_state
             self._col = pos + len(key)
-            self.regions[(self._row, self._col)] = self._kind
+
+            if not include_key:
+                pos += len(key)
+
+            self.regions.append(((self._row, pos), self._kind))
             # First character of the new region
 
 
@@ -83,7 +88,6 @@ class Formatter(TcTool):
     _RULE_CLASSES: List[Type[FormattingRule]] = []
 
     def __init__(self):
-
         # Keep some dynamic properties around just so we don't have to constantly pass
         # them between methods
         self._file = ""
@@ -115,35 +119,62 @@ class Formatter(TcTool):
 
         self._rules = [rule(self._properties) for rule in self._RULE_CLASSES]
 
-        segment_last = (0, 0)
-        for segment, kind in self.find_code_segments(content).items():
-            # Loop over blocks of XML, declaration and implementation
-            self.format_segment(content, segment, kind)
-            segment_last = segment
+        segments: List[Segment] = list(self.split_code_segments(content))
 
-        return
+        for kind, segment in segments:
+            # Changes are done in-place
+            self.format_segment(segment, kind)
+
+        with open(file, "w", newline="") as fh:
+            # Keep newline symbols inside strings
+            for _, segment in segments:
+                fh.write("".join(segment))
 
     @staticmethod
-    def find_code_segments(content: List[str]) -> Dict[RowCol, Kind]:
-        """Find code segments based on tags.
+    def split_code_segments(content: List[str]):
+        """Copy content, split into XML and code sections.
 
-        Returns list of ((start_line, start_col), (end_line, end_col)).
+        Function is a generator, each pair is yielded.
 
+        Note: line endings are not modified! I.e., segments should be appended together
+        directly, without extra newlines.
+
+        :param: File content as list
         :return: List[Region]
         """
         machine = XmlMachine()
-
         machine.parse(content)
 
-        return machine.regions
+        regions = machine.regions
+        regions.append(
+            ((len(content), len(content[-1])), Kind.XML)  # Add end-of-file
+        )
 
-    def format_segment(self, content: List[str], segment: RowCol, kind: Kind):
-        """Format a specific segment of code."""
-        if kind == Kind.NORMAL:
+        # Iterate over pairs of regions so we got the start and end together
+        for (rowcol_prev, kind_prev), (rowcol, kind) in zip(regions[:-1], regions[1:]):
+            lines = content[rowcol_prev[0]: (rowcol[0] + 1)]  # Inclusive range
+
+            if rowcol_prev[1] > 0:
+                lines[0] = lines[0][rowcol_prev[1] :]
+                # Keep end of the first line
+
+            if rowcol[1] < len(lines[-1]):
+                lines[-1] = lines[-1][: rowcol[1]]
+                # Keep start of the last line (last character is not included!)
+
+            yield kind_prev, lines
+
+    def format_segment(self, content: List[str], kind: Kind):
+        """Format a specific segment of code.
+
+        :param content: Text to reformat (changed in place!)
+        :param kind: Type of the content
+        """
+        if kind == Kind.XML:
             return  # Do nothing
         else:
             for rule in self._rules:
-                rule.run(content)
+                rule.format(content)
 
     # def add_correction(self, message: str):
     #     """Register a formatting correction."""
@@ -179,4 +210,5 @@ class Formatter(TcTool):
     #         self.add_correction("Line contains trailing whitespace")
 
 
-Formatter.register_rule(CheckTabs)
+Formatter.register_rule(FormatTabs)
+Formatter.register_rule(FormatTrailingWhitespace)

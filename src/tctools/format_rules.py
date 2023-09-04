@@ -15,11 +15,15 @@ class FormattingRule(ABC):
         self._properties = properties
 
     @abstractmethod
-    def run(self, content: List[str]):
+    def format(self, content: List[str]):
+        """Fun rule to format text.
+
+        :param content: Text to format (changed in place!)
+        """
         pass
 
 
-class CheckTabs(FormattingRule):
+class FormatTabs(FormattingRule):
     """Check usage of tab character."""
 
     _re_tab = re.compile(r"\t")
@@ -31,16 +35,37 @@ class CheckTabs(FormattingRule):
         self._indent = " " * int(self._properties.get("tab_width", "4"))
         self._re_indent = re.compile(self._indent)
 
-    def run(self, content: List[str]):
+    def format(self, content: List[str]):
+        # TODO: Honour actual tab index (some tabs are shorter)
         for i, line in enumerate(content):
             if self._style == "tab":
-                new_line, count = re.subn(self._re_indent, "\t")
+                line, count = re.subn(self._re_indent, "\t", line)
                 if count:
-                    pass
+                    content[i] = line
                     # self.add_correction("Line contains indent that should be a tab")
 
             elif self._style == "space":
-                new_line, count = re.subn(self._re_tab, self._indent)
+                line, count = re.subn(self._re_tab, self._indent, line)
                 if count:
-                    pass
+                    content[i] = line
                     # self.add_correction("Line contains tab character")
+
+
+class FormatTrailingWhitespace(FormattingRule):
+    """Remove trailing whitespace."""
+
+    _re_trailing_ws = re.compile(r"[^\S\r\n]+$")  # Match whitespace but not newlines
+
+    def __init__(self, *args):
+        super().__init__(*args)
+
+        self._remove_tr_ws = self._properties.get("trim_trailing_whitespace", False)
+
+    def format(self, content: List[str]):
+        if not self._remove_tr_ws:
+            return  # Nothing to do
+        for i, line in enumerate(content):
+            line, count = re.subn(self._re_trailing_ws, "", line)
+            if count:
+                content[i] = line
+                # self.add(...)

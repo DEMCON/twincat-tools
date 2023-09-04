@@ -1,3 +1,9 @@
+"""Re-format a TwinCAT source file.
+
+The files are read line-by-line, not as XML as a whole. This will keep all non-code
+segments entirely untouched.
+"""
+
 import sys
 import logging
 
@@ -26,7 +32,7 @@ def main(*args) -> int:
     files = find_files(arguments)
 
     for file in files:
-        formatter.format(file)
+        formatter.format(str(file))
 
     return 0
 
