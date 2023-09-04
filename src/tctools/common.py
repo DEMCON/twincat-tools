@@ -1,5 +1,5 @@
 from typing import Optional, List
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from lxml import etree
 from abc import ABC
@@ -49,7 +49,7 @@ def common_argparser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
     return parser
 
 
-def find_files(args: "Namespace") -> List[str]:
+def find_files(args: "Namespace") -> List[Path]:
     """User argparse arguments to get a set of target files."""
     files = []
     if not args.target:
@@ -79,7 +79,7 @@ class TcTool(ABC):
         # Preserve `CDATA` XML flags
         self.parser = etree.XMLParser(strip_cdata=False)
 
-        self.header_before: Optional[str]  # Header of the last XML file
+        self.header_before: Optional[str] = None  # Header of the last XML file
 
     @staticmethod
     def get_xml_header(file: str) -> Optional[str]:
