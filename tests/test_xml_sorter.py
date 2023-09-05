@@ -18,7 +18,7 @@ def test_help(capsys):
 
 
 def test_single_file_plain_xml(plc_code):
-    """Test how a plain XML file gets sorted."""
+    """Test how a plain XML path gets sorted."""
     file = plc_code / "plant_catalog.xml"
 
     expected = [
@@ -103,7 +103,7 @@ def test_single_file_check(plc_code):
 
 
 def test_single_file_check_already_sorted(plc_code):
-    """Test check flag when file would be reformatted but not resorted."""
+    """Test check flag when path would be reformatted but not resorted."""
     file = plc_code / "books_sorted.xml"
 
     code = tctools.xml_sort.main(str(file), "--check")
@@ -111,7 +111,7 @@ def test_single_file_check_already_sorted(plc_code):
 
 
 def test_single_project_file(plc_code):
-    """Test XML sort on a single target file."""
+    """Test XML sort on a single target path."""
     file = plc_code / "TwinCAT Project1" / "TwinCAT Project1.tsproj"
     tctools.xml_sort.main(
         str(file),

@@ -1,12 +1,10 @@
-from typing import List, OrderedDict, NamedTuple
+from typing import List, OrderedDict, Tuple
 from abc import ABC, abstractmethod
 import re
 import math
 
 
-class Correction(NamedTuple):
-    message: str
-    line_number: int
+Correction = Tuple[int, str]
 
 
 class FormattingRule(ABC):
@@ -29,12 +27,18 @@ class FormattingRule(ABC):
         """
         pass
 
-    def add_correction(self, *args):
+    def add_correction(self, message: str, line_nr: int):
         """Register a formatting correction.
 
         See :class:`Correction`.
         """
-        self._corrections.append(Correction(*args))
+        self._corrections.append((line_nr, message))
+
+    def consume_corrections(self) -> List[Correction]:
+        """Return listed corrections and reset list."""
+        corrections = self._corrections
+        self._corrections = []
+        return corrections
 
 
 class FormatTabs(FormattingRule):
@@ -53,7 +57,6 @@ class FormatTabs(FormattingRule):
 
     def format(self, content: List[str]):
         for i, line in enumerate(content):
-
             if self._style == "tab":
                 re_search = self._re_spaces
                 new_char = "\t"
@@ -70,17 +73,24 @@ class FormatTabs(FormattingRule):
                 num_chars = 0
                 if new_char == " ":  # Tab > spaces
                     num_chars = self._indent_size - (
-                                matches.start() % self._indent_size)
+                        matches.start() % self._indent_size
+                    )
                 elif new_char == "\t":  # Spaces > tabs
                     num_chars = int(math.ceil((matches.end() - matches.start()) / 4))
                 line = (
-                        line[: matches.start()]
-                        + new_char * num_chars
-                        + line[matches.end():]
+                    line[: matches.start()]
+                    + new_char * num_chars
+                    + line[matches.end() :]
                 )
                 count += 1
 
             if count > 0:
+                self.add_correction(
+                    "Line contains an indent that should be a tab"
+                    if new_char == "\t"
+                    else "Line contains a tab that should be spaces",
+                    i,
+                )
                 content[i] = line
 
 
@@ -101,4 +111,4 @@ class FormatTrailingWhitespace(FormattingRule):
             line, count = re.subn(self._re_trailing_ws, "", line)
             if count:
                 content[i] = line
-                # self.add(...)
+                self.add_correction("Line contains trailing whitespace", i)

@@ -24,7 +24,7 @@ def plc_code(tmp_path):
 def assert_order_of_lines_in_file(
     expected: List[str], file: str, is_substring=False, check_true=True
 ):
-    """Assert the expected lines occur in the given order in the file.
+    """Assert the expected lines occur in the given order in the path.
 
     Leading and trailing whitespace is ignored.
 
@@ -64,53 +64,32 @@ def assert_order_of_lines_in_file(
     ) == check_true, "Did not encounter right number of expected lines"
 
 
-def assert_warnings(expected: dict, actual: List[str]):
-    """Assert expected formatting warnings in real output."""
+def assert_strings_have_substrings(expected: List[List[str]], actual: List[str]):
+    """Assert substrings occur in exactly one but any set of lines."""
+
+    actual = [line for line in actual if len(line) > 0]  # Remove emtpy strings
 
     def check_line(line):
-        """Check if any of the expected messages are in a line."""
-        for warning, files in expected.items():
-            if warning not in line:
-                continue
-            for file, blocks in files.items():
-                if file not in line:
-                    continue
-                for block, nrs in blocks.items():
-                    if f"[{block}]" not in line:
-                        continue
-                    for number in nrs:
-                        if f":{number}" in line:
-                            return [warning, file, block, number]
+        for idx_expected, substrings in enumerate(expected):
+            if all([substring in line for substring in substrings]):
+                return idx_expected
 
         return None
 
-    # left_overs = [line for line in actual if line and not check_line(line)]
-
-    # assert (
-    #     len(left_overs) == 0
-    #     and f"Expected warnings do not match list exactly: {left_overs}"
-    # )
-
-    i = 0
+    i = 0  # Old-fashioned loop because we resize
     while i < len(actual):
-        line = actual[i]
-        if not line:
+        idx = check_line(actual[i])
+        if idx is not None:  # Found match, remove both
             actual.pop(i)
+            expected.pop(idx)
             continue
 
-        idx = check_line(line)
-        if idx is not None:
-            actual.pop(i)
-            expected[idx[0]][idx[1]][idx[2]].remove(idx[3])
-            if not expected[idx[0]][idx[1]][idx[2]]:
-                expected[idx[0]][idx[1]].pop(idx[2])
-            if not expected[idx[0]][idx[1]]:
-                expected[idx[0]].pop(idx[1])
-            if not expected[idx[0]]:
-                expected.pop(idx[0])
-            continue
+        i += 1
 
-        i += 1  # Old-fashioned looping so we can modify the list as we go
-
-    assert len(actual) == 0 and f"Actual warnings list is not fully covered: {actual}"
-    assert len(expected) == 0 and f"Expected warnings not all covered: {expected}"
+    assert (
+        actual == []
+        and "Some lines in `actual` are not covered by the expected substrings"
+    )
+    assert (
+        expected == [] and "Some expected substring sets were not found in `actual`"
+    )

@@ -1,6 +1,5 @@
 from lxml import etree
 import re
-from typing import Optional
 from logging import getLogger
 
 from .common import TcTool
@@ -18,9 +17,9 @@ class XmlSorter(TcTool):
     def __init__(self, quiet=False, resave=True, report=False, skip_nodes=None):
         """
 
-        :param quiet:       If true, do not mention each file we touch
+        :param quiet:       If true, do not mention each path we touch
         :param resave:      If true, re-save the files in-place
-        :param report:      If true, print all changes to make
+        :param report:      If true, print all changes to be made
         :param skip_nodes:  List of node tags to ignore (and their children)
         """
 
@@ -31,17 +30,13 @@ class XmlSorter(TcTool):
         if self.skip_nodes is None:
             self.skip_nodes = []
 
-        self.files_checked = 0  # Files read by parser
-        self.files_to_alter = 0  # Files that seem to require changes
-        self.files_resaved = 0  # Files actually re-saved to disk
-
-        self._file_changed = False  # True if any change is made in the current file
+        self._file_changed = False  # True if any change is made in the current path
         # This is a property to avoid passing around booleans between recursive calls
 
         super().__init__()
 
     def sort_file(self, path: str):
-        """Sort a single file."""
+        """Sort a single path."""
         tree = self.get_xml_tree(path)
 
         self.files_checked += 1
@@ -54,7 +49,7 @@ class XmlSorter(TcTool):
         etree.indent(tree, space="  ", level=0)
 
         if not self.quiet:
-            logger.debug(f"Processing file `{path}`...")
+            logger.debug(f"Processing path `{path}`...")
 
         tree_bytes = etree.tostring(root, doctype=self.header_before)
 
@@ -68,11 +63,11 @@ class XmlSorter(TcTool):
 
         if current_bytes != tree_bytes:
             if self.report:
-                print(f"Old file contents of `{path}`:")
+                print(f"Old path contents of `{path}`:")
                 print("-" * 50)
                 print(current_bytes.decode("utf-8"))
                 print("-" * 50)
-                print("New file contents:")
+                print("New path contents:")
                 print("-" * 50)
                 print(tree_bytes.decode("utf-8"))
                 print("-" * 50)

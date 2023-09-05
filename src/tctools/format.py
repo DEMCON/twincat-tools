@@ -1,4 +1,4 @@
-"""Re-format a TwinCAT source file.
+"""Re-format a TwinCAT source path.
 
 The files are read line-by-line, not as XML as a whole. This will keep all non-code
 segments entirely untouched.
@@ -14,10 +14,10 @@ from .format_class import Formatter, logger
 def parse_arguments(args):
     """Parse CLI arguments for this entrypoint."""
     parser = common_argparser()
-    parser.description = "Format the PLC code inside a TwinCAT source XML file."
-    parser.epilog = "Example: ..."
+    parser.description = "Format the PLC code inside a TwinCAT source XML path."
+    parser.epilog = "Example: [program] ./MyTwinCATProject --filter *.TcPOU"
 
-    return parser.parse_args(args if args else sys.argv)
+    return parser.parse_args(args)
 
 
 def main(*args) -> int:
@@ -27,13 +27,28 @@ def main(*args) -> int:
     if arguments.loglevel:
         logger.setLevel(arguments.loglevel)
 
-    formatter = Formatter()
+    formatter = Formatter(
+        quiet=arguments.quiet,
+        resave=not arguments.dry and not arguments.check,
+        report=arguments.dry,
+    )
 
     files = find_files(arguments)
 
     for file in files:
-        formatter.format(str(file))
+        formatter.format_file(str(file))
 
+    logger.info(f"Checked {formatter.files_checked} path(s)")
+
+    if arguments.check:
+        if formatter.files_to_alter == 0:
+            logger.info(f"No changes to be made in checked files!")
+            return 0
+
+        logger.info(f"{formatter.files_to_alter} path(s) can be re-sorted")
+        return 1
+
+    logger.info(f"Re-saved {formatter.files_resaved} path(s)")
     return 0
 
 

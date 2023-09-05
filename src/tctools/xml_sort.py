@@ -9,10 +9,10 @@ from .xml_sort_class import XmlSorter, logger
 def parse_arguments(args):
     """Parse CLI arguments for this entrypoint."""
     parser = common_argparser()
-    parser.description = "Alphabetically sort the nodes in an XML file."
+    parser.description = "Alphabetically sort the nodes in an XML path."
     parser.epilog = (
-        "Example: [program] --folder src --ext tsproj xti plcproj --skip-nodes "
-        "Device ./MyTwinCATProject"
+        "Example: [program] ./MyTwinCATProject -r --filter *.tsproj *.xti *.plcproj "
+        "--skip-nodes Device DataType"
     )
 
     parser.add_argument(
@@ -20,19 +20,6 @@ def parse_arguments(args):
         "--skip-nodes",
         nargs="+",
         help="Do not touch the attributes and sub-nodes of nodes with these names",
-    )
-    parser.add_argument(
-        "--dry",
-        help="Do not modify files on disk, only report changes",
-        action="store_true",
-        default=False,
-    )
-    parser.add_argument(
-        "--check",
-        help="Do not modify files on disk, but give a non-zero exit code if there "
-        "would be changes",
-        action="store_true",
-        default=False,
     )
 
     return parser.parse_args(args)
@@ -55,19 +42,19 @@ def main(*args) -> int:
     files = find_files(arguments)
 
     for file in files:
-        sorter.sort_file(file)
+        sorter.sort_file(str(file))
 
-    logger.info(f"Checked {sorter.files_checked} file(s)")
+    logger.info(f"Checked {sorter.files_checked} path(s)")
 
     if arguments.check:
         if sorter.files_to_alter == 0:
             logger.info(f"No changes to be made in checked files!")
             return 0
 
-        logger.info(f"{sorter.files_to_alter} file(s) can be re-sorted")
+        logger.info(f"{sorter.files_to_alter} path(s) can be re-sorted")
         return 1
 
-    logger.info(f"Re-saved {sorter.files_resaved} file(s)")
+    logger.info(f"Re-saved {sorter.files_resaved} path(s)")
     return 0
 
 

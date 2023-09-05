@@ -3,6 +3,7 @@ from logging import getLogger
 from typing import List, Tuple, Type
 from collections import OrderedDict
 from enum import Enum
+import re
 
 from .common import TcTool
 from .format_rules import FormattingRule, FormatTabs, FormatTrailingWhitespace
@@ -18,27 +19,34 @@ class Kind(Enum):
 
 
 RowCol = Tuple[int, int]
-Segment = Tuple[Kind, List[str]]
+Segment = Tuple[Kind, List[str], str]
 
 
 class XmlMachine:
-    """Helper class to identify code bits inside an XML file."""
+    """Helper class to identify code bits inside an XML path."""
+
+    _re_name = re.compile(r'Name="(\w+)"')
 
     def __init__(self):
         self._kind = Kind.XML
-        self._row = 0  # Line number inside file
+        self._name = ""
+        self._row = 0  # Line number inside path
         self._col = 0  # Position inside line
 
-        self.regions: List[Tuple[RowCol, Kind]] = []
+        self.regions: List[Tuple[RowCol, Kind, str]] = []
 
     def parse(self, content: List[str]):
         """Progress machine line by line."""
         self._kind = Kind.XML
         self._row = 0
         self._col = 0
-        self.regions = [((self._row, self._col), Kind.XML)]
+        self.regions = [((self._row, self._col), Kind.XML, "<unknown>")]
         for self._row, line in enumerate(content):
             self._col = 0
+
+            if matches := self._re_name.search(line):
+                self._name = matches.group(1)
+
             while self._col < len(line):
                 self._parse_line(line)
 
@@ -75,7 +83,7 @@ class XmlMachine:
             if not include_key:
                 pos += len(key)
 
-            self.regions.append(((self._row, pos), self._kind))
+            self.regions.append(((self._row, pos), self._kind, self._name))
             # First character of the new region
 
 
@@ -87,14 +95,25 @@ class Formatter(TcTool):
 
     _RULE_CLASSES: List[Type[FormattingRule]] = []
 
-    def __init__(self):
+    def __init__(self, quiet=False, resave=True, report=False):
+        """
+
+        :param quiet:       If True, minimize CLI output
+        :param resave:      If True, re-save the files in-place
+        :param report:      If True, print all changes to be made
+        """
+
+        self.quiet = quiet
+        self.resave = resave
+        self.report = report
+
         # Keep some dynamic properties around just so we don't have to constantly pass
         # them between methods
         self._file = ""
         self._properties = OrderedDict()
-        self._tag = ""
-        self._line_number = 0
         self._rules: List[FormattingRule] = []
+
+        self._number_corrections = 0  # Track number of changes for the current file
 
         super().__init__()
 
@@ -104,31 +123,37 @@ class Formatter(TcTool):
         cls._RULE_CLASSES.append(new_rule)
         sorted(cls._RULE_CLASSES, key=lambda item: item.PRIORITY)
 
-    def format(self, file: str):
-        """Format (or check) a specific file.
+    def format_file(self, path: str):
+        """Format (or check) a specific path.
 
-        The file is read as text and code inside XML tags is detected manually. Other
+        The path is read as text and code inside XML tags is detected manually. Other
         lines of XML remain untouched.
         """
-
-        with open(file, "r") as fh:
+        with open(path, "r") as fh:
             content = fh.readlines()
 
-        self._file = file
-        self._properties = get_properties(file)
+        self._file = path
+        self._properties = get_properties(path)
+
+        self.files_checked += 1
+        self._number_corrections = 0
+
+        if not self.quiet:
+            logger.debug(f"Processing path `{path}`...")
 
         self._rules = [rule(self._properties) for rule in self._RULE_CLASSES]
 
         segments: List[Segment] = list(self.split_code_segments(content))
 
-        for kind, segment in segments:
+        for kind, segment, name in segments:
             # Changes are done in-place
             self.format_segment(segment, kind)
 
-        with open(file, "w", newline="") as fh:
-            # Keep newline symbols inside strings
-            for _, segment in segments:
-                fh.write("".join(segment))
+        if self.resave:
+            with open(path, "w", newline="") as fh:
+                # Keep newline symbols inside strings
+                for _, segment, _ in segments:
+                    fh.write("".join(segment))
 
     @staticmethod
     def split_code_segments(content: List[str]):
@@ -140,16 +165,20 @@ class Formatter(TcTool):
         directly, without extra newlines.
 
         :param: File content as list
-        :return: List[Region]
+        :return: List[Segment]
         """
         machine = XmlMachine()
         machine.parse(content)
 
         regions = machine.regions
-        regions.append(((len(content), len(content[-1])), Kind.XML))  # Add end-of-file
+        regions.append(
+            ((len(content), len(content[-1])), Kind.XML, "<unknown>")
+        )  # Add end-of-path
 
         # Iterate over pairs of regions so we got the start and end together
-        for (rowcol_prev, kind_prev), (rowcol, kind) in zip(regions[:-1], regions[1:]):
+        for (rowcol_prev, kind_prev, name_prev), (rowcol, kind, name) in zip(
+            regions[:-1], regions[1:]
+        ):
             lines = content[rowcol_prev[0] : (rowcol[0] + 1)]  # Inclusive range
 
             if rowcol_prev[1] > 0:
@@ -160,7 +189,7 @@ class Formatter(TcTool):
                 lines[-1] = lines[-1][: rowcol[1]]
                 # Keep start of the last line (last character is not included!)
 
-            yield kind_prev, lines
+            yield kind_prev, lines, name_prev
 
     def format_segment(self, content: List[str], kind: Kind):
         """Format a specific segment of code.
@@ -173,6 +202,15 @@ class Formatter(TcTool):
         else:
             for rule in self._rules:
                 rule.format(content)
+                corrections = rule.consume_corrections()
+                self._number_corrections += len(corrections)
+
+                tag = f"[{kind.name.lower()}]"
+
+                if self.report:
+                    for line_nr, message in corrections:
+                        # `line_r` is zero-indexed
+                        print(f"{self._file}{tag}:{line_nr+1}\t{message}")
 
 
 Formatter.register_rule(FormatTabs)

@@ -17,13 +17,25 @@ def common_argparser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
     )
 
     parser.add_argument(
+        "--dry",
+        help="Do not modify files on disk, only report changes to be made",
+        action="store_true",
+        default=False,
+    )
+    parser.add_argument(
+        "--check",
+        help="Do not modify files on disk, but give a non-zero exit code if there "
+        "would be changes",
+        action="store_true",
+        default=False,
+    )
+    parser.add_argument(
         "-q",
         "--quiet",
         help="Do not provide any CLI output",
         action="store_true",
         default=False,
     )
-    # parser.add_argument("--project", help="Path to .plcproj files to target")
     parser.add_argument(
         "-r",
         "--recursive",
@@ -66,7 +78,7 @@ def find_files(args: "Namespace") -> List[Path]:
                         filt = f"**/{filt}"
                     files += path.glob(filt)
         else:
-            raise ValueError(f"Could not find file or folder: `{target}`")
+            raise ValueError(f"Could not find path or folder: `{target}`")
 
     return files
 
@@ -78,13 +90,19 @@ class TcTool(ABC):
         # Preserve `CDATA` XML flags
         self.parser = etree.XMLParser(strip_cdata=False)
 
-        self.header_before: Optional[str] = None  # Header of the last XML file
+        self.header_before: Optional[str] = None  # Header of the last XML path
+
+        self.quiet = False
+
+        self.files_checked = 0  # Files read by parser
+        self.files_to_alter = 0  # Files that seem to require changes
+        self.files_resaved = 0  # Files actually re-saved to disk
 
     @staticmethod
     def get_xml_header(file: str) -> Optional[str]:
         """Get raw XML header as string."""
         with open(file, "r") as fh:
-            # Search only the start of the file, otherwise give up
+            # Search only the start of the path, otherwise give up
             for _ in range(100):
                 line = fh.readline()
                 if line.startswith("<?xml") and line.rstrip().endswith("?>"):
@@ -93,7 +111,7 @@ class TcTool(ABC):
         return None
 
     def get_xml_tree(self, path: str):
-        """Get parsed XML file."""
+        """Get parsed XML path."""
         tree = etree.parse(path, self.parser)
 
         self.header_before = self.get_xml_header(path)

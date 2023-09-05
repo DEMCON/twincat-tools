@@ -16,8 +16,8 @@ def test_replace_tab():
 
     properties = {"indent_style": "space"}
 
-    formatter = format_rules.FormatTabs(properties)
-    formatter.format(content)
+    rule = format_rules.FormatTabs(properties)
+    rule.format(content)
 
     assert content == [
         "    var             : BOOL;\n",
@@ -37,8 +37,8 @@ def test_replace_spaces():
 
     properties = {"indent_style": "tab"}
 
-    formatter = format_rules.FormatTabs(properties)
-    formatter.format(content)
+    rule = format_rules.FormatTabs(properties)
+    rule.format(content)
 
     assert content == [
         "\tvar\t\t\t\t: BOOL;\n",
@@ -61,8 +61,8 @@ def test_trailing_ws():
 
     properties = {"trim_trailing_whitespace": True}
 
-    formatter = format_rules.FormatTrailingWhitespace(properties)
-    formatter.format(content)
+    rule = format_rules.FormatTrailingWhitespace(properties)
+    rule.format(content)
 
     assert content == [
         "flag1 := FALSE;\n",
