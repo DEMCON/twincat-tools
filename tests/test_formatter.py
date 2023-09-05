@@ -100,6 +100,30 @@ trim_trailing_whitespace = true
     assert_strings_have_substrings(expected, result)
 
 
+def test_check(plc_code, capsys):
+    """Test `check` flag for formatter."""
+    config = plc_code / "TwinCAT Project1" / ".editorconfig"
+    config.write_text(
+        """root = true
+[*.TcPOU]
+indent_style = space
+indent_size = 4
+"""
+    )
+    file = plc_code / "TwinCAT Project1" / "MyPlc" / "POUs" / "FB_Example.TcPOU"
+
+    content_before = file.read_text()
+
+    code = tctools.format.main(str(file), "--check")
+    assert code != 0
+
+    assert content_before == file.read_text()
+
+    tctools.format.main(str(file))  # Re-format
+    code_new = tctools.format.main(str(file), "--check")  # Check again
+    assert code_new == 0
+
+
 def test_reformat_resave(plc_code):
     """Test reformatting, making sure the XML remains untouched."""
     config = plc_code / "TwinCAT Project1" / ".editorconfig"
@@ -141,19 +165,3 @@ indent_size = 4
 
     content_after = file.read_text()
     assert "\t" not in content_after
-
-
-def test_reformat_trailing_ws(plc_code):
-    """Test reformatting for illegal tab characters."""
-    config = plc_code / "TwinCAT Project1" / ".editorconfig"
-    config.write_text(
-        """root = true
-[*.TcPOU]
-trim_trailing_whitespace = true
-"""
-    )
-    file = plc_code / "TwinCAT Project1" / "MyPlc" / "POUs" / "FB_Example.TcPOU"
-
-    tctools.format.main(str(file))
-
-    content_after = file.read_text()

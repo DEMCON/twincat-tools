@@ -149,6 +149,9 @@ class Formatter(TcTool):
             # Changes are done in-place
             self.format_segment(segment, kind)
 
+        if self._number_corrections > 0:
+            self.files_to_alter += 1
+
         if self.resave:
             with open(path, "w", newline="") as fh:
                 # Keep newline symbols inside strings
