@@ -39,7 +39,7 @@ Projects can be opened and built again as expected, and when saved again the fil
 
 ## Auto Formatter
 
-Use this to make consistent use of spaces/tabs.
+Use this to make consistent use of whitespace.
 Visual Studio with PLC doesn't do a lot of the things that other IDEs do, like removing trailing whitespace and making 
 consistent usage of spaces / tabs.
 This tool is meant to supplement this.
@@ -70,3 +70,5 @@ The following `.editorconfig` fields are considered:
   * If style is set to tab, any `tab_width`-number of spaces will be replaced by a tab
 * `trim_trailing_whitespace`
   * If true, whitespace at the end of lines is removed
+* `insert_final_newline`
+  * If true, every code block must end with a newline

@@ -112,3 +112,31 @@ class FormatTrailingWhitespace(FormattingRule):
             if count:
                 content[i] = line
                 self.add_correction("Line contains trailing whitespace", i)
+
+
+class FormatInsertFinalNewline(FormattingRule):
+    """Asserting a final empty newline in a file."""
+
+    def __init__(self, *args):
+        super().__init__(*args)
+
+        self._insert = self._properties.get("insert_final_newline", False)
+
+    def format(self, content: List[str]):
+        if not self._insert:
+            return
+
+        if len(content) == 1 and content[0] == "":
+            return
+
+        if content[-1].endswith("\n") or content[-1].endswith("\r"):
+            return
+
+        if content[-1] == "" and (
+            content[-2].endswith("\n") or content[-2].endswith("\r")
+        ):
+            return  # Then the line before does it already
+
+        content[-1] += "\n"
+        # TODO: Support different file endings
+        self.add_correction("Block does not end with a newline", len(content) - 1)

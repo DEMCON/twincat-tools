@@ -6,7 +6,12 @@ from enum import Enum
 import re
 
 from .common import TcTool
-from .format_rules import FormattingRule, FormatTabs, FormatTrailingWhitespace
+from .format_rules import (
+    FormattingRule,
+    FormatTabs,
+    FormatTrailingWhitespace,
+    FormatInsertFinalNewline,
+)
 
 
 logger = getLogger("formatter")
@@ -133,7 +138,10 @@ class Formatter(TcTool):
             content = fh.readlines()
 
         self._file = path
+
         self._properties = get_properties(path)
+        if not self._properties:
+            logger.warning(f"Editorconfig properties is empty for file `{path}`")
 
         self.files_checked += 1
         self._number_corrections = 0
@@ -184,13 +192,17 @@ class Formatter(TcTool):
         ):
             lines = content[rowcol_prev[0] : (rowcol[0] + 1)]  # Inclusive range
 
-            if rowcol_prev[1] > 0:
-                lines[0] = lines[0][rowcol_prev[1] :]
-                # Keep end of the first line
+            if rowcol[0] == rowcol_prev[0]:  # If there is only a single line!
+                lines[0] = lines[0][rowcol_prev[1] : rowcol[1]]
+                # Use two columns in one step, otherwise the columns move
+            else:
+                if rowcol_prev[1] > 0:
+                    lines[0] = lines[0][rowcol_prev[1] :]
+                    # Keep end of the first line
 
-            if rowcol[1] < len(lines[-1]):
-                lines[-1] = lines[-1][: rowcol[1]]
-                # Keep start of the last line (last character is not included!)
+                if rowcol[1] < len(lines[-1]):
+                    lines[-1] = lines[-1][: rowcol[1]]
+                    # Keep start of the last line (last character is not included!)
 
             yield kind_prev, lines, name_prev
 
@@ -218,3 +230,4 @@ class Formatter(TcTool):
 
 Formatter.register_rule(FormatTabs)
 Formatter.register_rule(FormatTrailingWhitespace)
+Formatter.register_rule(FormatInsertFinalNewline)

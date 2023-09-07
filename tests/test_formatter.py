@@ -124,29 +124,25 @@ indent_size = 4
     assert code_new == 0
 
 
-def test_reformat_resave(plc_code):
-    """Test reformatting, making sure the XML remains untouched."""
-    config = plc_code / "TwinCAT Project1" / ".editorconfig"
-    config.write_text(
-        """root = true
-[*.TcPOU]
-indent_style = space
-indent_size = 4
-"""
-    )
-    file = plc_code / "TwinCAT Project1" / "MyPlc" / "POUs" / "FB_Example.TcPOU"
+def test_reformat_empty_config(plc_code):
+    """Test reformatting with no or empty `editorconfig`.
+
+    This also verified the formatter correctly puts the XML bits back.
+    """
+    file = plc_code / "TwinCAT Project1" / "MyPlc" / "POUs" / "FB_Full.TcPOU"
 
     content_before = file.read_text()
 
-    tctools.format.main(str(file))
+    tctools.format.main(str(file))  # No error is given
 
-    content_after = file.read_text()
+    assert content_before == file.read_text() and "File was changed"
 
-    # Make sure the XML bits are the same
-    assert content_after[:243] == content_before[:243]
-    assert content_after[-54:] == content_before[-54:]
+    config = plc_code / "TwinCAT Project1" / ".editorconfig"
+    config.write_text("root = true")
 
-    assert content_after != content_before
+    tctools.format.main(str(file))  # No error is given
+
+    assert content_before == file.read_text() and "File was changed"
 
 
 def test_reformat_no_tab_char(plc_code):
@@ -165,3 +161,28 @@ indent_size = 4
 
     content_after = file.read_text()
     assert "\t" not in content_after
+
+
+def test_reformat_everything(plc_code):
+    """Test reformatting for a typical file with a bunch of stuff."""
+    config = plc_code / "TwinCAT Project1" / ".editorconfig"
+    config.write_text(
+        """root = true
+[*.TcPOU]
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = true
+insert_final_newline = true
+"""
+    )
+    file = plc_code / "TwinCAT Project1" / "MyPlc" / "POUs" / "FB_Full.TcPOU"
+
+    tctools.format.main(str(file))
+
+    file_fixed = plc_code / "TwinCAT Project1" / "MyPlc" / "POUs" / "FB_Full_fixed.txt"
+    # ^ This file has manually fixed formatting
+
+    assert (
+        file.read_text() == file_fixed.read_text()
+        and "Formatted result not as expected"
+    )

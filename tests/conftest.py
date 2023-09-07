@@ -90,6 +90,4 @@ def assert_strings_have_substrings(expected: List[List[str]], actual: List[str])
         actual == []
         and "Some lines in `actual` are not covered by the expected substrings"
     )
-    assert (
-        expected == [] and "Some expected substring sets were not found in `actual`"
-    )
+    assert expected == [] and "Some expected substring sets were not found in `actual`"

@@ -73,3 +73,23 @@ def test_trailing_ws():
         "flag4 := TRUE;\n",
         "\n",
     ]
+
+
+def test_final_newline():
+    """Addition of final empty newline."""
+    content = [
+        "flag1 := FALSE;         \n",
+        "       flag2 := FALSE;         \n",
+        "flag3 := FALSE;\t\t",
+    ]
+
+    properties = {"insert_final_newline": True}
+
+    rule = format_rules.FormatInsertFinalNewline(properties)
+    rule.format(content)
+
+    assert content == [
+        "flag1 := FALSE;         \n",
+        "       flag2 := FALSE;         \n",
+        "flag3 := FALSE;\t\t\n",
+    ]

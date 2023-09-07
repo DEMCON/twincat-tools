@@ -1,0 +1,56 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="FB_Full" Id="{db56d684-bc10-4696-841c-dbe98e4576b1}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Full
+VAR_INPUT
+    myInput         : LREAL;
+END_VAR
+VAR_OUTPUT
+    myOutput        : BOOL := FALSE;
+END_VAR
+VAR
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF myInput > 0 THEN
+    // FormatTrailingWhitespace
+    IF myInput < 10 THEN
+        myOutput := TRUE;
+    END_IF // FormatTabs
+    // FormatInsertFinalNewline
+END_IF
+]]></ST>
+    </Implementation>
+    <Method Name="MyMethod" Id="{300583ab-a978-412f-a94c-befedd5e1e5f}">
+      <Declaration><![CDATA[METHOD MyMethod : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[MyMethod := TRUE;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="Prop" Id="{8fd80566-d814-442c-877d-7ad2a8e592db}">
+      <Declaration><![CDATA[PROPERTY Prop : BOOL
+]]></Declaration>
+      <Get Name="Get" Id="{0e5e03b6-bf09-44cd-b757-f0cd34abbf52}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[Prop := TRUE;
+]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{8d674369-f153-4e28-9032-b7f6aa732966}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+  </POU>
+</TcPlcObject>
