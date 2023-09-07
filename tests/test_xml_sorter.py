@@ -1,4 +1,6 @@
 import pytest
+import subprocess
+import sys
 
 import tctools.xml_sort
 
@@ -7,7 +9,6 @@ from .conftest import assert_order_of_lines_in_file
 
 def test_help(capsys):
     """Test the help text."""
-
     with pytest.raises(SystemExit) as err:
         tctools.xml_sort.main("--help")
 
@@ -15,6 +16,19 @@ def test_help(capsys):
 
     message = capsys.readouterr().out
     assert "usage:" in message
+
+
+def test_cli(plc_code, capsys):
+    """Test the CLI hook works."""
+    file = plc_code / "plant_catalog.xml"
+
+    path = sys.executable  # Re-use whatever executable we're using now
+    result = subprocess.run(
+        [path, "-m", "tctools.xml_sort", str(file)], capture_output=True
+    )
+
+    assert result.returncode == 0
+    assert "Re-saved 1 path" in result.stdout.decode()
 
 
 def test_single_file_plain_xml(plc_code):

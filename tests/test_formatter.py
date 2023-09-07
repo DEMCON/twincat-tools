@@ -1,4 +1,6 @@
 import pytest
+import subprocess
+import sys
 
 import tctools.format
 
@@ -7,7 +9,6 @@ from .conftest import assert_strings_have_substrings
 
 def test_help(capsys):
     """Test the help text."""
-
     with pytest.raises(SystemExit) as err:
         tctools.format.main("--help")
 
@@ -15,6 +16,27 @@ def test_help(capsys):
 
     message = capsys.readouterr().out
     assert "usage:" in message
+
+
+def test_cli(plc_code, capsys):
+    """Test the CLI hook works."""
+    config = plc_code / "TwinCAT Project1" / ".editorconfig"
+    config.write_text(
+        """root = true
+[*.TcPOU]
+indent_style = space
+indent_size = 4
+"""
+    )
+    file = plc_code / "TwinCAT Project1" / "MyPlc" / "POUs" / "FB_Example.TcPOU"
+
+    path = sys.executable  # Re-use whatever executable we're using now
+    result = subprocess.run(
+        [path, "-m", "tctools.format", str(file)], capture_output=True
+    )
+
+    assert result.returncode == 0
+    assert "Re-saved 1 path" in result.stdout.decode()
 
 
 def test_dry_no_tab_char(plc_code, capsys):

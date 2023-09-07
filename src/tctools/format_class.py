@@ -165,6 +165,7 @@ class Formatter(TcTool):
                 # Keep newline symbols inside strings
                 for _, segment, _ in segments:
                     fh.write("".join(segment))
+            self.files_resaved += 1
 
     @staticmethod
     def split_code_segments(content: List[str]):
