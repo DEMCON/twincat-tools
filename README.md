@@ -1,5 +1,8 @@
 # TwinCAT Tools
 
+[![PyTest](https://github.com/RobertoRoos/tctools/actions/workflows/tests.yml/badge.svg)](https://github.com/RobertoRoos/TcTools/actions)
+[![codecov](https://codecov.io/gh/RobertoRoos/TcTools/graph/badge.svg?token=3NU2UNM2U0)](https://codecov.io/gh/RobertoRoos/TcTools)
+
 This repository contains a small set of tools for developing TwinCAT projects.
 
 ## XML Sorter
