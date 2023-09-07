@@ -93,3 +93,58 @@ def test_final_newline():
         "       flag2 := FALSE;         \n",
         "flag3 := FALSE;\t\t\n",
     ]
+
+
+def test_end_of_line():
+    """Test EOL correction."""
+    content_before = [
+        "func();\n",
+        "func();\r\n",
+        "func();\r\n\r\n\r\n",
+        "func();\n",
+        "func();\r",
+        "func();\r\r",
+        "func();\n",
+    ]
+
+    content = content_before.copy()
+    rule = format_rules.FormatEndOfLine({"end_of_line": "lf"})
+    rule.format(content)
+
+    assert content == [
+        "func();\n",
+        "func();\n",
+        "func();\n\n\n",
+        "func();\n",
+        "func();\n",
+        "func();\n\n",
+        "func();\n",
+    ]
+
+    content = content_before.copy()
+    rule = format_rules.FormatEndOfLine({"end_of_line": "crlf"})
+    rule.format(content)
+
+    assert content == [
+        "func();\r\n",
+        "func();\r\n",
+        "func();\r\n\r\n\r\n",
+        "func();\r\n",
+        "func();\r\n",
+        "func();\r\n\r\n",
+        "func();\r\n",
+    ]
+
+    content = content_before.copy()
+    rule = format_rules.FormatEndOfLine({"end_of_line": "cr"})
+    rule.format(content)
+
+    assert content == [
+        "func();\r",
+        "func();\r",
+        "func();\r\r\r",
+        "func();\r",
+        "func();\r",
+        "func();\r\r",
+        "func();\r",
+    ]

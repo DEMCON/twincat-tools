@@ -11,6 +11,7 @@ from .format_rules import (
     FormatTabs,
     FormatTrailingWhitespace,
     FormatInsertFinalNewline,
+    FormatEndOfLine,
 )
 
 
@@ -134,7 +135,7 @@ class Formatter(TcTool):
         The path is read as text and code inside XML tags is detected manually. Other
         lines of XML remain untouched.
         """
-        with open(path, "r", encoding="utf-8", errors="ignore") as fh:
+        with open(path, "r", encoding="utf-8", errors="ignore", newline="") as fh:
             content = fh.readlines()
 
         self._file = path
@@ -150,6 +151,13 @@ class Formatter(TcTool):
             logger.debug(f"Processing path `{path}`...")
 
         self._rules = [rule(self._properties) for rule in self._RULE_CLASSES]
+
+        # Do whole-file rules first:
+        for rule in self._rules:
+            if not rule.WHOLE_FILE:
+                continue
+
+            self.apply_rule(rule, content)
 
         segments: List[Segment] = list(self.split_code_segments(content))
 
@@ -220,18 +228,26 @@ class Formatter(TcTool):
             return  # Do nothing
         else:
             for rule in self._rules:
-                rule.format(content)
-                corrections = rule.consume_corrections()
-                self._number_corrections += len(corrections)
+                if rule.WHOLE_FILE:
+                    continue  # Skip here
 
-                tag = f"[{kind.name.lower()}]"
+                self.apply_rule(rule, content, kind)
 
-                if self.report:
-                    for line_nr, message in corrections:
-                        # `line_r` is zero-indexed
-                        print(f"{self._file}{tag}:{line_nr+1}\t{message}")
+    def apply_rule(self, rule, content, kind=None):
+        """Run a rule over some content and handle results."""
+        rule.format(content)
+        corrections = rule.consume_corrections()
+        self._number_corrections += len(corrections)
+
+        tag = f"[{kind.name.lower()}]" if kind else "[file]"
+
+        if self.report:
+            for line_nr, message in corrections:
+                # `line_r` is zero-indexed
+                print(f"{self._file}{tag}:{line_nr + 1}\t{message}")
 
 
 Formatter.register_rule(FormatTabs)
 Formatter.register_rule(FormatTrailingWhitespace)
 Formatter.register_rule(FormatInsertFinalNewline)
+Formatter.register_rule(FormatEndOfLine)

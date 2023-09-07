@@ -11,13 +11,23 @@ class FormattingRule(ABC):
     """TcFormatter rule base class.
 
     Extend and implement this class to check for and correct a specific error/style/etc.
+
+    :cvar PRIORITY: Lower priority means a rule gets applied earlier.
+    :cvar WHOLE_FILE: If True, rule is applied to the entire while instead of just
+                      code blocks.
     """
 
     PRIORITY = 100
+    WHOLE_FILE = False
 
     def __init__(self, properties: OrderedDict):
         self._properties = properties
         self._corrections: List[Correction] = []
+
+        # Universal properties:
+        self._end_of_line = self._properties.get("end_of_line", None)
+        options = {"lf": "\n", "cr": "\r", "crlf": "\r\n"}
+        self._line_ending = options.get(self._end_of_line, "\n")
 
     @abstractmethod
     def format(self, content: List[str]):
@@ -97,7 +107,10 @@ class FormatTabs(FormattingRule):
 class FormatTrailingWhitespace(FormattingRule):
     """Remove trailing whitespace."""
 
-    _re_trailing_ws = re.compile(r"[^\S\r\n]+$")  # Match whitespace but not newlines
+    PRIORITY = 90  # Precede `FinalNewline`
+
+    _re_trailing_ws = re.compile(r"([^\S\r\n]+)([\r\n])*$")
+    # Match whitespace (but not newlines) before (any) newline at the end of the line
 
     def __init__(self, *args):
         super().__init__(*args)
@@ -108,7 +121,7 @@ class FormatTrailingWhitespace(FormattingRule):
         if not self._remove_tr_ws:
             return  # Nothing to do
         for i, line in enumerate(content):
-            line, count = re.subn(self._re_trailing_ws, "", line)
+            line, count = re.subn(self._re_trailing_ws, r"\2", line)  # Keep group #2
             if count:
                 content[i] = line
                 self.add_correction("Line contains trailing whitespace", i)
@@ -140,3 +153,45 @@ class FormatInsertFinalNewline(FormattingRule):
         content[-1] += "\n"
         # TODO: Support different file endings
         self.add_correction("Block does not end with a newline", len(content) - 1)
+
+
+class FormatEndOfLine(FormattingRule):
+    """Asserting line endings are as expected."""
+
+    WHOLE_FILE = True
+    PRIORITY = 50  # Better do it a bit early
+
+    def __init__(self, *args):
+        super().__init__(*args)
+
+        self._re_line_end = None
+
+        if self._end_of_line is not None:
+            if self._end_of_line == "lf":
+                self._re_line_end = re.compile(r"\r\n|\r")
+                # Works because Windows is first in the list
+            elif self._end_of_line == "cr":
+                self._re_line_end = re.compile(r"\r\n|\n")
+            elif self._end_of_line == "crlf":
+                self._re_line_end = re.compile(r"\r(?!\n)|(?<!\r)\n")
+                # Match "\r" NOT followed by "\n" and match "\n" NOT preceded by "\r"
+            else:
+                raise ValueError(f"Unrecognized file ending `{self._line_ending}`")
+
+    def format(self, content: List[str]):
+        if self._end_of_line is None:
+            return  # Nothing specified
+
+        count = 0
+        for i, line in enumerate(content):
+            line, new = re.subn(self._re_line_end, self._line_ending, line)
+            if new > 0:
+                content[i] = line
+                count += new
+
+        eol = self._line_ending.encode("unicode_escape")
+
+        if count > 0:
+            self.add_correction(
+                f"{count} line endings need to be corrected to {eol}`", 0
+            )

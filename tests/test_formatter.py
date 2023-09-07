@@ -208,3 +208,44 @@ insert_final_newline = true
         file.read_text() == file_fixed.read_text()
         and "Formatted result not as expected"
     )
+
+
+@pytest.mark.parametrize("eol", [("lf", "\r\n", "\n"), ("crlf", "\n", "\r\n")])
+def test_reformat_eol(plc_code, eol):
+    """Test EOL correction."""
+    config_eol, write_eol, expected_eol = eol
+
+    config = plc_code / "TwinCAT Project1" / ".editorconfig"
+    config.write_text(
+        f"""root = true
+    [*.TcPOU]
+    end_of_line = {config_eol}
+    """
+    )
+
+    # Version control will affect line endings, so just make the file here
+    content_list = [
+        '<?xml version="1.0" encoding="utf-8"?>',
+        "<TcPlcObject>",
+        '<POU Name="FB_Test>',
+        "<Declaration><![CDATA[FUNCTION_BLOCK FB_Example",
+        "VAR_OUTPUT",
+        "    out         : BOOL;",
+        "END_VAR",
+        "]]></Declaration>",
+        "<Implementation>",
+        "<ST><![CDATA[",
+        "out := TRUE;",
+        "]]></ST>",
+        "</Implementation>",
+        "</POU>",
+        "</TcPlcObject>",
+    ]
+
+    file = plc_code / "TwinCAT Project1" / "MyPlc" / "POUs" / f"FB_Test.TcPOU"
+    file.write_text(write_eol.join(content_list), newline="")
+
+    tctools.format.main(str(file))
+
+    content_after = file.read_bytes()
+    assert content_after == expected_eol.join(content_list).encode()
