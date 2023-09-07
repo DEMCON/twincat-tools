@@ -134,7 +134,7 @@ class Formatter(TcTool):
         The path is read as text and code inside XML tags is detected manually. Other
         lines of XML remain untouched.
         """
-        with open(path, "r") as fh:
+        with open(path, "r", encoding="utf-8", errors="ignore") as fh:
             content = fh.readlines()
 
         self._file = path
@@ -160,8 +160,8 @@ class Formatter(TcTool):
         if self._number_corrections > 0:
             self.files_to_alter += 1
 
-        if self.resave:
-            with open(path, "w", newline="") as fh:
+        if self.resave and self._number_corrections > 0:
+            with open(path, "w", newline="", encoding="utf-8") as fh:
                 # Keep newline symbols inside strings
                 for _, segment, _ in segments:
                     fh.write("".join(segment))
@@ -179,6 +179,9 @@ class Formatter(TcTool):
         :param: File content as list
         :return: List[Segment]
         """
+        if not content:
+            return  # Nothing to yield
+
         machine = XmlMachine()
         machine.parse(content)
 
