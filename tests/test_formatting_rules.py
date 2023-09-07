@@ -75,24 +75,43 @@ def test_trailing_ws():
     ]
 
 
-def test_final_newline():
-    """Addition of final empty newline."""
-    content = [
-        "flag1 := FALSE;         \n",
-        "       flag2 := FALSE;         \n",
-        "flag3 := FALSE;\t\t",
-    ]
+content_final_newline = [
+    (
+        ["flag1 := FALSE;"],
+        ["flag1 := FALSE;\n"],
+    ),
+    (
+        ["flag1 := FALSE;    "],
+        ["flag1 := FALSE;    \n"],
+    ),
+    (
+        ["flag1 := FALSE;\n", "flag2 := FALSE;\n"],
+        ["flag1 := FALSE;\n", "flag2 := FALSE;\n"],
+    ),
+    (
+        [],
+        [],
+    ),
+    (
+        ["flag1 := TRUE;", "", "", ""],
+        ["flag1 := TRUE;", "", "", "\n"],
+    ),
+    (
+        ["flag1 := TRUE;\r\n", "flag2 := TRUE;"],
+        ["flag1 := TRUE;\r\n", "flag2 := TRUE;\r\n"],
+    ),
+]
 
+
+@pytest.mark.parametrize("content,expected", content_final_newline)
+def test_final_newline(content, expected):
+    """Addition of final empty newline."""
     properties = {"insert_final_newline": True}
 
     rule = format_rules.FormatInsertFinalNewline(properties)
     rule.format(content)
 
-    assert content == [
-        "flag1 := FALSE;         \n",
-        "       flag2 := FALSE;         \n",
-        "flag3 := FALSE;\t\t\n",
-    ]
+    assert content == expected
 
 
 def test_end_of_line():

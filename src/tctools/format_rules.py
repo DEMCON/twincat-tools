@@ -1,4 +1,4 @@
-from typing import List, OrderedDict, Tuple
+from typing import List, OrderedDict, Tuple, Optional
 from abc import ABC, abstractmethod
 import re
 import math
@@ -25,9 +25,11 @@ class FormattingRule(ABC):
         self._corrections: List[Correction] = []
 
         # Universal properties:
-        self._end_of_line = self._properties.get("end_of_line", None)
+        self._end_of_line: Optional[str] = self._properties.get("end_of_line", None)
         options = {"lf": "\n", "cr": "\r", "crlf": "\r\n"}
-        self._line_ending = options.get(self._end_of_line, "\n")
+        self._line_ending: str = options.get(self._end_of_line, "\n")
+
+        self._re_any_line_ending = re.compile(r"(\r\n|\n|\r)")  # Find any full EOL
 
     @abstractmethod
     def format(self, content: List[str]):
@@ -133,25 +135,29 @@ class FormatInsertFinalNewline(FormattingRule):
     def __init__(self, *args):
         super().__init__(*args)
 
-        self._insert = self._properties.get("insert_final_newline", False)
+        self._insert_final_newline = self._properties.get("insert_final_newline", False)
 
     def format(self, content: List[str]):
-        if not self._insert:
+        if not self._insert_final_newline:
             return
 
-        if len(content) == 1 and content[0] == "":
+        if not content or len(content) == 1 and content[0] == "":
             return
 
-        if content[-1].endswith("\n") or content[-1].endswith("\r"):
-            return
+        idx = len(content) - 1
+        while idx >= 0:
+            if content[idx].endswith("\n") or content[idx].endswith("\r"):
+                return  # Newline found
+            if content[idx] == "":
+                idx -= 1  # Empty line, try the one before
+            else:
+                break  # Last content should be a newline, stay in function
 
-        if content[-1] == "" and (
-            content[-2].endswith("\n") or content[-2].endswith("\r")
-        ):
-            return  # Then the line before does it already
+        match = self._re_any_line_ending.search(content[0])
+        # Get present EOL from first line
+        eol = match.group(1) if match else self._line_ending
 
-        content[-1] += "\n"
-        # TODO: Support different file endings
+        content[-1] += eol
         self.add_correction("Block does not end with a newline", len(content) - 1)
 
 
