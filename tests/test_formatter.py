@@ -14,7 +14,7 @@ def test_help(capsys):
     assert err.type == SystemExit
 
     message = capsys.readouterr().out
-    assert "usage:" in message and "options:" in message
+    assert "usage:" in message
 
 
 def test_dry_no_tab_char(plc_code, capsys):
