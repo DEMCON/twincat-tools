@@ -153,7 +153,7 @@ class Formatter(TcTool):
 
         segments: List[Segment] = list(self.split_code_segments(content))
 
-        for kind, segment, name in segments:
+        for kind, segment, _ in segments:
             # Changes are done in-place
             self.format_segment(segment, kind)
 
@@ -187,7 +187,7 @@ class Formatter(TcTool):
         )  # Add end-of-path
 
         # Iterate over pairs of regions so we got the start and end together
-        for (rowcol_prev, kind_prev, name_prev), (rowcol, kind, name) in zip(
+        for (rowcol_prev, kind_prev, name_prev), (rowcol, _, _) in zip(
             regions[:-1], regions[1:]
         ):
             lines = content[rowcol_prev[0] : (rowcol[0] + 1)]  # Inclusive range

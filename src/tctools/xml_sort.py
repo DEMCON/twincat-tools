@@ -1,5 +1,4 @@
 import sys
-from pathlib import Path
 import logging
 
 from .common import common_argparser, find_files
@@ -48,7 +47,7 @@ def main(*args) -> int:
 
     if arguments.check:
         if sorter.files_to_alter == 0:
-            logger.info(f"No changes to be made in checked files!")
+            logger.info("No changes to be made in checked files!")
             return 0
 
         logger.info(f"{sorter.files_to_alter} path(s) can be re-sorted")

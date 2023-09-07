@@ -42,7 +42,7 @@ def main(*args) -> int:
 
     if arguments.check:
         if formatter.files_to_alter == 0:
-            logger.info(f"No changes to be made in checked files!")
+            logger.info("No changes to be made in checked files!")
             return 0
 
         logger.info(f"{formatter.files_to_alter} path(s) can be re-sorted")

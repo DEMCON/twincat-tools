@@ -2,7 +2,6 @@ from typing import Optional, List
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from lxml import etree
-from abc import ABC
 
 
 def common_argparser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
@@ -83,7 +82,7 @@ def find_files(args: "Namespace") -> List[Path]:
     return files
 
 
-class TcTool(ABC):
+class TcTool:
     """Base class for tools with shared functionality."""
 
     def __init__(self):
