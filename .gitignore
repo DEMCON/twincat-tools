@@ -12,6 +12,9 @@ build/
 venv/
 .venv/
 
+.coverage
+*.html
+
 
 # TwinCAT files
 *.*.bak
