@@ -9,6 +9,12 @@ import logging
 
 from .common import common_argparser, find_files
 from .format_class import Formatter, logger
+from .format_rules import (
+    FormatTabs,
+    FormatTrailingWhitespace,
+    FormatInsertFinalNewline,
+    FormatEndOfLine,
+)
 
 
 def parse_arguments(args):
@@ -33,6 +39,11 @@ def main(*args) -> int:
     logging.basicConfig(stream=sys.stdout)
     if arguments.loglevel:
         logger.setLevel(arguments.loglevel)
+
+    Formatter.register_rule(FormatTabs)
+    Formatter.register_rule(FormatTrailingWhitespace)
+    Formatter.register_rule(FormatInsertFinalNewline)
+    Formatter.register_rule(FormatEndOfLine)
 
     formatter = Formatter(
         quiet=arguments.quiet,

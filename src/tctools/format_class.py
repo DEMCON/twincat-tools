@@ -245,9 +245,3 @@ class Formatter(TcTool):
             for line_nr, message in corrections:
                 # `line_r` is zero-indexed
                 print(f"{self._file}{tag}:{line_nr + 1}\t{message}")
-
-
-Formatter.register_rule(FormatTabs)
-Formatter.register_rule(FormatTrailingWhitespace)
-Formatter.register_rule(FormatInsertFinalNewline)
-Formatter.register_rule(FormatEndOfLine)
