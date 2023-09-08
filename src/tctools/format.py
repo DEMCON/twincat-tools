@@ -15,7 +15,14 @@ def parse_arguments(args):
     """Parse CLI arguments for this entrypoint."""
     parser = common_argparser()
     parser.description = "Format the PLC code inside a TwinCAT source XML path."
-    parser.epilog = "Example: [program] ./MyTwinCATProject --filter *.TcPOU"
+    parser.epilog = "Example: [program] ./MyTwinCATProject"
+
+    parser.add_argument(
+        "--filter",
+        help="Target files only with these patterns (default: all TwinCAT PLC types)",
+        nargs="+",
+        default=["*.TcPOU", "*.TcGVL", "*.TcDUT"],
+    )
 
     return parser.parse_args(args)
 

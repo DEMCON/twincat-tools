@@ -15,6 +15,12 @@ def parse_arguments(args):
     )
 
     parser.add_argument(
+        "--filter",
+        help="Target files only with these patterns (default: .xml only)",
+        nargs="+",
+        default=["*.xml"],
+    )
+    parser.add_argument(
         "-n",
         "--skip-nodes",
         nargs="+",

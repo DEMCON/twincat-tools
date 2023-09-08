@@ -59,7 +59,7 @@ indent_size = 4
 Usage:
 
 ```cmd
-python -m tctools.format [file or folder, ...] [--check]
+python -m tctools.format [file or folder, ...] [--check] [--dry] [--filter [filters, ...]]
 ```
 
 Add `--help` for full instructions.

@@ -43,12 +43,6 @@ def common_argparser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
         default=False,
     )
     parser.add_argument(
-        "--filter",
-        help="Target files only with these extensions",
-        nargs="+",
-        default=["*.xml"],
-    )
-    parser.add_argument(
         "-l",
         "--log",
         dest="loglevel",
