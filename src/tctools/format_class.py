@@ -6,13 +6,7 @@ from enum import Enum
 import re
 
 from .common import TcTool
-from .format_rules import (
-    FormattingRule,
-    FormatTabs,
-    FormatTrailingWhitespace,
-    FormatInsertFinalNewline,
-    FormatEndOfLine,
-)
+from .format_rules import FormattingRule
 
 
 logger = getLogger("formatter")

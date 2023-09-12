@@ -201,10 +201,3 @@ class FormatEndOfLine(FormattingRule):
             self.add_correction(
                 f"{count} line endings need to be corrected to {eol}`", 0
             )
-
-
-class FormatWhitespaceAlign(FormattingRule):
-    """Assert whitespace aligns between code blocks.
-
-    Most typical usage is in input/output lists.
-    """
