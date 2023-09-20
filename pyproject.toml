@@ -20,8 +20,10 @@ classifiers = [
 dependencies = [
     "lxml~=4.9.3",
     "EditorConfig~=0.12.3",
+    "GItPython~=3.1.36",
 ]
 
 [project.scripts]
 format = "tctools.format:main"
 xml_sort = "tctools.xml_sort:main"
+git_info = "tctools.git_info:main"

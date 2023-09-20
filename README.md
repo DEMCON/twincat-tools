@@ -5,7 +5,9 @@
 
 This repository contains a small set of tools for developing TwinCAT projects.
 
-## XML Sorter
+## Tools
+
+### XML Sorter
 
 TwinCAT saves its project files somewhat arbitrarily, the order of elements is changed seemingly at random.
 Use this XML sorter before committing your changes to fix the XML layout and keep your Git history more clean.
@@ -18,11 +20,11 @@ python -m tctools.xml_sort [file or folder, ...] -r --ext tsproj xti plcproj --s
 
 Add `--help` for full instructions.
 
-### Notes
+#### Notes
 
 * Nodes with the attribute `xml:space="preserve"` are not touched
 
-### Differences with Ruud's XmlSorter
+#### Differences with Ruud's XmlSorter
 
 The precursor of this script is the XmlSorter made by Ruud, written in C#:
 https://github.com/DEMCON/XmlSorter
@@ -40,7 +42,7 @@ There are a couple of difference between this sorter and Ruud's:
 **None** of these appear problematic for TwinCAT.
 Projects can be opened and built again as expected, and when saved again the file will be as TwinCAT likes it.
 
-## Auto Formatter
+### Auto Formatter
 
 Use this to make consistent use of whitespace.
 Visual Studio with PLC doesn't do a lot of the things that other IDEs do, like removing trailing whitespace and making 
@@ -64,7 +66,7 @@ python -m tctools.format [file or folder, ...] [--check] [--dry] [--filter [filt
 
 Add `--help` for full instructions.
 
-### Valid options
+#### Valid options
 
 The following `.editorconfig` fields are considered:
 
@@ -75,3 +77,38 @@ The following `.editorconfig` fields are considered:
   * If true, whitespace at the end of lines is removed
 * `insert_final_newline`
   * If true, every code block must end with a newline
+
+### Git Info
+
+Use to insert Git version into source file based on a template, to make it available for compilation.
+
+Create a template file (e.g. `.TcGVL.template`), with `{{...}}` tags as placeholders for the version info.
+Then run the info tool (preferably as part of your build) to have it create a new file next to it.
+
+Usage:
+
+```cmd
+pyton -m tctools.git_info [template file] [--output [file]] [--repo [directory]]
+```
+
+Add `--help` for full instruction.
+
+The first Git repository up from the template file is used.
+
+#### Placeholders
+
+ * `GIT_HASH`: Hash of the last commit (full 40 hex characters)
+ * `GIT_HASH_SHORT`: First 8 characters of the last commit hash
+ * `GIT_DATE`: Datetime of the last commit
+ * `GIT_TAG`: Most recent tag of this branch
+ * `GIT_BRANCH`: Currently checked out branch
+ * `GIT_DESCRIPTION`: Result of `git describe --tags --always`
+ * `GIT_DESCRIPTION_DIRY`: Result of `git describe --tags --always --dirty`
+
+The Git description will look like: `v0.0.3a-4-g51994a8-dirty`.
+It mentions the last tags and the number of commits since, followed by the current hash.
+Finally, `-dirty` indicates there are still uncommitted changes.
+
+#### Notes
+
+ * Requires Git, likely required to be added to `PATH`. 

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.12">
+  <GVL Name="GVL_GitInfo" Id="{6148c389-a582-4f4e-b09f-ac76fcce8cac}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+{attribute 'global_init_slot' := '40500'}
+VAR_GLOBAL
+    tag         : STRING := '{{GIT_TAG}}';
+    gitVersion  : STRING := '{{GIT_DESCRIPTION}}';
+    branch      : STRING := '{{GIT_BRANCH}}';
+    commitDate  : STRING := '{{GIT_DATE}}';
+    commitHash  : STRING := '{{GIT_HASH}}';
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>
