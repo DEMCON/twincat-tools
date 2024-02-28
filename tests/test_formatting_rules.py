@@ -201,13 +201,13 @@ content_variables = [
     (
         [
             "    var1    : LREAL := 5.0;    // Comment",
-            "    anotherVar    : LREAL := 5.0;",
-            "    other   : LREAL;",
+            "    anotherVar    : BOOL := TRUE;",
+            "    other   : INT;  // Other comment",
         ],
         [
-            "    var1            : LREAL := 5.0;     // Comment",
-            "    anotherVar      : LREAL := 5.0;",
-            "    anotherVar      : LREAL",
+            "    var1        : LREAL := 5.0;     // Comment",
+            "    anotherVar  : BOOL := TRUE;",
+            "    other       : INT;              // Other comment",
         ],
     )
 ]

@@ -13,7 +13,7 @@ class FormattingRule(ABC):
     Extend and implement this class to check for and correct a specific error/style/etc.
 
     :cvar PRIORITY: Lower priority means a rule gets applied earlier.
-    :cvar WHOLE_FILE: If True, rule is applied to the entire while instead of just
+    :cvar WHOLE_FILE: If True, rule is applied to the entire file instead of just
                       code blocks.
     """
 
@@ -26,7 +26,14 @@ class FormattingRule(ABC):
 
         # Universal properties:
 
-        self._indent_size: int = int(self._properties.get("tab_width", "4"))
+        # Number of spaces per indentation:
+        self._indent_size: int = int(self._properties.get("indent_size", "4"))
+        # Number of spaces per tab character:
+        self._tab_width: int = (
+            int(self._properties["tab_width"])
+            if "tab_width" in self._properties
+            else self._indent_size
+        )
 
         self._indent_style: Optional[str] = self._properties.get("indent_style", None)
 
@@ -39,6 +46,14 @@ class FormattingRule(ABC):
         self._line_ending: str = options.get(self._end_of_line, "\n")
 
         self._re_any_line_ending = re.compile(r"(\r\n|\n|\r)")  # Find any full EOL
+
+    @property
+    def actual_indent_size(self) -> int:
+        """Tab width for style=tabs or indent size for style=spaces."""
+        if self._indent_style == "tab":
+            return self._tab_width
+
+        return self._indent_size
 
     @abstractmethod
     def format(self, content: List[str]):
@@ -85,7 +100,7 @@ class FormatTabs(FormattingRule):
             while (matches := re_search.search(line, pos)) is not None:
                 pos = matches.end()
                 num_chars = (
-                    int(math.ceil((matches.end() - matches.start()) / 4))
+                    int(math.ceil((matches.end() - matches.start()) / self._tab_width))
                     if self._indent_str == "\t"
                     else self._indent_size - (matches.start() % self._indent_size)
                 )
@@ -207,65 +222,80 @@ class FormatEndOfLine(FormattingRule):
 class FormatVariablesAlign(FormattingRule):
     """Assert whitespace align in variable declarations.
 
-    Target formatting will be split on the ":" and the inline comment.
+    Target formatting will create columns on the ":" and the inline comment.
     """
 
     def __init__(self, *args):
         super().__init__(*args)
 
         self._re_chunks = [
-            (":", re.compile(r":(?!=)")),
-            ("//", re.compile(r"\/\/")),
+            re.compile(r":(?!=)"),  # Match ":", but not ":="
+            re.compile(r"//"),  # Match "//"
         ]
 
     def format(self, content: List[str]):
+        # TODO: Identify argument lists
         self.format_argument_list(content)
         return
 
     def format_argument_list(self, content: List[str]):
-        content_chunks = [self._split_line(line) for line in content]
+        content_chunks = [
+            [
+                chunk.rstrip()
+                for chunk in self._split_by_ordered_regex(line, self._re_chunks)
+            ]
+            for line in content
+        ]
 
-        max_sizes = [
+        max_chunk_sizes = [
             max([len(line_chunks[i]) for line_chunks in content_chunks])
             for i in range(3)
-        ]  # Biggest size of all lines per chunk
+        ]  # Biggest size of each chunk for all lines
 
-        indents = [1]  # Number of indents per chunk
-        for size in max_sizes[:-1]:
-            new_indent = indents[-1]
-            new_indent += math.ceil((size + 2) / self._indent_size)
-            indents.append(new_indent)
+        new_indent = 0
+        chunk_indent_levels = [new_indent]  # Number of indentations for each chunk
+        for size in max_chunk_sizes[:-1]:
+            new_indent += math.ceil((size + 2) / self.actual_indent_size)
+            chunk_indent_levels.append(new_indent)
 
         for i, line_chunks in enumerate(content_chunks):
             new_line = ""
-            for chunk, indent in zip(line_chunks, indents):
+            for chunk, indent in zip(line_chunks, chunk_indent_levels):
                 if chunk:
-                    new_line = self._pad_to_indent_level(new_line, indent)
+                    if indent > 0:
+                        new_line += self._pad_to_indent_level(new_line, indent)
                     new_line += chunk
 
             content[i] = new_line
 
-    def _split_line(self, line: str) -> List[str]:
-        """Split variable declaration string.
+    @staticmethod
+    def _split_by_ordered_regex(line: str, patterns: List) -> List[str]:
+        """Split line into bits through a list of patterns.
 
-        The chunks returned are [name, type + value, comment].
+        Patters are followed in strict order.
+        The patter matches are kept, in the next chunk.
+        Returned list will always have one more element than the number of patterns.
         """
         pos = 0
         chunks = []
-        for sep, regex in self._re_chunks:
-            match = regex.search(line, pos)
-            if match:
-                substr = line[pos : match.end()]
-                chunks.append(substr.strip() + sep)
-                pos = match.end()
-            else:
+        for pattern in patterns:
+            if pos >= len(line):
                 chunks.append("")
+                continue
 
-        if pos < len(line):
-            substr = line[pos:]
-            chunks.append(substr.strip())
-        else:
-            chunks.append("")
+            match = pattern.search(line, pos)
+            if match:
+                substr = line[pos : match.start()]
+                pos = match.start()
+            else:
+                substr = line[pos:]
+                pos = len(line)
+
+            chunks.append(substr)
+
+        # Add remaining string as final chunk:
+        substr = line[pos:]
+        chunks.append(substr)
 
         return chunks
 
@@ -281,15 +311,21 @@ class FormatVariablesAlign(FormattingRule):
         num = self._indent_size - col % self._indent_size
         return self._indent_str[0] * num
 
-    def _pad_to_indent_level(self, line: str, end_level: int):
+    def _pad_to_indent_level(self, line: str, tab_index: int):
         """Add indents to the end of a string to reach a tab index.
 
         ``end_level = 1`` would pad until ``line`` is e.g. 4 characters.
         """
-        while end_level * self._indent_size - len(line) > 0:
-            line += self._get_indent_string(col=len(line))
+        index = math.floor(len(line) / self.actual_indent_size)
 
-        return line
+        padding_str = ""
+        for i in range(tab_index - index):
+            new_indent = (
+                self._get_indent_string(col=len(line)) if i == 0 else self._indent_str
+            )
+            padding_str += new_indent
+
+        return padding_str
 
 
 class FormatWhitespaceAlign(FormattingRule):
