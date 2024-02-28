@@ -14,6 +14,7 @@ from .format_rules import (
     FormatTrailingWhitespace,
     FormatInsertFinalNewline,
     FormatEndOfLine,
+    FormatVariablesAlign,
 )
 
 
@@ -44,6 +45,7 @@ def main(*args) -> int:
     Formatter.register_rule(FormatTrailingWhitespace)
     Formatter.register_rule(FormatInsertFinalNewline)
     Formatter.register_rule(FormatEndOfLine)
+    Formatter.register_rule(FormatVariablesAlign)
 
     formatter = Formatter(
         quiet=arguments.quiet,
