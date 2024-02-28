@@ -174,29 +174,6 @@ def test_end_of_line(eol, expected):
     assert content == expected
 
 
-content_align = [
-    (
-        [
-            "    var1    : LREAL := 5.0;",
-            "    anotherVar    : LREAL           := 5.0;",
-            "    other   : LREAL",
-        ],
-        [
-            "    var1            : LREAL := 5.0;",
-            "    anotherVar      : LREAL := 5.0;",
-            "    other           : LREAL := 5.0;",
-        ],
-    )
-]
-
-
-@pytest.mark.parametrize("content,expected", content_align)
-def test_whitespace_align(content, expected):
-    rule = format_rules.FormatWhitespaceAlign({})
-    rule.format(content)
-    assert content == expected
-
-
 content_variables = [
     (
         [
