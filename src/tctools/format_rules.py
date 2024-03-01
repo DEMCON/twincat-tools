@@ -1,7 +1,9 @@
-from typing import List, OrderedDict, Tuple, Optional
+from typing import TYPE_CHECKING, List, OrderedDict, Tuple, Optional
 from abc import ABC, abstractmethod
 import re
 import math
+
+from .format_extras import Kind
 
 
 Correction = Tuple[int, str]
@@ -56,10 +58,11 @@ class FormattingRule(ABC):
         return self._indent_size
 
     @abstractmethod
-    def format(self, content: List[str]):
+    def format(self, content: List[str], kind: Optional[Kind] = None):
         """Fun rule to format text.
 
         :param content: Text to format (changed in place!)
+        :param kind:    Kind of content
         """
         pass
 
@@ -86,7 +89,7 @@ class FormatTabs(FormattingRule):
     def __init__(self, *args):
         super().__init__(*args)
 
-    def format(self, content: List[str]):
+    def format(self, content: List[str], kind: Optional[Kind] = None):
         if self._indent_style == "tab":
             re_search = self._re_spaces
         elif self._indent_style == "space":
@@ -135,7 +138,7 @@ class FormatTrailingWhitespace(FormattingRule):
 
         self._remove_tr_ws = self._properties.get("trim_trailing_whitespace", False)
 
-    def format(self, content: List[str]):
+    def format(self, content: List[str], kind: Optional[Kind] = None):
         if not self._remove_tr_ws:
             return  # Nothing to do
         for i, line in enumerate(content):
@@ -153,7 +156,7 @@ class FormatInsertFinalNewline(FormattingRule):
 
         self._insert_final_newline = self._properties.get("insert_final_newline", False)
 
-    def format(self, content: List[str]):
+    def format(self, content: List[str], kind: Optional[Kind] = None):
         if not self._insert_final_newline:
             return
 
@@ -200,7 +203,7 @@ class FormatEndOfLine(FormattingRule):
             else:
                 raise ValueError(f"Unrecognized file ending `{self._line_ending}`")
 
-    def format(self, content: List[str]):
+    def format(self, content: List[str], kind: Optional[Kind] = None):
         if self._end_of_line is None:
             return  # Nothing specified
 
@@ -222,7 +225,7 @@ class FormatEndOfLine(FormattingRule):
 class FormatVariablesAlign(FormattingRule):
     """Assert whitespace align in variable declarations.
 
-    Target formatting will create columns on the ":" and the inline comment.
+    Target formatting will create columns on the ":" and the "//" of comments.
     """
 
     def __init__(self, *args):
@@ -233,12 +236,14 @@ class FormatVariablesAlign(FormattingRule):
             re.compile(r"//"),  # Match "//"
         ]
 
-    def format(self, content: List[str]):
-        # TODO: Identify argument lists
+    def format(self, content: List[str], kind: Optional[Kind] = None):
+        if kind is None or kind is not Kind.DECLARATION:
+            return  # Don't touch, only affect variable listing
+
         self.format_argument_list(content)
-        return
 
     def format_argument_list(self, content: List[str]):
+        """Format entire declaration section"""
         content_chunks = [
             [
                 chunk.rstrip()

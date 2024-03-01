@@ -1,8 +1,9 @@
-"""Test the formatting rules without building the full applicaton."""
+"""Test the formatting rules without building the full application."""
 
 import pytest
 
 from tctools import format_rules
+from tctools.format_class import Kind
 
 
 def test_replace_tab():
@@ -177,14 +178,24 @@ def test_end_of_line(eol, expected):
 content_variables = [
     (
         [
+            "FUNCTION_BLOCK FB_Cool EXTENDS FB_MyBlock2",
+            "// Untouched",
+            "VAR_INPUT_OUTPUT",
             "    var1    : LREAL := 5.0;    // Comment",
-            "    anotherVar    : BOOL := TRUE;",
+            "    anotherVar    : FB_MyBlock(va1 := 1, var2 := 2);",
+            "    // Untouched",
             "    other   : INT;  // Other comment",
+            "END_VAR",
         ],
         [
-            "    var1        : LREAL := 5.0;     // Comment",
-            "    anotherVar  : BOOL := TRUE;",
-            "    other       : INT;              // Other comment",
+            "FUNCTION_BLOCK FB_Cool EXTENDS FB_MyBlock2",
+            "// Untouched",
+            "VAR_INPUT_OUTPUT",
+            "    var1        : LREAL := 5.0;                     // Comment",
+            "    anotherVar  : FB_MyBlock(va1 := 1, var2 := 2);",
+            "    // Untouched",
+            "    other       : INT;                              // Other comment",
+            "END_VAR",
         ],
     )
 ]
@@ -193,5 +204,5 @@ content_variables = [
 @pytest.mark.parametrize("content,expected", content_variables)
 def test_variable_align(content, expected):
     rule = format_rules.FormatVariablesAlign({})
-    rule.format(content)
+    rule.format(content, Kind.DECLARATION)
     assert content == expected
