@@ -1,21 +1,15 @@
 from editorconfig import get_properties
 from logging import getLogger
-from typing import List, Tuple, Type
+from typing import List, Tuple, Type, Optional
 from collections import OrderedDict
-from enum import Enum
 import re
 
 from .common import TcTool
 from .format_rules import FormattingRule
+from .format_extras import Kind
 
 
 logger = getLogger("formatter")
-
-
-class Kind(Enum):
-    XML = (0,)
-    DECLARATION = (1,)
-    IMPLEMENTATION = 2
 
 
 RowCol = Tuple[int, int]
@@ -227,9 +221,9 @@ class Formatter(TcTool):
 
                 self.apply_rule(rule, content, kind)
 
-    def apply_rule(self, rule, content, kind=None):
+    def apply_rule(self, rule, content, kind: Optional[Kind] = None):
         """Run a rule over some content and handle results."""
-        rule.format(content)
+        rule.format(content, kind)
         corrections = rule.consume_corrections()
         self._number_corrections += len(corrections)
 
