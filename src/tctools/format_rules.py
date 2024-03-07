@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, List, OrderedDict, Tuple, Optional
+from typing import List, Dict, OrderedDict, Tuple, Optional
 from abc import ABC, abstractmethod
 import re
 import math
@@ -231,10 +231,16 @@ class FormatVariablesAlign(FormattingRule):
     def __init__(self, *args):
         super().__init__(*args)
 
-        self._re_chunks = [
-            re.compile(r":(?!=)"),  # Match ":", but not ":="
-            re.compile(r"//"),  # Match "//"
-        ]
+        self._re_variable = re.compile(
+            r"""
+                ^\s*                # Start of string + any ws
+                (\S+)               # Sequence of non-ws
+                \s*:                # Any ws + literal ":"
+                \s*(.+);            # Any ws + any sequence + literal ";"
+                \s*([^\r\n]+)?      # Any ws + (Optional) any sequence
+        """,
+            re.VERBOSE,
+        )
 
     def format(self, content: List[str], kind: Optional[Kind] = None):
         if kind is None or kind is not Kind.DECLARATION:
@@ -244,26 +250,37 @@ class FormatVariablesAlign(FormattingRule):
 
     def format_argument_list(self, content: List[str]):
         """Format entire declaration section"""
-        content_chunks = [
-            [
-                chunk.rstrip()
-                for chunk in self._split_by_ordered_regex(line, self._re_chunks)
-            ]
-            for line in content
-        ]
 
-        max_chunk_sizes = [
-            max([len(line_chunks[i]) for line_chunks in content_chunks])
-            for i in range(3)
-        ]  # Biggest size of each chunk for all lines
+        # Get variable definitions, split up and keyed by content index:
+        variable_definitions: Dict[int, List[Optional[str]]] = {}
 
-        new_indent = 0
+        # Biggest size of each chunk across all lines:
+        max_chunk_sizes: List[Optional[int]] = [None] * 3
+
+        for i, line in enumerate(content):
+            match = self._re_variable.match(line)
+            if not match:
+                continue
+
+            chunks = list(match.groups())
+            chunks[1] = f": {chunks[1]};"  # Bring match the matched characters
+
+            variable_definitions[i] = chunks
+            for j, chunk in enumerate(chunks):
+                if not chunk:
+                    continue
+                if max_chunk_sizes[j] is None or len(chunk) > max_chunk_sizes[j]:
+                    max_chunk_sizes[j] = len(chunk)
+
+        new_indent = 1  # Variable name should start with one tab
         chunk_indent_levels = [new_indent]  # Number of indentations for each chunk
         for size in max_chunk_sizes[:-1]:
             new_indent += math.ceil((size + 2) / self.actual_indent_size)
             chunk_indent_levels.append(new_indent)
 
-        for i, line_chunks in enumerate(content_chunks):
+        # TODO: Handle capture of EOL symbol
+
+        for i, line_chunks in variable_definitions.items():
             new_line = ""
             for chunk, indent in zip(line_chunks, chunk_indent_levels):
                 if chunk:
@@ -272,37 +289,6 @@ class FormatVariablesAlign(FormattingRule):
                     new_line += chunk
 
             content[i] = new_line
-
-    @staticmethod
-    def _split_by_ordered_regex(line: str, patterns: List) -> List[str]:
-        """Split line into bits through a list of patterns.
-
-        Patters are followed in strict order.
-        The patter matches are kept, in the next chunk.
-        Returned list will always have one more element than the number of patterns.
-        """
-        pos = 0
-        chunks = []
-        for pattern in patterns:
-            if pos >= len(line):
-                chunks.append("")
-                continue
-
-            match = pattern.search(line, pos)
-            if match:
-                substr = line[pos : match.start()]
-                pos = match.start()
-            else:
-                substr = line[pos:]
-                pos = len(line)
-
-            chunks.append(substr)
-
-        # Add remaining string as final chunk:
-        substr = line[pos:]
-        chunks.append(substr)
-
-        return chunks
 
     def _get_indent_string(self, col=0) -> str:
         """Return indent character(s), based on settings and current column.
