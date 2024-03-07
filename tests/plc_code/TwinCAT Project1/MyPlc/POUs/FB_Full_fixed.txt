@@ -3,10 +3,10 @@
   <POU Name="FB_Full" Id="{db56d684-bc10-4696-841c-dbe98e4576b1}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_Full
 VAR_INPUT
-    myInput         : LREAL;
+    myInput     : LREAL;
 END_VAR
 VAR_OUTPUT
-    myOutput        : BOOL := FALSE;
+    myOutput    : BOOL := FALSE;
 END_VAR
 VAR
 END_VAR

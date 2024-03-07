@@ -242,6 +242,8 @@ class FormatVariablesAlign(FormattingRule):
             re.VERBOSE,
         )
 
+        self._re_newlines = re.compile(r"[\r\n]+$")
+
     def format(self, content: List[str], kind: Optional[Kind] = None):
         if kind is None or kind is not Kind.DECLARATION:
             return  # Don't touch, only affect variable listing
@@ -272,13 +274,14 @@ class FormatVariablesAlign(FormattingRule):
                 if max_chunk_sizes[j] is None or len(chunk) > max_chunk_sizes[j]:
                     max_chunk_sizes[j] = len(chunk)
 
+        if not variable_definitions:
+            return  # No variables found, nothing to do
+
         new_indent = 1  # Variable name should start with one tab
         chunk_indent_levels = [new_indent]  # Number of indentations for each chunk
         for size in max_chunk_sizes[:-1]:
             new_indent += math.ceil((size + 2) / self.actual_indent_size)
             chunk_indent_levels.append(new_indent)
-
-        # TODO: Handle capture of EOL symbol
 
         for i, line_chunks in variable_definitions.items():
             new_line = ""
@@ -287,6 +290,10 @@ class FormatVariablesAlign(FormattingRule):
                     if indent > 0:
                         new_line += self._pad_to_indent_level(new_line, indent)
                     new_line += chunk
+
+            if match_eol := self._re_newlines.search(content[i]):
+                # The newline didn't get matched in the variable chunks, put it back:
+                new_line += match_eol.group()
 
             content[i] = new_line
 
