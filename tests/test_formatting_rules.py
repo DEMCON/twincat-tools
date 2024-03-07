@@ -191,11 +191,27 @@ content_variables = [
             "FUNCTION_BLOCK FB_Cool EXTENDS FB_MyBlock2\n",
             "// Untouched\n",
             "VAR_IN_OUT\n",
-            "    var1        : LREAL := 5.0;                         // Comment\r\n",
+            "    var1        : LREAL := 5.0;                     // Comment\r\n",
             "    anotherVar  : FB_MyBlock(va1 := 1, var2 := 2);\n",
             "    // Untouched\n",
-            "    other       : INT;                                  // Other comment\n",
+            "    other       : INT;                              // Other comment\n",
             "END_VAR\n",
+        ],
+    ),
+    (
+        [
+            "METHOD Empty\n",
+            "VAR_IN\n",
+            "\n",
+            "VAR_OUT\n",
+            "",
+        ],
+        [
+            "METHOD Empty\n",
+            "VAR_IN\n",
+            "\n",
+            "VAR_OUT\n",
+            "",
         ],
     )
 ]
