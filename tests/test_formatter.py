@@ -242,7 +242,7 @@ def test_reformat_eol(plc_code, eol):
         "</TcPlcObject>",
     ]
 
-    file = plc_code / "TwinCAT Project1" / "MyPlc" / "POUs" / f"FB_Test.TcPOU"
+    file = plc_code / "TwinCAT Project1" / "MyPlc" / "POUs" / "FB_Test.TcPOU"
     file.write_bytes(write_eol.join(content_list).encode())
 
     tctools.format.main(str(file))
