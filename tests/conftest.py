@@ -6,7 +6,6 @@ import pytest
 import shutil
 from pathlib import Path
 from typing import List
-import re
 
 
 @pytest.fixture

@@ -182,9 +182,9 @@ content_variables = [
             "// Untouched\n",
             "VAR_IN_OUT\n",
             "    var1    : LREAL := 5.0;    // Comment\r\n",
-            "    anotherVar    : FB_MyBlock(va1 := 1, var2 := 2);\n",
+            "anotherVar    : FB_MyBlock(va1 := 1, var2 := 2);\n",
             "    // Untouched\n",
-            "    other   : INT;  // Other comment\n",
+            "    other \t\t : INT;  // Other comment\n",
             "END_VAR\n",
         ],
         [
@@ -197,6 +197,30 @@ content_variables = [
             "    other       : INT;                              // Other comment\n",
             "END_VAR\n",
         ],
+        {},
+    ),
+    (
+        [
+            "FUNCTION_BLOCK FB_Cool EXTENDS FB_MyBlock2\n",
+            "//\tUntouched\n",
+            "VAR_IN_OUT\n",
+            "\tvar1 : LREAL := 5.0;// Comment\r\n",
+            "anotherVar\t: \t FB_MyBlock(va1 := 1, var2 := 2);\n",
+            "\t// Untouched\n",
+            "\tother\t\t:\t\tINT;\t\t\t// Other comment\n",
+            "END_VAR\n",
+        ],
+        [
+            "FUNCTION_BLOCK FB_Cool EXTENDS FB_MyBlock2\n",
+            "//\tUntouched\n",
+            "VAR_IN_OUT\n",
+            "\tvar1\t\t\t: LREAL := 5.0;\t\t\t\t\t\t\t\t// Comment\r\n",
+            "\tanotherVar\t\t: FB_MyBlock(va1 := 1, var2 := 2);\n",
+            "\t// Untouched\n",
+            "\tother\t\t\t: INT;\t\t\t\t\t\t\t\t\t\t// Other comment\n",
+            "END_VAR\n",
+        ],
+        {"indent_style": "tab"},
     ),
     (
         [
@@ -213,12 +237,13 @@ content_variables = [
             "VAR_OUT\n",
             "",
         ],
-    )
+        {},
+    ),
 ]
 
 
-@pytest.mark.parametrize("content,expected", content_variables)
-def test_variable_align(content, expected):
-    rule = format_rules.FormatVariablesAlign({})
+@pytest.mark.parametrize("content,expected,settings", content_variables)
+def test_variable_align(content, expected, settings):
+    rule = format_rules.FormatVariablesAlign(settings)
     rule.format(content, Kind.DECLARATION)
     assert content == expected

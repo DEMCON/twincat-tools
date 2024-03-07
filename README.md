@@ -70,8 +70,8 @@ Add `--help` for full instructions.
 
 The following `.editorconfig` fields are considered:
 
-* `tab_style`
-  * If style is set space, any tab character will be replaced
+* `indent_style`
+  * If style is set to space, any tab character will be replaced
   * If style is set to tab, any `tab_width`-number of spaces will be replaced by a tab
 * `trim_trailing_whitespace`
   * If true, whitespace at the end of lines is removed
