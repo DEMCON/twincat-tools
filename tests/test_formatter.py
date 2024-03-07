@@ -230,7 +230,7 @@ def test_reformat_eol(plc_code, eol):
         '<POU Name="FB_Test>',
         "<Declaration><![CDATA[FUNCTION_BLOCK FB_Example",
         "VAR_OUTPUT",
-        "    out         : BOOL;",
+        "    out     : BOOL;",
         "END_VAR",
         "]]></Declaration>",
         "<Implementation>",
