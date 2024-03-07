@@ -117,9 +117,11 @@ class FormatTabs(FormattingRule):
 
             if count > 0:
                 self.add_correction(
-                    "Line contains an indent that should be a tab"
-                    if self._indent_str == "\t"
-                    else "Line contains a tab that should be spaces",
+                    (
+                        "Line contains an indent that should be a tab"
+                        if self._indent_str == "\t"
+                        else "Line contains a tab that should be spaces"
+                    ),
                     i,
                 )
                 content[i] = line
