@@ -15,6 +15,7 @@ from .format_rules import (
     FormatInsertFinalNewline,
     FormatEndOfLine,
     FormatVariablesAlign,
+    FormatConditionalParentheses,
 )
 
 
@@ -46,6 +47,7 @@ def main(*args) -> int:
     Formatter.register_rule(FormatInsertFinalNewline)
     Formatter.register_rule(FormatEndOfLine)
     Formatter.register_rule(FormatVariablesAlign)
+    Formatter.register_rule(FormatConditionalParentheses)
 
     formatter = Formatter(
         quiet=arguments.quiet,

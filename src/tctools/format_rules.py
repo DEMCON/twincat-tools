@@ -340,22 +340,24 @@ class FormatConditionalParentheses(FormattingRule):
 
         self._re_needs_parentheses = re.compile(
             r"""
-                ^                       # Look for start of string or new line
-                (\s*IF\s+)              # Match IF with surrounding ws
-                ([^(\r\n].+?[^)\r\n])   # Match any characters NOT whitin ()
-                (\s+THEN)               # Match THEN with preceding ws
+                ^               # Look for start of string or new line
+                \s*IF\s+        # Match IF with surrounding ws
+                ([^(\r\n].+?)   # Match any characters NOT starting with (
+                                # We cannot match the closing bracket, as this could be
+                                # from a function call
+                \s+THEN         # Match THEN with preceding ws
             """,
-            re.VERBOSE | re.MULTILINE
+            re.VERBOSE | re.MULTILINE,
         )
 
         self._re_removes_parentheses = re.compile(
             r"""
                 ^                       # Look for start of string or new line
-                (\s*IF\s+)              # Match IF with surrounding ws
+                \s*IF\s*                # Match IF with surrounding ws
                 \((.+)\)                # Match any characters whitin ()
-                (\s+THEN)               # Match THEN with preceding ws
+                \s*THEN                 # Match THEN with preceding ws
             """,
-            re.VERBOSE | re.MULTILINE
+            re.VERBOSE | re.MULTILINE,
         )
 
     def format(self, content: List[str], kind: Optional[Kind] = None):
@@ -364,12 +366,27 @@ class FormatConditionalParentheses(FormattingRule):
 
         if self._parentheses:
             pattern = self._re_needs_parentheses
-            replace = r"\1(\2)\3"
         else:
             pattern = self._re_removes_parentheses
-            replace = r"\1\2\3"
 
         for i, line in enumerate(content):
-            line_new, replacements = pattern.subn(replace, line)
-            if replacements > 0:
-                content[i] = line_new
+            # Do a manual match + replace, instead of e.g. subn(), because we might
+            # need to add extra spaces after removing parentheses
+            if match := pattern.search(line):
+                prefix = line[: match.start(1)]
+                condition = match.group(1)
+                suffix = line[match.end(1) :]
+
+                if self._parentheses:
+                    condition = "(" + condition + ")"
+                else:
+                    prefix = prefix[:-1]  # Remove parentheses
+                    suffix = suffix[1:]
+
+                    # Removing the () could cause a syntax error:
+                    if not prefix.endswith(" "):
+                        prefix += " "
+                    if not suffix.startswith(" "):
+                        suffix = " " + suffix
+
+                content[i] = prefix + condition + suffix
