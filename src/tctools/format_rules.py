@@ -340,22 +340,30 @@ class FormatConditionalParentheses(FormattingRule):
 
         self._re_needs_parentheses = re.compile(
             r"""
-                ^               # Look for start of string or new line
-                \s*IF\s+        # Match IF with surrounding ws
-                ([^(\r\n].+?)   # Match any characters NOT starting with (
-                                # We cannot match the closing bracket, as this could be
-                                # from a function call
-                \s+THEN         # Match THEN with preceding ws
+                # Look for start of string or new line:
+                ^
+                # Match keyword with surrounding ws:
+                \s*(?:IF|WHILE|CASE)\s+
+                # Match any characters NOT starting with "("
+                # We cannot match the closing bracket, as this could be from a
+                # function call
+                ([^(\r\n].+?)
+                # Match keyword with preceding ws:
+                \s+(?:THEN|DO|OF)
             """,
             re.VERBOSE | re.MULTILINE,
         )
 
         self._re_removes_parentheses = re.compile(
             r"""
-                ^                       # Look for start of string or new line
-                \s*IF\s*                # Match IF with surrounding ws
-                \((.+)\)                # Match any characters whitin ()
-                \s*THEN                 # Match THEN with preceding ws
+                # Look for start of string or new line:
+                ^
+                # Match IF with surrounding ws:
+                \s*(?:IF|WHILE|CASE)\s*
+                # Match any characters within ():
+                \((.+)\)
+                # Match THEN with preceding ws:
+                \s*(?:THEN|DO|OF)
             """,
             re.VERBOSE | re.MULTILINE,
         )
