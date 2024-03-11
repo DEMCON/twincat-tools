@@ -78,6 +78,12 @@ The following universal `.editorconfig` fields are considered:
 * `insert_final_newline`
   * If true, every code block must end with a newline
 
+And The following unofficial (custom) `.editorconfig` fields are used:
+
+* `parentheses_conditionals`
+  * If true, parentheses are enforced inside if-statements (`IF (condition = 1) THEN...`)
+  * If false, parentheses inside if-statements are removed (`IF condition = 1 THEN...`)
+
 When a config property is not set, the formatter will typically take no action.
 For example, not specifying `indent_style` (or using `unset`) will result in no whitespace conversions at all.
 
