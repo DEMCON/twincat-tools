@@ -68,15 +68,22 @@ Add `--help` for full instructions.
 
 #### Valid options
 
-The following `.editorconfig` fields are considered:
+The following universal `.editorconfig` fields are considered:
 
 * `indent_style`
-  * If style is set to space, any tab character will be replaced
+  * If style is set to space, any tab character will be replaced by `tab_width` number of spaces
   * If style is set to tab, any `tab_width`-number of spaces will be replaced by a tab
 * `trim_trailing_whitespace`
   * If true, whitespace at the end of lines is removed
 * `insert_final_newline`
   * If true, every code block must end with a newline
+
+When a config property is not set, the formatter will typically take no action.
+For example, not specifying `indent_style` (or using `unset`) will result in no whitespace conversions at all.
+
+Aside from these options, it will:
+
+* Align variables in a declaration (by variable type and comment)
 
 ### Git Info
 
