@@ -326,3 +326,50 @@ class FormatVariablesAlign(FormattingRule):
             padding_str += new_indent
 
         return padding_str
+
+
+class FormatConditionalParentheses(FormattingRule):
+    """Formatter to make uses of parentheses inside IF, CASE and WHILE consistent."""
+
+    def __init__(self, *args):
+        super().__init__(*args)
+
+        self._parentheses = self._properties.get("parentheses_conditionals", None)
+
+        # Regex to find conditional inside single lines:
+
+        self._re_needs_parentheses = re.compile(
+            r"""
+                ^                       # Look for start of string or new line
+                (\s*IF\s+)              # Match IF with surrounding ws
+                ([^(\r\n].+?[^)\r\n])   # Match any characters NOT whitin ()
+                (\s+THEN)               # Match THEN with preceding ws
+            """,
+            re.VERBOSE | re.MULTILINE
+        )
+
+        self._re_removes_parentheses = re.compile(
+            r"""
+                ^                       # Look for start of string or new line
+                (\s*IF\s+)              # Match IF with surrounding ws
+                \((.+)\)                # Match any characters whitin ()
+                (\s+THEN)               # Match THEN with preceding ws
+            """,
+            re.VERBOSE | re.MULTILINE
+        )
+
+    def format(self, content: List[str], kind: Optional[Kind] = None):
+        if self._parentheses is None:
+            return  # Nothing to do
+
+        if self._parentheses:
+            pattern = self._re_needs_parentheses
+            replace = r"\1(\2)\3"
+        else:
+            pattern = self._re_removes_parentheses
+            replace = r"\1\2\3"
+
+        for i, line in enumerate(content):
+            line_new, replacements = pattern.subn(replace, line)
+            if replacements > 0:
+                content[i] = line_new

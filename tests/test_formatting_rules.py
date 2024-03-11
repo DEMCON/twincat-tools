@@ -247,3 +247,56 @@ def test_variable_align(content, expected, settings):
     rule = format_rules.FormatVariablesAlign(settings)
     rule.format(content, Kind.DECLARATION)
     assert content == expected
+
+
+content_parentheses = [
+    (
+        [
+            "IF inputs.button = 1 THEN\n",
+            "    output.led := 1;\n",
+            "END_IF\n",
+        ],
+        [
+            "IF (inputs.button = 1) THEN\n",
+            "    output.led := 1;\n",
+            "END_IF\n",
+        ],
+    ),
+    (
+        [
+            "IF inputs.button = 1 THEN // comment!\n",
+        ],
+        [
+            "IF (inputs.button = 1) THEN // comment!\n",
+        ],
+    ),
+    (
+        [
+            "IF inputs.button = 1 THEN\r\n",
+        ],
+        [
+            "IF(inputs.button = 1)THEN\r\n",
+        ],
+    ),
+]
+
+
+@pytest.mark.parametrize("content,expected", content_parentheses)
+def test_parentheses_add(content, expected):
+    rule = format_rules.FormatConditionalParentheses({"parentheses_conditionals": True})
+    rule.format(content)
+    assert content == expected
+
+
+@pytest.mark.parametrize("expected,content", content_parentheses)
+def test_parentheses_remove(expected, content):
+    rule = format_rules.FormatConditionalParentheses({"parentheses_conditionals": False})
+    rule.format(content)
+    assert content == expected
+
+
+def test_parentheses_remove_no_ws():
+    rule = format_rules.FormatConditionalParentheses({"parentheses_conditionals": False})
+    content = ["IF(inputs.button = 1)THEN"]
+    rule.format(content)
+    assert content == ["IF inputs.button = 1 THEN"]
