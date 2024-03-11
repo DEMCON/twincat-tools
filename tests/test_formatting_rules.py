@@ -279,6 +279,22 @@ content_parentheses = [
             "IF (func(arg1 := 1, args2 := func2())) THEN\n",
         ],
     ),
+    (
+        [
+            "WHILE func() DO // comment!\n",
+        ],
+        [
+            "WHILE (func()) DO // comment!\n",
+        ],
+    ),
+    (
+        [
+            "CASE idx OF\n",
+        ],
+        [
+            "CASE (idx) OF\n",
+        ],
+    ),
     # (  # This case fails, because we cannot identify matching parentheses:
     #     [
     #         "IF (1+1)*2 = 3*(x-1) THEN\n",
