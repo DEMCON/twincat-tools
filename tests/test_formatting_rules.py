@@ -110,9 +110,9 @@ def test_final_newline(content, expected):
     properties = {"insert_final_newline": True}
 
     rule = format_rules.FormatInsertFinalNewline(properties)
-    rule.format(content)
-
-    assert content == expected
+    content_new = content.copy()
+    rule.format(content_new)
+    assert content_new == expected
 
 
 content_eol = [
@@ -170,9 +170,9 @@ def test_end_of_line(eol, expected):
 
     content = content_before.copy()
     rule = format_rules.FormatEndOfLine({"end_of_line": eol})
-    rule.format(content)
-
-    assert content == expected
+    content_new = content.copy()
+    rule.format(content_new)
+    assert content_new == expected
 
 
 content_variables = [
@@ -245,8 +245,9 @@ content_variables = [
 @pytest.mark.parametrize("content,expected,settings", content_variables)
 def test_variable_align(content, expected, settings):
     rule = format_rules.FormatVariablesAlign(settings)
-    rule.format(content, Kind.DECLARATION)
-    assert content == expected
+    content_new = content.copy()
+    rule.format(content_new, Kind.DECLARATION)
+    assert content_new == expected
 
 
 content_parentheses = [
@@ -272,31 +273,45 @@ content_parentheses = [
     ),
     (
         [
-            "IF inputs.button = 1 THEN\r\n",
+            "IF func(arg1 := 1, args2 := func2()) THEN\n",
         ],
         [
-            "IF(inputs.button = 1)THEN\r\n",
+            "IF (func(arg1 := 1, args2 := func2())) THEN\n",
         ],
     ),
+    # (  # This case fails, because we cannot identify matching parentheses:
+    #     [
+    #         "IF (1+1)*2 = 3*(x-1) THEN\n",
+    #     ],
+    #     [
+    #         "IF ((1+1)*2 = 3*(x-1)) THEN\n",
+    #     ],
+    # ),
 ]
 
 
 @pytest.mark.parametrize("content,expected", content_parentheses)
 def test_parentheses_add(content, expected):
     rule = format_rules.FormatConditionalParentheses({"parentheses_conditionals": True})
-    rule.format(content)
-    assert content == expected
+    content_new = content.copy()
+    rule.format(content_new)
+    assert content_new == expected
 
 
 @pytest.mark.parametrize("expected,content", content_parentheses)
 def test_parentheses_remove(expected, content):
-    rule = format_rules.FormatConditionalParentheses({"parentheses_conditionals": False})
-    rule.format(content)
-    assert content == expected
+    rule = format_rules.FormatConditionalParentheses(
+        {"parentheses_conditionals": False}
+    )
+    content_new = content.copy()
+    rule.format(content_new)
+    assert content_new == expected
 
 
 def test_parentheses_remove_no_ws():
-    rule = format_rules.FormatConditionalParentheses({"parentheses_conditionals": False})
+    rule = format_rules.FormatConditionalParentheses(
+        {"parentheses_conditionals": False}
+    )
     content = ["IF(inputs.button = 1)THEN"]
     rule.format(content)
     assert content == ["IF inputs.button = 1 THEN"]
