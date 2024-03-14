@@ -197,7 +197,7 @@ content_variables = [
             "    other       : INT;                              // Other comment\n",
             "END_VAR\n",
         ],
-        {},
+        {"twincat_align_variables": True},
     ),
     (
         [
@@ -220,7 +220,7 @@ content_variables = [
             "\tother\t\t\t: INT;\t\t\t\t\t\t\t\t\t\t// Other comment\n",
             "END_VAR\n",
         ],
-        {"indent_style": "tab"},
+        {"indent_style": "tab", "twincat_align_variables": True},
     ),
     (
         [
@@ -237,8 +237,31 @@ content_variables = [
             "VAR_OUT\n",
             "",
         ],
-        {},
+        {"twincat_align_variables": True},
     ),
+    # (  # These multi-line definitions do not work unfortunately
+    #     [
+    #         "VAR_IN\n",
+    #         "    regularVar: LREAL := 5.0; // Comment\n",
+    #         "    multiLineFB: FB_MyBlock := (\n",
+    #         "        arg1 := TRUE,\n",
+    #         "        arg2 := 'hello',\n",
+    #         "    ); // Other comment\n",
+    #         "VAR_OUT\n",
+    #     ],
+    #     [
+    #         [
+    #             "VAR_IN\n",
+    #             "    regularVar      : LREAL := 5.0;     // Comment\n",
+    #             "    multiLineFB     : FB_MyBlock := (\n",
+    #             "        arg1 := TRUE,\n",
+    #             "        arg2 := 'hello',\n",
+    #             "    );                                  // Other comment\n",
+    #             "VAR_OUT\n",
+    #         ],
+    #     ],
+    #     {"twincat_align_variables": True},
+    # ),
 ]
 
 
@@ -308,7 +331,7 @@ content_parentheses = [
 
 @pytest.mark.parametrize("content,expected", content_parentheses)
 def test_parentheses_add(content, expected):
-    rule = format_rules.FormatConditionalParentheses({"parentheses_conditionals": True})
+    rule = format_rules.FormatConditionalParentheses({"twincat_parentheses_conditionals": True})
     content_new = content.copy()
     rule.format(content_new)
     assert content_new == expected
@@ -317,7 +340,7 @@ def test_parentheses_add(content, expected):
 @pytest.mark.parametrize("expected,content", content_parentheses)
 def test_parentheses_remove(expected, content):
     rule = format_rules.FormatConditionalParentheses(
-        {"parentheses_conditionals": False}
+        {"twincat_parentheses_conditionals": False}
     )
     content_new = content.copy()
     rule.format(content_new)
@@ -326,7 +349,7 @@ def test_parentheses_remove(expected, content):
 
 def test_parentheses_remove_no_ws():
     rule = format_rules.FormatConditionalParentheses(
-        {"parentheses_conditionals": False}
+        {"twincat_parentheses_conditionals": False}
     )
     content = ["IF(inputs.button = 1)THEN"]
     rule.format(content)

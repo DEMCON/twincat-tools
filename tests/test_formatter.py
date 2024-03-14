@@ -195,6 +195,7 @@ indent_style = space
 indent_size = 4
 trim_trailing_whitespace = true
 insert_final_newline = true
+twincat_align_variables = true
 """
     )
     file = plc_code / "TwinCAT Project1" / "MyPlc" / "POUs" / "FB_Full.TcPOU"

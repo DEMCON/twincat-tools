@@ -80,7 +80,9 @@ The following universal `.editorconfig` fields are considered:
 
 And The following unofficial (custom) `.editorconfig` fields are used:
 
-* `parentheses_conditionals`
+* `twincat_align_variables`
+  * If true, variables in declarations are aligned together
+* `twincat_parentheses_conditionals`
   * If true, parentheses are enforced inside if-statements (`IF (condition = 1) THEN...`)
   * If false, parentheses inside if-statements are removed (`IF condition = 1 THEN...`)
 

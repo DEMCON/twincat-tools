@@ -233,6 +233,8 @@ class FormatVariablesAlign(FormattingRule):
     def __init__(self, *args):
         super().__init__(*args)
 
+        self._align = self._properties.get("twincat_align_variables", False)
+
         self._re_variable = re.compile(
             r"""
                 ^\s*                # Start of string + any ws
@@ -247,6 +249,9 @@ class FormatVariablesAlign(FormattingRule):
         self._re_newlines = re.compile(r"[\r\n]+$")
 
     def format(self, content: List[str], kind: Optional[Kind] = None):
+        if not self._align:
+            return  # Disabled by config
+
         if kind is None or kind is not Kind.DECLARATION:
             return  # Don't touch, only affect variable listing
 
@@ -334,7 +339,7 @@ class FormatConditionalParentheses(FormattingRule):
     def __init__(self, *args):
         super().__init__(*args)
 
-        self._parentheses = self._properties.get("parentheses_conditionals", None)
+        self._parentheses = self._properties.get("twincat_parentheses_conditionals", None)
 
         # Regex to find conditional inside single lines:
 
