@@ -230,6 +230,8 @@ class FormatVariablesAlign(FormattingRule):
     Target formatting will create columns on the ":" and the "//" of comments.
     """
 
+    PRIORITY = 110  # Go after FormatTabs
+
     def __init__(self, *args):
         super().__init__(*args)
 
@@ -302,6 +304,9 @@ class FormatVariablesAlign(FormattingRule):
                 # The newline didn't get matched in the variable chunks, put it back:
                 new_line += match_eol.group()
 
+            if content[i] != new_line:
+                self.add_correction("Variable declaration needs alignment", i)
+
             content[i] = new_line
 
     def _get_indent_string(self, col=0) -> str:
@@ -339,7 +344,9 @@ class FormatConditionalParentheses(FormattingRule):
     def __init__(self, *args):
         super().__init__(*args)
 
-        self._parentheses = self._properties.get("twincat_parentheses_conditionals", None)
+        self._parentheses = self._properties.get(
+            "twincat_parentheses_conditionals", None
+        )
 
         # Regex to find conditional inside single lines:
 
@@ -401,5 +408,14 @@ class FormatConditionalParentheses(FormattingRule):
                         prefix += " "
                     if not suffix.startswith(" "):
                         suffix = " " + suffix
+
+                self.add_correction(
+                    (
+                        "Parentheses around conditions are expected"
+                        if self._parentheses
+                        else "Parentheses around condition should be removed"
+                    ),
+                    i,
+                )
 
                 content[i] = prefix + condition + suffix

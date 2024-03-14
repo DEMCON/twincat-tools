@@ -331,7 +331,9 @@ content_parentheses = [
 
 @pytest.mark.parametrize("content,expected", content_parentheses)
 def test_parentheses_add(content, expected):
-    rule = format_rules.FormatConditionalParentheses({"twincat_parentheses_conditionals": True})
+    rule = format_rules.FormatConditionalParentheses(
+        {"twincat_parentheses_conditionals": True}
+    )
     content_new = content.copy()
     rule.format(content_new)
     assert content_new == expected
