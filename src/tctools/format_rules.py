@@ -242,7 +242,7 @@ class FormatVariablesAlign(FormattingRule):
                 ^\s*                # Start of string + any ws
                 (\S+)               # Sequence of non-ws
                 \s*:                # Any ws + literal ":"
-                \s*(.+);            # Any ws + any sequence + literal ";"
+                \s*(.+?);           # Any ws + any sequence + literal ";"
                 \s*([^\r\n]+)?      # Any ws + (Optional) any sequence
         """,
             re.VERBOSE,
