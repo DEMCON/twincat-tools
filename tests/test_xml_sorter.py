@@ -3,6 +3,7 @@ import subprocess
 import sys
 
 import tctools.xml_sort
+from tctools.xml_sort_class import XmlSorter
 
 from .conftest import assert_order_of_lines_in_file
 
@@ -18,7 +19,7 @@ def test_help(capsys):
     assert "usage:" in message
 
 
-def test_cli(plc_code, capsys):
+def test_cli(plc_code):
     """Test the CLI hook works."""
     file = plc_code / "plant_catalog.xml"
 
@@ -48,7 +49,10 @@ def test_single_file_plain_xml(plc_code):
     ]
 
     assert_order_of_lines_in_file(expected, file, is_substring=True, check_true=False)
-    tctools.xml_sort.main(str(file))
+
+    sorter = XmlSorter(str(file))
+    sorter.run()
+
     assert_order_of_lines_in_file(expected, file, is_substring=True)
 
 
@@ -84,21 +88,25 @@ def test_sort_attributes(plc_code):
     assert_order_of_lines_in_file(expected, file, is_substring=True)
 
 
-def test_single_file_dry(plc_code, capsys):
+def test_single_file_dry(plc_code, caplog):
     """Test using dry run."""
     file = plc_code / "books.xml"
 
-    tctools.xml_sort.main(str(file), "--dry")
+    sorter = XmlSorter(str(file), "--dry", "-l", "DEBUG")
+    sorter.run()
 
-    result = capsys.readouterr().out
+    result = "\n".join(caplog.messages)
     assert '<book letter="a">' in result
+    caplog.clear()
 
-    tctools.xml_sort.main(str(file))  # Make change for real
-    capsys.readouterr()
+    sorter = XmlSorter(str(file), "-l", "DEBUG")
+    sorter.run()  # Make change for real
+    caplog.clear()
 
-    tctools.xml_sort.main(str(file), "--dry")
+    sorter = XmlSorter(str(file), "--dry", "-l", "DEBUG")
+    sorter.run()
 
-    result3 = capsys.readouterr().out
+    result3 = "\n".join(caplog.messages)
     assert '<book letter="a">' not in result3
     assert "identical" in result3
 

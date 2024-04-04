@@ -1,11 +1,7 @@
 from lxml import etree
 import re
-from logging import getLogger
 
 from .common import TcTool
-
-
-logger = getLogger("xml_sort")
 
 
 class XmlSorter(TcTool):
@@ -14,26 +10,53 @@ class XmlSorter(TcTool):
     Use one instance for a sequence of files.
     """
 
-    def __init__(self, quiet=False, resave=True, report=False, skip_nodes=None):
-        """
+    def __init__(self, *args):
+        super().__init__(*args)
 
-        :param quiet:       If true, do not mention each path we touch
-        :param resave:      If true, re-save the files in-place
-        :param report:      If true, print all changes to be made
-        :param skip_nodes:  List of node tags to ignore (and their children)
-        """
-
-        self.quiet = quiet
-        self.resave = resave
-        self.report = report
-        self.skip_nodes = skip_nodes
-        if self.skip_nodes is None:
-            self.skip_nodes = []
+        if self.args.skip_nodes is None:
+            self.args.skip_nodes = []
 
         self._file_changed = False  # True if any change is made in the current path
         # This is a property to avoid passing around booleans between recursive calls
 
-        super().__init__()
+    def set_arguments(self, parser):
+        super().set_arguments(parser)
+
+        parser.description = "Alphabetically sort the nodes in an XML path."
+        parser.epilog = (
+            "Example: [program] ./MyTwinCATProject -r "
+            "--filter *.tsproj *.xti *.plcproj --skip-nodes Device DataType"
+        )
+
+        parser.add_argument(
+            "--filter",
+            help="Target files only with these patterns (default: .xml only)",
+            nargs="+",
+            default=["*.tsproj", "*.xti", "*.plcproj"],
+        )
+        parser.add_argument(
+            "--skip-nodes",
+            "-n",
+            help="Do not touch the attributes and sub-nodes of nodes with these names",
+            nargs="+",
+            default=["Device", "DataType"],
+        )
+
+    def run(self):
+        for file in self.find_files():
+            self.sort_file(str(file))
+
+        self.logger.info(f"Checked {self.files_checked} path(s)")
+
+        if self.args.check:
+            if self.files_to_alter == 0:
+                self.logger.info("No changes to be made in checked files!")
+                return 0
+
+            self.logger.info(f"{self.files_to_alter} path(s) can be re-sorted")
+            return 1
+
+        self.logger.info(f"Re-saved {self.files_resaved} path(s)")
 
     def sort_file(self, path: str):
         """Sort a single path."""
@@ -48,8 +71,7 @@ class XmlSorter(TcTool):
         # Re-indent by a double space
         etree.indent(tree, space="  ", level=0)
 
-        if not self.quiet:
-            logger.debug(f"Processing path `{path}`...")
+        self.logger.debug(f"Processing path `{path}`...")
 
         tree_bytes = etree.tostring(root, doctype=self.header_before)
 
@@ -62,32 +84,31 @@ class XmlSorter(TcTool):
             self.files_to_alter += 1
 
         if current_bytes != tree_bytes:
-            if self.report:
-                print(f"Old path contents of `{path}`:")
-                print("-" * 50)
-                print(current_bytes.decode("utf-8"))
-                print("-" * 50)
-                print("New path contents:")
-                print("-" * 50)
-                print(tree_bytes.decode("utf-8"))
-                print("-" * 50)
+            if self.args.dry:
+                self.logger.debug(f"Old path contents of `{path}`:")
+                self.logger.debug("-" * 50)
+                self.logger.debug(current_bytes.decode("utf-8"))
+                self.logger.debug("-" * 50)
+                self.logger.debug("New path contents:")
+                self.logger.debug("-" * 50)
+                self.logger.debug(tree_bytes.decode("utf-8"))
+                self.logger.debug("-" * 50)
 
-            logger.debug(f"File can be re-sorted: `{path}`")
+            self.logger.debug(f"File can be re-sorted: `{path}`")
 
-            if self.resave:
+            if not self.args.check and not self.args.dry:
                 with open(path, "wb") as fh:
                     fh.write(tree_bytes)
                     # Write by hand (instead of `tree.write()` so we control the header
                     self.files_resaved += 1
         else:
-            if self.report:
-                print("Content identical for `{path}`")
-                print()
+            if self.args.dry:
+                self.logger.debug("Content identical for `{path}`")
 
     def sort_node_recursively(self, node):
         """Sort a node and any sub-nodes, and their sub-nodes."""
 
-        if node.tag in self.skip_nodes:
+        if node.tag in self.args.skip_nodes:
             return  # Stop here
 
         if node.get("{http://www.w3.org/XML/1998/namespace}space") == "preserve":
@@ -127,7 +148,6 @@ class XmlSorter(TcTool):
 
         Sorting will be done on the literal node XML subtree string.
         """
-
         key = etree.tostring(node, encoding="unicode")
         key = re.sub(r"\s+", "", key, flags=re.UNICODE)
 
