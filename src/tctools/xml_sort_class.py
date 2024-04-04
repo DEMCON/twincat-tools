@@ -73,16 +73,16 @@ class XmlSorter(TcTool):
                 print("-" * 50)
 
             logger.debug(f"File can be re-sorted: `{path}`")
+
+            if self.resave:
+                with open(path, "wb") as fh:
+                    fh.write(tree_bytes)
+                    # Write by hand (instead of `tree.write()` so we control the header
+                    self.files_resaved += 1
         else:
             if self.report:
-                print("Content identical> for `{path}`")
+                print("Content identical for `{path}`")
                 print()
-
-        if self.resave:
-            with open(path, "wb") as fh:
-                fh.write(tree_bytes)
-                # Write by hand (instead of `tree.write()` so we can control the header
-                self.files_resaved += 1
 
     def sort_node_recursively(self, node):
         """Sort a node and any sub-nodes, and their sub-nodes."""
