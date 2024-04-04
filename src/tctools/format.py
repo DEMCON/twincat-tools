@@ -74,6 +74,11 @@ def main(*args) -> int:
     return 0
 
 
+def main_argv():
+    """Entrypoint for the executable, defined through ``pyproject.toml``."""
+    exit(main(*sys.argv[1:]))
+
+
 if __name__ == "__main__":
     exit_code = main(*sys.argv[1:])  # Skip script name
     exit(exit_code)

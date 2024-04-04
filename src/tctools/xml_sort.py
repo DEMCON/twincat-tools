@@ -16,15 +16,18 @@ def parse_arguments(args):
 
     parser.add_argument(
         "--filter",
-        help="Target files only with these patterns (default: .xml only)",
+        help="Target files only with these patterns (default: *.tsproj, *.xti, "
+        "*.plcproj)",
         nargs="+",
-        default=["*.xml"],
+        default=["*.tsproj", "*.xti", "*.plcproj"],
     )
     parser.add_argument(
         "-n",
         "--skip-nodes",
+        help="Do not touch the attributes and sub-nodes of nodes with these names "
+        "(default: Device, Datatype)",
         nargs="+",
-        help="Do not touch the attributes and sub-nodes of nodes with these names",
+        default=["Device", "DataType"],
     )
 
     return parser.parse_args(args)
@@ -61,6 +64,11 @@ def main(*args) -> int:
 
     logger.info(f"Re-saved {sorter.files_resaved} path(s)")
     return 0
+
+
+def main_argv():
+    """Entrypoint for the executable, defined through ``pyproject.toml``."""
+    exit(main(*sys.argv[1:]))
 
 
 if __name__ == "__main__":

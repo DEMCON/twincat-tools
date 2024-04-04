@@ -17,6 +17,10 @@ Usage:
 ```cmd
 python -m tctools.xml_sort [file or folder, ...] -r --ext tsproj xti plcproj --skip-nodes Device DeploymentEvents TcSmItem DataType
 ```
+Or
+```cmd
+tc_xml_sort.exe [...]
+```
 
 Add `--help` for full instructions.
 
@@ -63,6 +67,10 @@ Usage:
 ```cmd
 python -m tctools.format [file or folder, ...] [--check] [--dry] [--filter [filters, ...]]
 ```
+Or
+```cmd
+tc_format.exe [...]
+```
 
 Add `--help` for full instructions.
 
@@ -104,6 +112,10 @@ Usage:
 
 ```cmd
 pyton -m tctools.git_info [template file] [--output [file]] [--repo [directory]]
+```
+Or
+```cmd
+tc_git_info.exe [...]
 ```
 
 Add `--help` for full instruction.
