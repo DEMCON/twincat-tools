@@ -42,3 +42,4 @@ doc = [
 tc_format = "tctools.format:main_argv"
 tc_xml_sort = "tctools.xml_sort:main_argv"
 tc_git_info = "tctools.git_info:main_argv"
+tc_make_release = "tctools.make_release:main_argv"
