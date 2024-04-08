@@ -44,7 +44,7 @@ class XmlSorter(TcTool):
             default=["Device", "DataType"],
         )
 
-    def run(self):
+    def run(self) -> int:
         for file in self.find_files():
             self.sort_file(str(file))
 

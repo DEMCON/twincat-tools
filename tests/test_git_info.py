@@ -5,6 +5,7 @@ from pathlib import Path
 import re
 
 import tctools.git_info
+from tctools.git_info_class import GitInfo
 
 
 def test_help(capsys):
@@ -45,7 +46,8 @@ def test_version_making(plc_code):
 
     current_dir = Path(__file__).parent  # Repurpose this package repo
 
-    tctools.git_info.main(str(file), "--repo", str(current_dir))
+    info = GitInfo(str(file), "--repo", str(current_dir))
+    info.run()
 
     new_file = plc_code / "TwinCAT Project1" / "MyPlc" / "GVLs" / "GVL_Version.TcGVL"
     assert new_file.is_file()
@@ -68,7 +70,8 @@ def test_empty_git(plc_code):
         plc_code / "TwinCAT Project1" / "MyPlc" / "GVLs" / "GVL_Version.TcGVL.template"
     )
 
-    tctools.git_info.main(str(file))
+    info = GitInfo(str(file))
+    info.run()
 
     new_file = plc_code / "TwinCAT Project1" / "MyPlc" / "GVLs" / "GVL_Version.TcGVL"
     assert new_file.is_file()

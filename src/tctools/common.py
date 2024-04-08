@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Optional, List
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser
 from pathlib import Path
 from lxml import etree
 import logging
@@ -43,14 +43,14 @@ class Tool(ABC):
         )
 
     @abstractmethod
-    def run(self):
+    def run(self) -> int:
         """Main tool execution."""
 
     def get_logger(self):
         """Get logger for this class."""
         logging.basicConfig(stream=sys.stdout)
         logger = logging.getLogger(self.LOGGER_NAME or __name__)
-        if self.args.log_level:
+        if "log_level" in self.args and self.args.log_level:
             level = logging.getLevelName(self.args.log_level)
             logger.setLevel(level)
 

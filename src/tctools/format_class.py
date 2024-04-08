@@ -1,5 +1,4 @@
 from editorconfig import get_properties
-from logging import getLogger
 from typing import List, Tuple, Type, Optional
 from collections import OrderedDict
 import re
@@ -115,7 +114,8 @@ class Formatter(TcTool):
 
         parser.add_argument(
             "--filter",
-            help="Target files only with these patterns (default: all TwinCAT PLC types)",
+            help="Target files only with these patterns "
+            "(default: all TwinCAT PLC types)",
             nargs="+",
             default=["*.TcPOU", "*.TcGVL", "*.TcDUT"],
         )
@@ -126,7 +126,7 @@ class Formatter(TcTool):
         cls._RULE_CLASSES.append(new_rule)
         sorted(cls._RULE_CLASSES, key=lambda item: item.PRIORITY)
 
-    def run(self):
+    def run(self) -> int:
         files = self.find_files()
 
         for file in files:
