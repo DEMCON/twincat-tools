@@ -1,28 +1,65 @@
-from typing import Optional, Dict
+from typing import Dict
 from git import Repo
-import os.path
+from pathlib import Path
 from logging import getLogger
+
+from .common import Tool
 
 
 logger = getLogger("formatter")
 
 
-class GitInfo:
+class GitInfo(Tool):
     """Class to insert Git version info into a template."""
 
-    def __init__(self, dry=False):
-        self.dry = dry
+    def __init__(self, *args):
+        super().__init__(*args)
 
-    def make_file(
-        self, template_path: str, output_path: Optional[str], repo_path: Optional[str]
-    ):
+    @staticmethod
+    def set_arguments(parser):
+        parser.description = (
+            "Create a new file with version info from Git from a template."
+        )
+        parser.epilog = "Example: [program] Version.TcGVL"
+
+        parser.add_argument(
+            "template",
+            help="Template file to be used for newly created file",
+        )
+
+        parser.add_argument(
+            "--output",
+            help="File path for the new output file (default: template file with the "
+            "last extension stripped)",
+            default=None,
+        )
+
+        parser.add_argument(
+            "--repo",
+            help="Path to use for the Git repository (default: "
+            "use the first repository up "
+            "from the template file)",
+            default=None,
+        )
+
+        parser.add_argument(
+            "--dry",
+            help="Output new file to CLI instead of writing to disk.",
+            action="store_true",
+            default=False,
+        )
+
+    def run(self) -> int:
         """Produce an info file based on template."""
 
-        with open(template_path, "r") as fh:
+        template_path = Path(self.args.template)
+
+        with template_path.open("r") as fh:
             content = "".join(fh.readlines())
 
-        if repo_path is None:
-            repo_path = os.path.abspath(os.path.dirname(template_path))
+        self.logger.debug(f"Read file {template_path.absolute()}")
+
+        repo_path = Path(self.args.repo) if self.args.repo else template_path.parent
 
         repo = Repo(repo_path, search_parent_directories=True)
 
@@ -32,21 +69,25 @@ class GitInfo:
             find = "{{GIT_" + name + "}}"
             content = content.replace(find, text)
 
-        if self.dry:
+        if self.args.dry:
             print(content)
-            return
+            return 0
 
-        if output_path is None:
-            output_path, _ = os.path.splitext(template_path)
-
-            _, test_ext = os.path.splitext(output_path)
-            if not test_ext:
+        if self.args.output is None:
+            if not template_path.suffix:
                 logger.warning("Template file does not have a double extension")
 
-            with open(output_path, "wb") as fh:
-                fh.write(content.encode())
+            output_path = template_path.with_suffix("")
+        else:
+            output_path = Path(self.args.output)
 
-    def _get_info(self, repo: Repo) -> Dict[str, str]:
+        with open(output_path, "wb") as fh:
+            fh.write(content.encode())
+
+        return 0
+
+    @staticmethod
+    def _get_info(repo: Repo) -> Dict[str, str]:
         info = {}
 
         try:
