@@ -3,6 +3,7 @@ import subprocess
 import sys
 
 import tctools.format
+from tctools.format_class import Formatter
 
 from .conftest import assert_strings_have_substrings
 
@@ -39,7 +40,7 @@ indent_size = 4
     assert "Re-saved 1 path" in result.stdout.decode()
 
 
-def test_dry_no_tab_char(plc_code, capsys):
+def test_dry_no_tab_char(plc_code, caplog):
     """Test finding illegal tab characters."""
     config = plc_code / "TwinCAT Project1" / ".editorconfig"
     config.write_text(
@@ -52,25 +53,28 @@ indent_size = 4
     file = plc_code / "TwinCAT Project1" / "MyPlc" / "POUs" / "FB_Example.TcPOU"
     content_before = file.read_text()
 
-    tctools.format.main(str(file), "--dry")
+    formatter = Formatter(str(file), "--dry", "-l", "DEBUG")
+    formatter.run()
 
     # fmt: off
     expected = [
+        ["Processing path"],
         ["FB_Example.TcPOU", "declaration", ":3", "Line contains a tab that should be spaces"],
         ["FB_Example.TcPOU", "declaration", ":10", "Line contains a tab that should be spaces"],
         ["FB_Example.TcPOU", "implementation", ":2", "Line contains a tab that should be spaces"],
         ["FB_Example.TcPOU", "implementation", ":4", "Line contains a tab that should be spaces"],
         ["FB_Example.TcPOU", "implementation", ":5", "Line contains a tab that should be spaces"],
         ["FB_Example.TcPOU", "implementation", ":12", "Line contains a tab that should be spaces"],
+        ["Checked 1 path(s)"],
+        ["Re-saved 0 path(s)"],
     ]
     # fmt: on
 
-    result = capsys.readouterr().out.split("\n")
-    assert_strings_have_substrings(expected, result)
+    assert_strings_have_substrings(expected, caplog.messages)
     assert content_before == file.read_text() and "Source file was modified"
 
 
-def test_dry_tab_spaces(plc_code, capsys):
+def test_dry_tab_spaces(plc_code, caplog):
     """Test finding illegal spaces."""
     config = plc_code / "TwinCAT Project1" / ".editorconfig"
     config.write_text(
@@ -81,24 +85,28 @@ indent_size = 4
 """
     )
     file = plc_code / "TwinCAT Project1" / "MyPlc" / "POUs" / "FB_Example.TcPOU"
-    tctools.format.main(str(file), "--dry")
+
+    formatter = Formatter(str(file), "--dry", "-l", "DEBUG")
+    formatter.run()
 
     # fmt: off
     expected = [
+        ["Processing path"],
         ["FB_Example.TcPOU", "declaration", ":3", "Line contains an indent that should be a tab"],
         ["FB_Example.TcPOU", "declaration", ":4", "Line contains an indent that should be a tab"],
         ["FB_Example.TcPOU", "declaration", ":9", "Line contains an indent that should be a tab"],
         ["FB_Example.TcPOU", "implementation", ":3", "Line contains an indent that should be a tab"],
         ["FB_Example.TcPOU", "implementation", ":4", "Line contains an indent that should be a tab"],
         ["FB_Example.TcPOU", "implementation", ":9", "Line contains an indent that should be a tab"],
+        ["Checked 1 path(s)"],
+        ["Re-saved 0 path(s)"],
     ]
     # fmt: on
 
-    result = capsys.readouterr().out.split("\n")
-    assert_strings_have_substrings(expected, result)
+    assert_strings_have_substrings(expected, caplog.messages)
 
 
-def test_dry_trailing_ws(plc_code, capsys):
+def test_dry_trailing_ws(plc_code, caplog):
     """Test finding illegal ws."""
     config = plc_code / "TwinCAT Project1" / ".editorconfig"
     config.write_text(
@@ -108,21 +116,25 @@ trim_trailing_whitespace = true
 """
     )
     file = plc_code / "TwinCAT Project1" / "MyPlc" / "POUs" / "FB_Example.TcPOU"
-    tctools.format.main(str(file), "--dry")
+
+    formatter = Formatter(str(file), "--dry", "-l", "DEBUG")
+    formatter.run()
 
     # fmt: off
     expected = [
+        ["Processing path"],
         ["FB_Example.TcPOU", "implementation", ":2", "Line contains trailing whitespace"],
         ["FB_Example.TcPOU", "implementation", ":9", "Line contains trailing whitespace"],
         ["FB_Example.TcPOU", "implementation", ":12", "Line contains trailing whitespace"],
+        ["Checked 1 path(s)"],
+        ["Re-saved 0 path(s)"],
     ]
     # fmt: on
 
-    result = capsys.readouterr().out.split("\n")
-    assert_strings_have_substrings(expected, result)
+    assert_strings_have_substrings(expected, caplog.messages)
 
 
-def test_check(plc_code, capsys):
+def test_check(plc_code, caplog):
     """Test `check` flag for formatter."""
     config = plc_code / "TwinCAT Project1" / ".editorconfig"
     config.write_text(
@@ -136,7 +148,9 @@ indent_size = 4
 
     content_before = file.read_text()
 
-    code = tctools.format.main(str(file), "--check")
+    formatter = Formatter(str(file), "--check")
+    code = formatter.run()
+
     assert code != 0
 
     assert content_before == file.read_text()
@@ -155,14 +169,16 @@ def test_reformat_empty_config(plc_code):
 
     content_before = file.read_text()
 
-    tctools.format.main(str(file))  # No error is given
+    formatter = Formatter(str(file))
+    formatter.run()  # No error is given
 
     assert content_before == file.read_text() and "File was changed"
 
     config = plc_code / "TwinCAT Project1" / ".editorconfig"
     config.write_text("root = true")
 
-    tctools.format.main(str(file))  # No error is given
+    formatter = Formatter(str(file))
+    formatter.run()  # No error is given
 
     assert content_before == file.read_text() and "File was changed"
 
@@ -179,7 +195,8 @@ indent_size = 4
     )
     file = plc_code / "TwinCAT Project1" / "MyPlc" / "POUs" / "FB_Example.TcPOU"
 
-    tctools.format.main(str(file))
+    formatter = Formatter(str(file))
+    formatter.run()
 
     content_after = file.read_text()
     assert "\t" not in content_after
@@ -200,7 +217,8 @@ twincat_align_variables = true
     )
     file = plc_code / "TwinCAT Project1" / "MyPlc" / "POUs" / "FB_Full.TcPOU"
 
-    tctools.format.main(str(file))
+    formatter = Formatter(str(file))
+    formatter.run()
 
     file_fixed = plc_code / "TwinCAT Project1" / "MyPlc" / "POUs" / "FB_Full_fixed.txt"
     # ^ This file has manually fixed formatting
@@ -246,7 +264,8 @@ def test_reformat_eol(plc_code, eol):
     file = plc_code / "TwinCAT Project1" / "MyPlc" / "POUs" / "FB_Test.TcPOU"
     file.write_bytes(write_eol.join(content_list).encode())
 
-    tctools.format.main(str(file))
+    formatter = Formatter(str(file))
+    formatter.run()
 
     content_after = file.read_bytes()
     assert content_after == expected_eol.join(content_list).encode()

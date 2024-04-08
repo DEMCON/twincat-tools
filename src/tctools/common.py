@@ -83,7 +83,7 @@ class TcTool(Tool, ABC):
         parser.add_argument(
             "--check",
             help="Do not modify files on disk, but give a non-zero exit code if there "
-                 "would be changes",
+            "would be changes",
             action="store_true",
             default=False,
         )

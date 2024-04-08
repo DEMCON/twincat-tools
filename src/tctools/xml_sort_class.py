@@ -10,6 +10,8 @@ class XmlSorter(TcTool):
     Use one instance for a sequence of files.
     """
 
+    LOGGER_NAME = "xml_sorter"
+
     def __init__(self, *args):
         super().__init__(*args)
 
