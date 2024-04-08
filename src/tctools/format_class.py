@@ -5,11 +5,16 @@ from collections import OrderedDict
 import re
 
 from .common import TcTool
-from .format_rules import FormattingRule
+from .format_rules import (
+    FormattingRule,
+    FormatTabs,
+    FormatTrailingWhitespace,
+    FormatInsertFinalNewline,
+    FormatEndOfLine,
+    FormatVariablesAlign,
+    FormatConditionalParentheses,
+)
 from .format_extras import Kind
-
-
-logger = getLogger("formatter")
 
 
 RowCol = Tuple[int, int]
@@ -87,19 +92,12 @@ class Formatter(TcTool):
     Instantiate once for a sequence of files.
     """
 
+    LOGGER_NAME = "formatter"
+
     _RULE_CLASSES: List[Type[FormattingRule]] = []
 
-    def __init__(self, quiet=False, resave=True, report=False):
-        """
-
-        :param quiet:       If True, minimize CLI output
-        :param resave:      If True, re-save the files in-place
-        :param report:      If True, print all changes to be made
-        """
-
-        self.quiet = quiet
-        self.resave = resave
-        self.report = report
+    def __init__(self, *args):
+        super().__init__(*args)
 
         # Keep some dynamic properties around just so we don't have to constantly pass
         # them between methods
@@ -109,13 +107,43 @@ class Formatter(TcTool):
 
         self._number_corrections = 0  # Track number of changes for the current file
 
-        super().__init__()
+    def set_arguments(self, parser):
+        super().set_arguments(parser)
+
+        parser.description = "Format the PLC code inside a TwinCAT source XML path."
+        parser.epilog = "Example: [program] ./MyTwinCATProject"
+
+        parser.add_argument(
+            "--filter",
+            help="Target files only with these patterns (default: all TwinCAT PLC types)",
+            nargs="+",
+            default=["*.TcPOU", "*.TcGVL", "*.TcDUT"],
+        )
 
     @classmethod
     def register_rule(cls, new_rule: Type[FormattingRule]):
         """Incorporate a new formatting rule (accounting for its priority)."""
         cls._RULE_CLASSES.append(new_rule)
         sorted(cls._RULE_CLASSES, key=lambda item: item.PRIORITY)
+
+    def run(self):
+        files = self.find_files()
+
+        for file in files:
+            self.format_file(str(file))
+
+        self.logger.info(f"Checked {self.files_checked} path(s)")
+
+        if self.args.check:
+            if self.files_to_alter == 0:
+                self.logger.info("No changes to be made in checked files!")
+                return 0
+
+            self.logger.info(f"{self.files_to_alter} path(s) can be re-sorted")
+            return 1
+
+        self.logger.info(f"Re-saved {self.files_resaved} path(s)")
+        return 0
 
     def format_file(self, path: str):
         """Format (or check) a specific path.
@@ -130,22 +158,19 @@ class Formatter(TcTool):
 
         self._properties = get_properties(path)
         if not self._properties:
-            logger.warning(f"Editorconfig properties is empty for file `{path}`")
+            self.logger.warning(f"Editorconfig properties is empty for file `{path}`")
 
         self.files_checked += 1
         self._number_corrections = 0
 
-        if not self.quiet:
-            logger.debug(f"Processing path `{path}`...")
+        self.logger.debug(f"Processing path `{path}`...")
 
         self._rules = [rule(self._properties) for rule in self._RULE_CLASSES]
 
         # Do whole-file rules first:
         for rule in self._rules:
-            if not rule.WHOLE_FILE:
-                continue
-
-            self.apply_rule(rule, content)
+            if rule.WHOLE_FILE:
+                self.apply_rule(rule, content)
 
         segments: List[Segment] = list(self.split_code_segments(content))
 
@@ -156,11 +181,12 @@ class Formatter(TcTool):
         if self._number_corrections > 0:
             self.files_to_alter += 1
 
-        if self.resave and self._number_corrections > 0:
+        if not self.args.dry and not self.args.check and self._number_corrections > 0:
             with open(path, "w", newline="", encoding="utf-8") as fh:
                 # Keep newline symbols inside strings
                 for _, segment, _ in segments:
                     fh.write("".join(segment))
+
             self.files_resaved += 1
 
     @staticmethod
@@ -216,10 +242,8 @@ class Formatter(TcTool):
             return  # Do nothing
         else:
             for rule in self._rules:
-                if rule.WHOLE_FILE:
-                    continue  # Skip here
-
-                self.apply_rule(rule, content, kind)
+                if not rule.WHOLE_FILE:  # Skip otherwise
+                    self.apply_rule(rule, content, kind)
 
     def apply_rule(self, rule, content, kind: Optional[Kind] = None):
         """Run a rule over some content and handle results."""
@@ -229,7 +253,14 @@ class Formatter(TcTool):
 
         tag = f"[{kind.name.lower()}]" if kind else "[file]"
 
-        if self.report:
-            for line_nr, message in corrections:
-                # `line_r` is zero-indexed
-                print(f"{self._file}{tag}:{line_nr + 1}\t{message}")
+        for line_nr, message in corrections:
+            # `line_r` is zero-indexed
+            self.logger.debug(f"{self._file}{tag}:{line_nr + 1}\t{message}")
+
+
+Formatter.register_rule(FormatTabs)
+Formatter.register_rule(FormatTrailingWhitespace)
+Formatter.register_rule(FormatInsertFinalNewline)
+Formatter.register_rule(FormatEndOfLine)
+Formatter.register_rule(FormatVariablesAlign)
+Formatter.register_rule(FormatConditionalParentheses)
