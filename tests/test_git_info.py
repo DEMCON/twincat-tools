@@ -57,6 +57,37 @@ def test_version_making(plc_code):
     assert not result  # Make sure not tags remain
 
 
+def test_eol_preservation(plc_code):
+    """Test handling of EOL characters in the source and output file."""
+    file = plc_code / "GitInfo.TcGVL.template"
+    content = (
+        '<?xml version="1.0" encoding="utf-8"?>\n'
+        "<TcPlcObject>\r\n"
+        '  <GVL Name="GVL_GitInfo">\r'
+        "    <Declaration><![CDATA[VAR_GLOBAL\n"
+        "    tag         : STRING := 'stuff';\n"
+        "    branch      : STRING := 'stuff';\r\n"
+        "    commitHash  : STRING := '{{GIT_HASH}}';\r\n"
+        "END_VAR\r\n"
+        "]]></Declaration>\r\n"
+        "  </GVL>\r\n"
+        "</TcPlcObject>\r\n"
+    )
+    file.write_bytes(content.encode())  # Keep EOL exact
+
+    current_dir = Path(__file__).parent  # Repurpose this package repo
+
+    info = GitInfo(str(file), "--repo", str(current_dir))
+    info.run()
+
+    new_file = file.parent / "GitInfo.TcGVL"
+    assert new_file.is_file()
+    content_after = new_file.read_bytes().decode()  # Keep EOL exact
+    assert "{{GIT_HASH}}" not in content_after
+    # Make sure content is the same (except for the {{..}} that got replaced:
+    assert content_after[:222] == content[:222] and content_after[-58:] == content[-58:]
+
+
 def test_empty_git(plc_code):
     """Test versioning when the git repo is entirely empty."""
 
