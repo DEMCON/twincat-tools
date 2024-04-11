@@ -1,22 +1,22 @@
 from typing import Dict
 from git import Repo
 from pathlib import Path
-from logging import getLogger
-
 from .common import Tool
 
 
-logger = getLogger("formatter")
-
-
 class GitInfo(Tool):
-    """Class to insert Git version info into a template."""
+    """Class to insert Git version info into a template.
+
+    We use template keys in the source file like ``{{key}}``.
+    This is done to avoid conflicts with TwinCAT source files. e.g. ``<key>`` might
+    collide with XML brackets in ``$key`` the dollar sign is a key for string constants.
+    """
 
     def __init__(self, *args):
         super().__init__(*args)
 
-    @staticmethod
-    def set_arguments(parser):
+    def set_arguments(self, parser):
+        super().set_arguments(parser)
         parser.description = (
             "Create a new file with version info from Git from a template."
         )
@@ -42,32 +42,31 @@ class GitInfo(Tool):
             default=None,
         )
 
-        parser.add_argument(
-            "--dry",
-            help="Output new file to CLI instead of writing to disk.",
-            action="store_true",
-            default=False,
-        )
-
     def run(self) -> int:
         """Produce an info file based on template."""
 
         template_path = Path(self.args.template)
 
-        with template_path.open("r") as fh:
-            content = "".join(fh.readlines())
+        with template_path.open("r", newline="") as fh:
+            content = fh.read()  # Preserve line endings
 
-        self.logger.debug(f"Read file {template_path.absolute()}")
+        self.logger.debug(f"Read file `{template_path.absolute()}`")
 
         repo_path = Path(self.args.repo) if self.args.repo else template_path.parent
 
         repo = Repo(repo_path, search_parent_directories=True)
 
-        info = self._get_info(repo)
+        keywords_used = 0
 
-        for name, text in info.items():
-            find = "{{GIT_" + name + "}}"
-            content = content.replace(find, text)
+        info = self._get_info(repo)
+        for keyword, value in info.items():
+            new_content = content.replace(f"{{{{GIT_{keyword}}}}}", value)
+            if new_content != content:
+                keywords_used += 1
+
+            content = new_content
+
+        self.logger.info(f"Applied {keywords_used} keyword(s) to template")
 
         if self.args.dry:
             print(content)
@@ -75,45 +74,50 @@ class GitInfo(Tool):
 
         if self.args.output is None:
             if not template_path.suffix:
-                logger.warning("Template file does not have a double extension")
+                self.logger.warning("Template file does not have a double extension")
 
             output_path = template_path.with_suffix("")
         else:
             output_path = Path(self.args.output)
 
-        with open(output_path, "wb") as fh:
-            fh.write(content.encode())
+        if keywords_used == 0:
+            self.logger.error("Couldn't find any keywords to replace in template")
+            return 1
 
+        with open(output_path, "w", newline="") as fh:
+            fh.write(content)
+
+        self.logger.debug(f"Wrote to file `{output_path.absolute()}`")
         return 0
 
-    @staticmethod
-    def _get_info(repo: Repo) -> Dict[str, str]:
-        info = {}
-
+    def _get_info(self, repo: Repo) -> Dict[str, str]:
         try:
             git_hash = (repo.head.object.hexsha,)
         except ValueError as err:
-            logger.warning("Repository is probably empty: " + str(err))
-            empty = "<empty>"
-            return {
-                "HASH": empty,
-                "HASH_SHORT": empty,
-                "DATE": empty,
-                "TAG": empty,
-                "BRANCH": empty,
-                "DESCRIPTION": empty,
-                "DESCRIPTION_DIRTY": empty,
-            }
+            self.logger.warning("Repository is probably empty: " + str(err))
+            git_hash = None
 
         if isinstance(git_hash, tuple):
             git_hash = git_hash[0]
 
-        info["HASH"] = git_hash
-        info["HASH_SHORT"] = git_hash[:8]
-        info["DATE"] = repo.head.object.committed_datetime.strftime("%d-%m-%Y %H:%M:%S")
-        info["TAG"] = repo.git.tag()
-        info["BRANCH"] = repo.active_branch.name
-        info["DESCRIPTION"] = repo.git.describe("--tags", "--always")
-        info["DESCRIPTION_DIRTY"] = repo.git.describe("--tags", "--dirty", "--always")
+        empty = "[empty]"
 
-        return info
+        return {
+            "HASH": git_hash or empty,
+            "HASH_SHORT": git_hash[:8] if git_hash else empty,
+            "DATE": (
+                repo.head.object.committed_datetime.strftime("%d-%m-%Y %H:%M:%S")
+                if git_hash
+                else empty
+            ),
+            "TAG": repo.git.tag() if git_hash else empty,
+            "BRANCH": repo.active_branch.name if git_hash else empty,
+            "DESCRIPTION": (
+                repo.git.describe("--tags", "--always") if git_hash else empty
+            ),
+            "DESCRIPTION_DIRTY": (
+                repo.git.describe("--tags", "--dirty", "--always")
+                if git_hash
+                else empty
+            ),
+        }
