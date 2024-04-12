@@ -1,4 +1,4 @@
-from typing import List, Dict, OrderedDict, Tuple, Optional
+from typing import List, Dict, OrderedDict, Tuple, Optional, Type, Any
 from abc import ABC, abstractmethod
 import re
 import math
@@ -29,12 +29,10 @@ class FormattingRule(ABC):
         # Universal properties:
 
         # Number of spaces per indentation:
-        self._indent_size: int = int(self._properties.get("indent_size", "4"))
+        self._indent_size: int = self.get_property("indent_size", 4, value_type=int)
         # Number of spaces per tab character:
-        self._tab_width: int = (
-            int(self._properties["tab_width"])
-            if "tab_width" in self._properties
-            else self._indent_size
+        self._tab_width: int = self.get_property(
+            "tab_width", default=self._indent_size, value_type=int
         )
 
         self._indent_style: Optional[str] = self._properties.get("indent_style", None)
@@ -56,6 +54,32 @@ class FormattingRule(ABC):
             return self._tab_width
 
         return self._indent_size
+
+    def get_property(
+        self,
+        name: str,
+        default: Any = None,
+        value_type: Optional[Type] = None,
+    ) -> Any:
+        """Get item from ``_properties``, parsing as needed.
+
+        :param name:
+        :param default: Value to dfault if name doesn't exist
+        :param value_type: Class of the returned value (e.g. ``bool``)
+        """
+        if name not in self._properties:
+            return default
+
+        value = self._properties[name]
+        if value_type is None:
+            return value  # Unprocessed
+
+        if value_type == bool:
+            if isinstance(value, str):
+                return value in ["TRUE", "True", "true", "1"]
+            return bool(value)
+
+        return value_type(value)
 
     @abstractmethod
     def format(self, content: List[str], kind: Optional[Kind] = None):
@@ -138,7 +162,9 @@ class FormatTrailingWhitespace(FormattingRule):
     def __init__(self, *args):
         super().__init__(*args)
 
-        self._remove_tr_ws = self._properties.get("trim_trailing_whitespace", False)
+        self._remove_tr_ws = self.get_property(
+            "trim_trailing_whitespace", False, value_type=bool
+        )
 
     def format(self, content: List[str], kind: Optional[Kind] = None):
         if not self._remove_tr_ws:
@@ -156,7 +182,9 @@ class FormatInsertFinalNewline(FormattingRule):
     def __init__(self, *args):
         super().__init__(*args)
 
-        self._insert_final_newline = self._properties.get("insert_final_newline", False)
+        self._insert_final_newline = self.get_property(
+            "insert_final_newline", False, value_type=bool
+        )
 
     def format(self, content: List[str], kind: Optional[Kind] = None):
         if not self._insert_final_newline:
@@ -235,7 +263,9 @@ class FormatVariablesAlign(FormattingRule):
     def __init__(self, *args):
         super().__init__(*args)
 
-        self._align = self._properties.get("twincat_align_variables", False)
+        self._align = self.get_property(
+            "twincat_align_variables", False, value_type=bool
+        )
 
         self._re_variable = re.compile(
             r"""
@@ -344,8 +374,8 @@ class FormatConditionalParentheses(FormattingRule):
     def __init__(self, *args):
         super().__init__(*args)
 
-        self._parentheses = self._properties.get(
-            "twincat_parentheses_conditionals", None
+        self._parentheses = self.get_property(
+            "twincat_parentheses_conditionals", value_type=bool
         )
 
         # Regex to find conditional inside single lines:
