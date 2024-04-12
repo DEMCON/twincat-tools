@@ -7,6 +7,11 @@ import logging
 import sys
 
 
+# Create type hinting shortcuts:
+Element = etree._Element  # noqa
+ElementTree = etree._ElementTree  # noqa
+
+
 class Tool(ABC):
     """Tools base class.
 
@@ -107,7 +112,7 @@ class TcTool(Tool, ABC):
 
         return None
 
-    def get_xml_tree(self, path: str):
+    def get_xml_tree(self, path: str) -> ElementTree:
         """Get parsed XML path."""
         tree = etree.parse(path, self.xml_parser)
 
