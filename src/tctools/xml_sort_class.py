@@ -41,7 +41,7 @@ class XmlSorter(TcTool):
             "-n",
             help="Do not touch the attributes and sub-nodes of nodes with these names",
             nargs="+",
-            default=["Device", "DataType"],
+            default=["Device", "DataType", "DeploymentEvents"],
         )
 
     def run(self) -> int:
