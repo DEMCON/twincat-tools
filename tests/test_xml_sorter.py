@@ -111,6 +111,27 @@ def test_single_file_dry(plc_code, caplog):
     assert "identical" in result3
 
 
+def test_skip_nodes(plc_code, caplog):
+    """Test skipping selected nodes"""
+    file = plc_code / "plant_catalog.xml"
+    content_before = file.read_text()
+
+    XmlSorter(str(file), "--skip-nodes", "PLANT").run()
+    content_after_skipped = file.read_text()
+
+    pos_line1 = content_after_skipped.find("<COMMON>Bloodroot</COMMON>")
+    pos_line2 = content_after_skipped.find(
+        "<BOTANICAL>Aquilegia canadensis</BOTANICAL>"
+    )
+    assert pos_line1 < pos_line2  # Make sure these nodes did not get moved around
+
+    XmlSorter(str(file)).run()
+    content_after = file.read_text()
+
+    assert content_after_skipped != content_before
+    assert content_after_skipped != content_after
+
+
 def test_single_file_check(plc_code):
     """Test using check flag."""
     file = plc_code / "books.xml"

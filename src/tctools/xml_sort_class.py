@@ -1,7 +1,8 @@
+from typing import Dict
 from lxml import etree
 import re
 
-from .common import TcTool
+from .common import TcTool, Element
 
 
 class XmlSorter(TcTool):
@@ -107,13 +108,16 @@ class XmlSorter(TcTool):
             if self.args.dry:
                 self.logger.debug("Content identical for `{path}`")
 
-    def sort_node_recursively(self, node):
-        """Sort a node and any sub-nodes, and their sub-nodes."""
+    def sort_node_recursively(self, node: Element):
+        """Sort a node and any sub-nodes, and their sub-nodes.
 
-        if node.tag in self.args.skip_nodes:
+        Sorting is done in-place, the object is passed in by reference.
+        """
+
+        if self.get_tag(node) in self.args.skip_nodes:
             return  # Stop here
 
-        if node.get("{http://www.w3.org/XML/1998/namespace}space") == "preserve":
+        if self.get_attrib(node).get("space", None):
             return  # Do not touch with `xml:space="preserve"`
 
         # Also sort the attributes - but this won't work flawlessly, since dicts are
@@ -133,7 +137,7 @@ class XmlSorter(TcTool):
         node[:] = new_children  # Replace children in place
 
     @staticmethod
-    def sort_attributes(node) -> bool:
+    def sort_attributes(node: Element) -> bool:
         """Sort the attributes of a node.
 
         :returns: True if any changes were really made
@@ -145,7 +149,7 @@ class XmlSorter(TcTool):
         return changed
 
     @staticmethod
-    def get_node_sorting_key(node):
+    def get_node_sorting_key(node: Element) -> str:
         """Get the string by which sub-nodes will be sorted.
 
         Sorting will be done on the literal node XML subtree string.
@@ -154,3 +158,25 @@ class XmlSorter(TcTool):
         key = re.sub(r"\s+", "", key, flags=re.UNICODE)
 
         return key
+
+    @staticmethod
+    def get_tag(node: Element) -> str:
+        """Get tag without URL prefix from node."""
+        tag = node.tag
+        if tag.startswith("{"):
+            # Keep only the part after the `{...}`
+            _, _, tag = tag.partition("}")
+
+        return tag
+
+    @staticmethod
+    def get_attrib(node: Element) -> Dict[str, str]:
+        """Yield node attributes, with namespace stripped."""
+        attributes = {}
+        for key, value in node.attrib.items():
+            if key.startswith("{"):
+                # Keep only the part after the `{...}`
+                _, _, key = key.partition("}")
+            attributes[key] = value
+
+        return attributes
