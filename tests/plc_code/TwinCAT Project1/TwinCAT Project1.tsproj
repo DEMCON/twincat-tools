@@ -27,6 +27,9 @@
 	</ImageDatas>
 	<Project ProjectGUID="{1EC5FF11-0D39-45C9-9F28-DEBCB37D35DC}" Target64Bit="true" ShowHideConfigurations="#x106">
 		<System>
+			<Settings MaxCpus="4" NonWinCpus="1">
+				<Cpu CpuId="3"/>
+			</Settings>
 			<Tasks>
 				<Task Id="3" Priority="20" CycleTime="100000" AmsPort="350" AdtTasks="true">
 					<Name>PlcTask</Name>

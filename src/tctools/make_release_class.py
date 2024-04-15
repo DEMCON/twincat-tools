@@ -1,13 +1,28 @@
+from typing import Optional, List
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import shutil
+from lxml import etree
 from git import Repo
 
 from .common import Tool
 
 
+ElementTree = etree._ElementTree  # noqa
+Element = etree._Element  # noqa
+
+
 class MakeRelease(Tool):
     """Tool to create a release archive from a TwinCAT project."""
+
+    def __init__(self, *args):
+        super().__init__(*args)
+
+        # Bunch of attributes to easily share data between methods:
+        self.version: Optional[str] = None
+        self.destination_dir: Optional[Path] = None
+        self.archive_source: Optional[Path] = None
+        self.config_dir: Optional[Path] = None
 
     def set_arguments(self, parser):
         super().set_arguments(parser)
@@ -39,9 +54,30 @@ The resulting archive will be named after the PLC project.
 
         parser.add_argument(
             "--platform",
-            help="Target platform for PLC to copy (default: `x64`",
+            help="Target platform for PLC to copy (default: `x64`)",
             default="x64",
         )
+
+        parser.add_argument(
+            "--check-cpu",
+            help="Validate the CPU configuration in the compiled project "
+            "(<number of cores> <number of isolated cores>)",
+            nargs=2,
+            default=None,
+        )
+
+        parser.add_argument(
+            "--check-devices",
+            help="Validate devices, only the listed devices may be enabled",
+            nargs="+",
+            default=None,
+        )
+
+    @staticmethod
+    def glob_first(path: Path, pattern: str) -> Path:
+        """Get the first glob result."""
+        results = path.rglob(pattern)
+        return next(results)
 
     def run(self) -> int:
         """Create release archive."""
@@ -52,48 +88,128 @@ The resulting archive will be named after the PLC project.
 
         self.logger.debug(f"Found Git repository `{repo_dir}`")
 
-        version = repo.git.tag()
-        if not version:
+        self.version = repo.git.tag()
+        if not self.version:
             self.logger.warning(f"Could not find any tags in `{repo}`")
-            version = "v0.0.0"
+            self.version = "v0.0.0"
 
-        self.logger.info(f"Making release for tag `{version}`")
+        self.logger.info(f"Making release for tag `{self.version}`")
 
-        destination_dir = Path(self.args.destination).absolute()
+        self.destination_dir = Path(self.args.destination).absolute()
 
-        if not destination_dir.is_dir():
-            destination_dir.mkdir(parents=True)
+        if not self.destination_dir.is_dir():
+            self.destination_dir.mkdir(parents=True)
 
-        self.logger.debug(f"Going to make release in `{destination_dir}`")
+        self.logger.debug(f"Going to make release in `{self.destination_dir}`")
 
-        boot_paths = source_dir.rglob(f"_Boot/*({self.args.platform})")
-        boot_dir = next(boot_paths)
+        pattern = f"_Boot/*({self.args.platform})"
+        boot_dir = self.glob_first(source_dir, pattern)
         self.logger.debug(f"Copying PLC boot files from `{boot_dir}")
 
-        plc_paths = boot_dir.rglob("*.tpzip")
-        plc_project = next(plc_paths)
+        plc_project = self.glob_first(boot_dir, "*.tpzip")
         name = plc_project.stem.lower().replace(" ", "_")
 
-        archive_file = destination_dir / f"{name}-{version}.zip"
+        archive_file = self.destination_dir / f"{name}-{self.version}.zip"
+        if archive_file.is_file():
+            raise RuntimeError(f"Target file `{archive_file}` already exists")
 
         # Create self-deleting temporary folder inside the release directory:
-        with TemporaryDirectory(dir=destination_dir.parent) as temp_dir_str:
+        with TemporaryDirectory(dir=self.destination_dir.parent) as temp_dir_str:
             temp_dir = Path(temp_dir_str)
 
             # Copy entire boot directory content to new folder
-            archive_source = temp_dir / "release"
-            shutil.copytree(boot_dir, archive_source / "PLC", dirs_exist_ok=True)
+            self.archive_source = temp_dir / "release"
+            shutil.copytree(boot_dir, self.archive_source / "PLC", dirs_exist_ok=True)
 
-            # Unpack CurrentConfig from deploy into temp dir:
-            shutil.unpack_archive(
-                archive_source / "PLC" / "CurrentConfig.tszip",
-                temp_dir / "CurrentConfig",
-                format="zip",
-            )
+            errors = self.validate_release(temp_dir)
+            for error in errors:
+                self.logger.error(error)
+
+            if self.args.dry:
+                return 0  # Don't make any more changes
+
+            if errors:
+                self.logger.error(
+                    f"Not making release because of {len(errors)} failed check(s)"
+                )
+                return 1
 
             # `make_archive` tends to add itself too, so create it outside the source:
             shutil.make_archive(
-                str(archive_file.with_suffix("")), "zip", archive_source
+                str(archive_file.with_suffix("")), "zip", self.archive_source
             )
 
         return 0
+
+    def validate_release(self, temp_dir: Path) -> List[str]:
+        """
+
+        :param temp_dir: Root of temporary directory
+        """
+        # Unpack CurrentConfig into temp dir:
+        self.config_dir = temp_dir / "CurrentConfig"
+        shutil.unpack_archive(
+            self.archive_source / "PLC" / "CurrentConfig.tszip",
+            self.config_dir,
+            format="zip",
+        )
+
+        project_file = self.glob_first(self.config_dir, "*.tsproj")
+        root = etree.parse(project_file)
+
+        errors = []
+        errors += self.check_cpu(root)
+        errors += self.check_devices(root)
+
+        return errors
+
+    def check_cpu(self, root: ElementTree) -> List[str]:
+        """Validate CPU configuration."""
+        if self.args.check_cpu is None:
+            return []
+
+        node: Element = root.xpath("//TcSmProject/Project/System/Settings")[0]
+        cpus = [
+            int(node.attrib[key]) if key in node.attrib else 0
+            for key in ["MaxCpus", "NonWinCpus"]
+        ]
+        expected_cpus = [int(val) for val in self.args.check_cpu]
+
+        if cpus[0] != expected_cpus[0] or cpus[1] != expected_cpus[1]:
+            return [
+                f"Expected cpu configuration {expected_cpus}, but found {cpus} in "
+                f"project file",
+            ]
+
+        return []
+
+    def check_devices(self, root: ElementTree) -> List[str]:
+        """Validate device configuration."""
+        errors = []
+
+        if self.args.check_devices is None:
+            return errors
+
+        devices: List[Element] = root.xpath("//TcSmProject/Project/Io/Device")
+
+        for i, device in enumerate(devices):
+            if "File" in device.attrib:  # Replace by file reference
+                extra_file = self.glob_first(self.config_dir, device.attrib["File"])
+                extra_root: ElementTree = etree.parse(extra_file)
+                new_device: Element = extra_root.xpath("//TcSmItem/Device")[0]
+                new_device.find("Name").text = device.attrib["File"].rstrip(".xti")
+                devices[i] = new_device
+
+        for device in devices:
+            name = device.find("Name").text
+            should_be_disabled = name not in self.args.check_devices
+            is_disabled = device.attrib.get("Disabled", "false").lower() == "true"
+            if should_be_disabled != is_disabled:
+                msg = (
+                    "disabled, but is enabled"
+                    if should_be_disabled
+                    else "enabled, but is disabled"
+                )
+                errors.append(f"Device `{name}` should be {msg}!")
+
+        return errors

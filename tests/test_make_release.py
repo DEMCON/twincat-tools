@@ -50,8 +50,42 @@ def test_release(plc_code, caplog, mock_git):
 
     src_dir = plc_code / "TwinCAT Release"
 
+    releaser = MakeRelease(
+        str(src_dir), "--check-cpu", "4", "1", "--check-devices", "Device 2 (EtherCAT)"
+    )
+    releaser.run()
+
+    archive = plc_code / "deploy" / f"myplc-{VERSION}.zip"
+    assert archive.is_file()
+
+
+def test_release_no_checks(plc_code, caplog, mock_git):
+    """Test the release feature."""
+
+    src_dir = plc_code / "TwinCAT Release"
+
     releaser = MakeRelease(str(src_dir))
     releaser.run()
 
     archive = plc_code / "deploy" / f"myplc-{VERSION}.zip"
     assert archive.is_file()
+
+
+def test_release_failing_checks(plc_code, caplog, mock_git):
+    """Test the release feature."""
+
+    src_dir = plc_code / "TwinCAT Release"
+
+    releaser = MakeRelease(
+        str(src_dir), "--check-cpu", "8", "2", "--check-devices", "Device 1 (EtherCAT)"
+    )
+    code = releaser.run()
+    assert code != 0
+
+    errors_str = "\n".join(caplog.messages)
+
+    assert "Expected cpu configuration" in errors_str
+    assert "should be disabled, but is enabled" in errors_str
+
+    archive = plc_code / "deploy" / f"myplc-{VERSION}.zip"
+    assert not archive.is_file()
