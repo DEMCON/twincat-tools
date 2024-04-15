@@ -53,5 +53,5 @@ def test_release(plc_code, caplog, mock_git):
     releaser = MakeRelease(str(src_dir))
     releaser.run()
 
-    archive = plc_code / "deploy" / f"name_{VERSION}.zip"
+    archive = plc_code / "deploy" / f"myplc-{VERSION}.zip"
     assert archive.is_file()
