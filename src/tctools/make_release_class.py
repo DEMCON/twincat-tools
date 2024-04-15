@@ -14,7 +14,10 @@ class MakeRelease(Tool):
         parser.description = """Create a release archive from the current project.
 
 Archives the compiled result of PlC and HMI projects.
-Checks can be performed to make sure the binaries work on a target PLC."""
+Checks can be performed to make sure the binaries work on a target PLC.
+
+The resulting archive will be named after the PLC project.
+"""
 
         parser.add_argument(
             "plc_source",
@@ -47,22 +50,31 @@ Checks can be performed to make sure the binaries work on a target PLC."""
         repo = Repo(source_dir, search_parent_directories=True)
         repo_dir = Path(repo.git_dir).parent
 
-        self.logger.debug(f"Using Git path `{repo_dir}`")
+        self.logger.debug(f"Found Git repository `{repo_dir}`")
 
         version = repo.git.tag()
         if not version:
-            self.logger.warning(
-                f"Could not find any tags in `{repo}`, continuing with 'v0.0.0'"
-            )
+            self.logger.warning(f"Could not find any tags in `{repo}`")
             version = "v0.0.0"
+
+        self.logger.info(f"Making release for tag `{version}`")
 
         destination_dir = Path(self.args.destination).absolute()
 
         if not destination_dir.is_dir():
             destination_dir.mkdir(parents=True)
 
+        self.logger.debug(f"Going to make release in `{destination_dir}`")
+
         boot_paths = source_dir.rglob(f"_Boot/*({self.args.platform})")
         boot_dir = next(boot_paths)
+        self.logger.debug(f"Copying PLC boot files from `{boot_dir}")
+
+        plc_paths = boot_dir.rglob("*.tpzip")
+        plc_project = next(plc_paths)
+        name = plc_project.stem.lower().replace(" ", "_")
+
+        archive_file = destination_dir / f"{name}-{version}.zip"
 
         # Create self-deleting temporary folder inside the release directory:
         with TemporaryDirectory(dir=destination_dir.parent) as temp_dir_str:
@@ -80,12 +92,8 @@ Checks can be performed to make sure the binaries work on a target PLC."""
             )
 
             # `make_archive` tends to add itself too, so create it outside the source:
-            archive_file = temp_dir / "archive"
-            shutil.make_archive(str(archive_file), "zip", archive_source)
-
-            shutil.move(
-                archive_file.with_suffix(".zip"),
-                destination_dir / f"name_{version}.zip",
+            shutil.make_archive(
+                str(archive_file.with_suffix("")), "zip", archive_source
             )
 
         return 0
