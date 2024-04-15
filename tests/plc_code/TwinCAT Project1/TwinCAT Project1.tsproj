@@ -35,7 +35,7 @@
 		</System>
 		<Motion>
 			<NC File="NC.xti"/>
-			<CNC CncEVersion="true" ToolMngAdsPort="851" VE="100">
+			<CNC Disabled="true" CncEVersion="true" ToolMngAdsPort="851" VE="100">
 				<Name>CNC</Name>
 				<GeoTask Priority="3" CycleTime="20000" AmsPort="554" AdtTasks="true">
 					<Name>CNC-Task GEO</Name>
@@ -1454,7 +1454,7 @@ Ende
 			</Project>
 		</Plc>
 		<Io>
-			<Device Id="1" Disabled="true" DevType="111" DevFlags="#x0003" AmsPort="28673" AmsNetId="172.27.80.1.2.1" RemoteName="Device 1 (EtherCAT)" InfoImageId="2">
+			<Device Id="1" Disabled="true" DevType="111" DevFlags="#x0003" AmsPort="28673" AmsNetId="172.27.80.1.2.1" RemoteName="Device 1 (EtherCAT)" InfoImageId="4">
 				<Name>Device 1 (EtherCAT)</Name>
 				<AddressInfo>
 					<Pnp>
@@ -1979,6 +1979,6 @@ Bit1: Value bigger/equal Limit2]]></Comment>
 	</Project>
 	<Mappings>
 		<MappingInfo Identifier="{00000000-0030-0304-5000-040330000403}" Id="#x02030010"/>
-		<MappingInfo Identifier="{00000000-0040-0304-5000-040341000403}" Id="#x02030020"/>
+		<MappingInfo Identifier="{00000000-0060-0304-5000-040361000403}" Id="#x02030020"/>
 	</Mappings>
 </TcSmProject>
