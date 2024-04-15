@@ -16,28 +16,3 @@ venv/
 /*.html
 
 _build/
-
-
-# TwinCAT files
-*.*.bak
-*_TcCom*
-*.tmc
-slprj/
-*_tct/
-*_etl_hrt/
-TrialLicense.tclrs
-*.suo
-*.project.~u
-*.user
-*.dbg
-json-schema.org/
-_CompileInfo/
-_ModuleInstall/
-_Boot/
-_Libraries/
-PublishProfiles/
-
-# HMI, nuget and web stuff
-.engineering_servers
-Packages/
-.~lock*
