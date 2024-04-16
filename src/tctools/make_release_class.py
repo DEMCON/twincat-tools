@@ -1,4 +1,5 @@
 from typing import Optional, List
+import re
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import shutil
@@ -63,13 +64,22 @@ The resulting archive will be named after the PLC project.
             help="Validate the CPU configuration in the compiled project "
             "(<number of cores> <number of isolated cores>)",
             nargs=2,
+            type=int,
             default=None,
         )
 
         parser.add_argument(
             "--check-devices",
-            help="Validate devices, only the listed devices may be enabled",
+            help="Validate devices, only the listed devices by name may be enabled",
             nargs="+",
+            default=None,
+        )
+
+        parser.add_argument(
+            "--check-version-variable",
+            help="Validate current version in PLC source code in the given variable "
+            "(<filename> <variable name>)",
+            nargs=2,
             default=None,
         )
 
@@ -160,6 +170,7 @@ The resulting archive will be named after the PLC project.
         errors = []
         errors += self.check_cpu(root)
         errors += self.check_devices(root)
+        errors += self.check_version_variable(temp_dir)
 
         return errors
 
@@ -173,7 +184,7 @@ The resulting archive will be named after the PLC project.
             int(node.attrib[key]) if key in node.attrib else 0
             for key in ["MaxCpus", "NonWinCpus"]
         ]
-        expected_cpus = [int(val) for val in self.args.check_cpu]
+        expected_cpus = self.args.check_cpu
 
         if cpus[0] != expected_cpus[0] or cpus[1] != expected_cpus[1]:
             return [
@@ -213,3 +224,35 @@ The resulting archive will be named after the PLC project.
                 errors.append(f"Device `{name}` should be {msg}!")
 
         return errors
+
+    def check_version_variable(self, temp_dir: Path) -> List[str]:
+        """Validate the version variable matches the release version.
+
+        :param temp_dir:
+        """
+        if self.args.check_version_variable is None:
+            return []
+
+        check_file, check_variable = self.args.check_version_variable
+
+        plc_archive = self.glob_first(
+            self.archive_source / "PLC" / "CurrentConfig",
+            "*.tpzip",
+        )
+        # Unpack CurrentConfig/<plc>.tpzip into temp dir:
+        plc_dir = self.config_dir / "plc"
+        shutil.unpack_archive(plc_archive, plc_dir, format="zip")
+
+        file = self.glob_first(plc_dir, check_file)
+        pattern = re.compile(check_variable + r".*" + self.version.replace(".", r"\."))
+
+        contents = file.read_text()
+        matches = pattern.findall(contents)
+
+        if not matches:
+            return [
+                f"Failed to find version `{self.version}` in code "
+                f"`{check_file}:{check_variable}`"
+            ]
+
+        return []
