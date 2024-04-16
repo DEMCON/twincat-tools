@@ -1,0 +1,6 @@
+﻿<div id="Desktop" data-tchmi-type="TcHmi.Controls.System.TcHmiView" data-tchmi-top="0" data-tchmi-left="0" data-tchmi-width-mode="Content" data-tchmi-min-width="100" data-tchmi-min-width-unit="%" data-tchmi-height-mode="Content" data-tchmi-min-height="100" data-tchmi-min-height-unit="%">
+<div id="TcHmiTextblock_Welcome" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="44" data-tchmi-left-unit="px" data-tchmi-text="Beckhoff HMI" data-tchmi-top="30" data-tchmi-top-unit="px" data-tchmi-width="150" data-tchmi-width-unit="px" data-tchmi-word-wrap="true">
+</div>
+<div data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" id="TcHmiTextblock_Version" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="116" data-tchmi-left-unit="px" data-tchmi-text="v1.2.3" data-tchmi-top="105" data-tchmi-top-unit="px" data-tchmi-width="150" data-tchmi-width-unit="px" data-tchmi-word-wrap="true">
+</div>
+</div>

@@ -19,5 +19,6 @@ PublishProfiles/
 
 # HMI, nuget and web stuff
 .engineering_servers
-Packages/
+**/Packages/
 .~lock*
+**/Server/
