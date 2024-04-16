@@ -2,6 +2,8 @@ import pytest
 import sys
 import os
 import subprocess
+import shutil
+from pathlib import Path
 
 import tctools.make_release
 from tctools.make_release_class import MakeRelease
@@ -10,7 +12,15 @@ from tctools.make_release_class import MakeRelease
 VERSION = "v1.2.3"
 
 
-@pytest.fixture()
+@pytest.fixture
+def release_files(plc_code):
+    source = Path(__file__).resolve().parent / "plc_release"
+    target = plc_code
+    shutil.copytree(source, target, dirs_exist_ok=True)
+    yield target
+
+
+@pytest.fixture
 def mock_git(mocker, plc_code, monkeypatch, request):
     """Mock ``git.Repo`` to not throw an error and return info.
 
@@ -37,7 +47,7 @@ def test_help(capsys):
     assert "usage: " in message
 
 
-def test_cli(plc_code, capsys):
+def test_cli_help(capsys):
     """Test the CLI hook works."""
 
     path = sys.executable  # Re-use whatever executable we're using now
@@ -47,15 +57,14 @@ def test_cli(plc_code, capsys):
     )
 
     assert result.returncode == 0
+    assert "usage:" in result.stdout.decode()
 
 
-def test_release(plc_code, caplog, mock_git):
+def test_release(release_files, caplog, mock_git):
     """Test the release feature."""
 
-    src_dir = plc_code / "TwinCAT Release"
-
     releaser = MakeRelease(
-        str(src_dir),
+        str(release_files),
         "--check-cpu",
         "4",
         "1",
@@ -67,30 +76,26 @@ def test_release(plc_code, caplog, mock_git):
     )
     releaser.run()
 
-    archive = plc_code / "deploy" / f"myplc-{VERSION}.zip"
+    archive = release_files / "deploy" / f"myplc-{VERSION}.zip"
     assert archive.is_file()
 
 
-def test_release_no_checks(plc_code, caplog, mock_git):
+def test_release_no_checks(release_files, caplog, mock_git):
     """Test the release feature."""
 
-    src_dir = plc_code / "TwinCAT Release"
-
-    releaser = MakeRelease(str(src_dir))
+    releaser = MakeRelease(str(release_files))
     releaser.run()
 
-    archive = plc_code / "deploy" / f"myplc-{VERSION}.zip"
+    archive = release_files / "deploy" / f"myplc-{VERSION}.zip"
     assert archive.is_file()
 
 
 @pytest.mark.parametrize("mock_git", [("v2.0.0",)], indirect=True)
-def test_release_failing_checks(plc_code, caplog, mock_git):
+def test_release_failing_checks(release_files, caplog, mock_git):
     """Test the release feature."""
 
-    src_dir = plc_code / "TwinCAT Release"
-
     releaser = MakeRelease(
-        str(src_dir),
+        str(release_files),
         "--check-cpu",
         "8",
         "2",
@@ -109,5 +114,5 @@ def test_release_failing_checks(plc_code, caplog, mock_git):
     assert "should be disabled, but is enabled" in errors_str
     assert "Failed to find version" in errors_str
 
-    archive_dir = plc_code / "deploy"
+    archive_dir = release_files / "deploy"
     assert not any(archive_dir.iterdir())  # Make sure it's empty

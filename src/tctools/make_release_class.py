@@ -149,6 +149,7 @@ The resulting archive will be named after the PLC project.
                 str(archive_file.with_suffix("")), "zip", self.archive_source
             )
 
+        self.logger.info(f"Created file `{archive_file}`")
         return 0
 
     def validate_release(self, temp_dir: Path) -> List[str]:
