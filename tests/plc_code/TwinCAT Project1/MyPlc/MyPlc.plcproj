@@ -20,6 +20,10 @@
     <Compile Include="DUTs\ST_Example.TcDUT">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="GVLs\GVL_Version.TcGVL">
+      <SubType>Code</SubType>
+      <LinkAlways>true</LinkAlways>
+    </Compile>
     <Compile Include="PlcTask.TcTTO">
       <SubType>Code</SubType>
     </Compile>
