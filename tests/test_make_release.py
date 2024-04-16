@@ -116,3 +116,19 @@ def test_release_failing_checks(release_files, caplog, mock_git):
 
     archive_dir = release_files / "deploy"
     assert not any(archive_dir.iterdir())  # Make sure it's empty
+
+
+def test_release_with_hmi(release_files, caplog, mock_git):
+    """Test the release feature."""
+
+    releaser = MakeRelease(
+        str(release_files),
+        "--include-hmi",
+        "--check-version-hmi",
+        "Desktop.view",
+        "TcHmiTextblock_Version",
+    )
+    releaser.run()
+
+    archive = release_files / "deploy" / f"myplc-{VERSION}.zip"
+    assert archive.is_file()

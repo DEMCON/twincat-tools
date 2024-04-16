@@ -48,9 +48,10 @@ The resulting archive will be named after the PLC project.
         )
 
         parser.add_argument(
-            "--hmi-source",
-            help="Path where to search for compilation directory of HMI project",
-            default=None,
+            "--include-hmi",
+            help="Also include HMI compilation in release (default: False)",
+            default=False,
+            action="store_true",
         )
 
         parser.add_argument(
@@ -79,6 +80,14 @@ The resulting archive will be named after the PLC project.
             "--check-version-variable",
             help="Validate current version in PLC source code in the given variable "
             "(<filename> <variable name>)",
+            nargs=2,
+            default=None,
+        )
+
+        parser.add_argument(
+            "--check-version-hmi",
+            help="Validate current version in HMI source code in the given object "
+            "(<filename> <object id>)",
             nargs=2,
             default=None,
         )
@@ -119,6 +128,11 @@ The resulting archive will be named after the PLC project.
         plc_project = self.glob_first(boot_dir, "*.tpzip")
         name = plc_project.stem.lower().replace(" ", "_")
 
+        hmi_bin_dir: Optional[Path] = None
+        if self.args.include_hmi:
+            html_file = self.glob_first(source_dir, "bin/*.html")
+            hmi_bin_dir = html_file.parent
+
         archive_file = self.destination_dir / f"{name}-{self.version}.zip"
         if archive_file.is_file():
             raise RuntimeError(f"Target file `{archive_file}` already exists")
@@ -130,6 +144,14 @@ The resulting archive will be named after the PLC project.
             # Copy entire boot directory content to new folder
             self.archive_source = temp_dir / "release"
             shutil.copytree(boot_dir, self.archive_source / "PLC", dirs_exist_ok=True)
+
+            # Also copy HMI bin directory:
+            if hmi_bin_dir:
+                shutil.copytree(
+                    hmi_bin_dir,
+                    self.archive_source / "HMI",
+                    dirs_exist_ok=True,
+                )
 
             errors = self.validate_release(temp_dir)
             for error in errors:
@@ -172,6 +194,7 @@ The resulting archive will be named after the PLC project.
         errors += self.check_cpu(root)
         errors += self.check_devices(root)
         errors += self.check_version_variable(temp_dir)
+        errors += self.check_version_hmi()
 
         return errors
 
@@ -257,3 +280,25 @@ The resulting archive will be named after the PLC project.
             ]
 
         return []
+
+    def check_version_hmi(self):
+        """Validate version string inside HMI page."""
+        if self.args.check_version_hmi is None:
+            return []
+
+        check_file, check_object = self.args.check_version_hmi
+
+        file = self.glob_first(self.archive_source / "HMI", check_file)
+        pattern = re.compile(check_object + r'.*data-tchmi-text="(.+?)"')
+        # Use `+?` for lazy matching
+
+        contents = file.read_text()
+        for match in pattern.finditer(contents):
+            if match.group(1) == self.version:
+                return []
+            return [
+                f"Version in HMI `{check_file}:{check_object}` is "
+                f"`{match.group(1)}`, not `{self.version}`"
+            ]
+
+        return [f"Failed to find HMI object `{check_object}` in `{check_file}`"]
