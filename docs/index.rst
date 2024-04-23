@@ -6,6 +6,12 @@ TcTools is a collection of command line interface tools to assist in developing 
 
 View the repository at https://github.com/DEMCON/TcTools.
 
+The tools summarized:
+
+* :ref:`xml_sorter`: Re-sort TwinCAT XML project folders for consistent version control
+* :ref:`auto_formatter`: Re-format TwinCAT structured text (ST) PLC source files
+* :ref:`git_info`: Generate source file based on Git version info
+
 ..
    Header format:
 
