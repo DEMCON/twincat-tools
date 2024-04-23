@@ -13,6 +13,10 @@ def main_argv():
     exit(main(*sys.argv[1:]))
 
 
+def get_parser():
+    return MakeRelease.get_argument_parser()
+
+
 if __name__ == "__main__":
     exit_code = main(*sys.argv[1:])  # Skip script name
     exit(exit_code)

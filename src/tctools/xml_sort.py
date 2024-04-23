@@ -1,5 +1,4 @@
 import sys
-from argparse import ArgumentParser
 
 from .xml_sort_class import XmlSorter
 
@@ -15,8 +14,7 @@ def main_argv():
 
 
 def get_parser():
-    parser = ArgumentParser()
-    return XmlSorter.set_arguments(parser)
+    return XmlSorter.get_argument_parser()
 
 
 if __name__ == "__main__":

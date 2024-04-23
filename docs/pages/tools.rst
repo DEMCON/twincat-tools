@@ -160,3 +160,21 @@ Notes
 -----
 
 * Requires Git, likely required to be added to ``PATH``.
+
+
+.. _make_release:
+
+Release Maker
+=============
+
+Use to produce a release archive of compiled PLC code, optionally together with compiled HMI application.
+
+Usage
+-----
+
+Call with ``python -m tctools.make_release`` or ``tc_make_release``.
+
+.. argparse::
+   :module: tctools.make_release
+   :func: get_parser
+   :nodescription:

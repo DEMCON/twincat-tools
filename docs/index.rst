@@ -11,6 +11,7 @@ The tools summarized:
 * :ref:`xml_sorter`: Re-sort TwinCAT XML project folders for consistent version control
 * :ref:`auto_formatter`: Re-format TwinCAT structured text (ST) PLC source files
 * :ref:`git_info`: Generate source file based on Git version info
+* :ref:`make_release`: Produce verified archive of built binaries
 
 ..
    Header format:

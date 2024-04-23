@@ -25,7 +25,8 @@ class MakeRelease(Tool):
         self.archive_source: Optional[Path] = None
         self.config_dir: Optional[Path] = None
 
-    def set_arguments(self, parser):
+    @classmethod
+    def set_arguments(cls, parser):
         super().set_arguments(parser)
         parser.description = """Create a release archive from the current project.
 
