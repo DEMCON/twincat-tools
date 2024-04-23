@@ -5,6 +5,15 @@
 
 This repository contains a small set of tools for developing TwinCAT projects.
 
+## Install
+
+Get it with the usual:
+```
+pip install .
+```
+
+To develop, use: `pip install -e .[test,doc]`
+
 ## Tools
 
 ### XML Sorter

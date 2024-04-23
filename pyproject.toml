@@ -20,7 +20,21 @@ classifiers = [
 dependencies = [
     "lxml~=4.9.3",
     "EditorConfig~=0.12.3",
-    "GItPython~=3.1.36",
+    "GitPython~=3.1.36",
+]
+
+[project.optional-dependencies]
+test = [
+    "black~=23.7.0",
+    "pytest~=7.4.1",
+    "pytest-cov~=4.1.0",
+    "pytest-mock~=3.14.0",
+    "flake8~=6.1.0",
+    "flake8-bugbear~=23.7.10",
+]
+doc = [
+    "sphinx~=7.3.7",
+    "sphinx_rtd_theme~=2.0.0",
 ]
 
 [project.scripts]
