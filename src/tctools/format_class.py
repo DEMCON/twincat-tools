@@ -106,19 +106,13 @@ class Formatter(TcTool):
 
         self._number_corrections = 0  # Track number of changes for the current file
 
-    def set_arguments(self, parser):
+    @classmethod
+    def set_arguments(cls, parser):
         super().set_arguments(parser)
 
         parser.description = "Format the PLC code inside a TwinCAT source XML path."
-        parser.epilog = "Example: [program] ./MyTwinCATProject"
-
-        parser.add_argument(
-            "--filter",
-            help="Target files only with these patterns "
-            "(default: all TwinCAT PLC types)",
-            nargs="+",
-            default=["*.TcPOU", "*.TcGVL", "*.TcDUT"],
-        )
+        parser.epilog = "Example: ``tc_format -r ./MyTwinCATProject``"
+        return parser
 
     @classmethod
     def register_rule(cls, new_rule: Type[FormattingRule]):

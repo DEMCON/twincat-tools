@@ -22,21 +22,13 @@ class XmlSorter(TcTool):
         self._file_changed = False  # True if any change is made in the current path
         # This is a property to avoid passing around booleans between recursive calls
 
-    def set_arguments(self, parser):
+    @classmethod
+    def set_arguments(cls, parser):
         super().set_arguments(parser)
 
-        parser.description = "Alphabetically sort the nodes in an XML path."
-        parser.epilog = (
-            "Example: [program] ./MyTwinCATProject -r "
-            "--filter *.tsproj *.xti *.plcproj --skip-nodes Device DataType"
-        )
-
-        parser.add_argument(
-            "--filter",
-            help="Target files only with these patterns (default: .xml only)",
-            nargs="+",
-            default=["*.tsproj", "*.xti", "*.plcproj"],
-        )
+        parser.prog = "tc_xml_sort"
+        parser.description = "Alphabetically sort the nodes in XML files."
+        parser.epilog = "Example: ``tc_xml_sort -r ./MyTwinCATProject``"
         parser.add_argument(
             "--skip-nodes",
             "-n",
@@ -44,6 +36,7 @@ class XmlSorter(TcTool):
             nargs="+",
             default=["Device", "DataType", "DeploymentEvents"],
         )
+        return parser
 
     def run(self) -> int:
         for file in self.find_files():

@@ -15,32 +15,31 @@ class GitInfo(Tool):
     def __init__(self, *args):
         super().__init__(*args)
 
-    def set_arguments(self, parser):
+    @classmethod
+    def set_arguments(cls, parser):
         super().set_arguments(parser)
+
         parser.description = (
             "Create a new file with version info from Git from a template."
         )
-        parser.epilog = "Example: [program] Version.TcGVL"
-
+        parser.epilog = "Example: ``tc_git_info Version.TcGVL.template``"
         parser.add_argument(
             "template",
             help="Template file to be used for newly created file",
         )
-
         parser.add_argument(
             "--output",
             help="File path for the new output file (default: template file with the "
             "last extension stripped)",
             default=None,
         )
-
         parser.add_argument(
             "--repo",
             help="Path to use for the Git repository (default: "
-            "use the first repository up "
-            "from the template file)",
+            "use the first repository up from the template file)",
             default=None,
         )
+        return parser
 
     def run(self) -> int:
         """Produce an info file based on template."""
