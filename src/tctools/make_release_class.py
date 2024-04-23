@@ -55,6 +55,16 @@ The resulting archive will be named after the PLC project.
         )
 
         parser.add_argument(
+            "--add-file",
+            "-a",
+            help="Add additional file to release package "
+            "(<filepath> <relative path inside archive>)",
+            default=None,
+            nargs="+",  # Can be 1 or 2
+            action="append",
+        )
+
+        parser.add_argument(
             "--platform",
             help="Target platform for PLC to copy (default: `x64`)",
             default="x64",
@@ -157,6 +167,8 @@ The resulting archive will be named after the PLC project.
             for error in errors:
                 self.logger.error(error)
 
+            self.add_additional_files()
+
             if self.args.dry:
                 return 0  # Don't make any more changes
 
@@ -173,6 +185,26 @@ The resulting archive will be named after the PLC project.
 
         self.logger.info(f"Created file `{archive_file}`")
         return 0
+
+    def add_additional_files(self):
+        if not self.args.add_file:
+            return
+
+        for file_option in self.args.add_file:
+            file_source = Path(file_option[0])
+            if len(file_option) == 1:
+                file_dest = file_source
+            elif len(file_option) == 2:
+                file_dest = Path(file_option[1])
+            else:
+                raise RuntimeError("`--add-file` argument must have 1 or 2 values")
+
+            if file_dest.is_absolute():
+                file_dest = file_dest.relative_to(Path.cwd())
+
+            shutil.copy(file_source, self.archive_source / file_dest)
+
+        return
 
     def validate_release(self, temp_dir: Path) -> List[str]:
         """
