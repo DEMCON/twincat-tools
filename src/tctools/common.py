@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Optional, List
-from argparse import ArgumentParser
+from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from pathlib import Path
 from lxml import etree
 import logging
@@ -30,9 +30,10 @@ class Tool(ABC):
         self.args = parser.parse_args(args)
         self.logger = self.get_logger()
 
-    @staticmethod
-    def set_arguments(parser):
+    @classmethod
+    def set_arguments(cls, parser):
         """Create application-specific arguments."""
+        parser.formatter_class = ArgumentDefaultsHelpFormatter
         parser.add_argument(
             "--dry",
             help="Do not modify files on disk, only report changes to be made",
@@ -46,6 +47,7 @@ class Tool(ABC):
             help="Set log level to change verbosity",
             default="INFO",
         )
+        return parser
 
     @abstractmethod
     def run(self) -> int:
@@ -77,12 +79,13 @@ class TcTool(Tool, ABC):
         self.files_to_alter = 0  # Files that seem to require changes
         self.files_resaved = 0  # Files actually re-saved to disk
 
-    def set_arguments(self, parser):
+    @classmethod
+    def set_arguments(cls, parser):
         super().set_arguments(parser)
 
         parser.add_argument(
             "target",
-            help="File or folder to target",
+            help="File(s) or folder(s) to target",
             nargs="+",
         )
         parser.add_argument(
@@ -99,6 +102,14 @@ class TcTool(Tool, ABC):
             action="store_true",
             default=False,
         )
+        parser.add_argument(
+            "--filter",
+            help="Target files only with these patterns",
+            nargs="+",
+            default=["*.tsproj", "*.xti", "*.plcproj"],
+        )
+
+        return parser
 
     @staticmethod
     def get_xml_header(file: str) -> Optional[str]:
