@@ -13,7 +13,9 @@ venv/
 .venv/
 
 .coverage
-*.html
+/*.html
+
+_build/
 
 
 # TwinCAT files
