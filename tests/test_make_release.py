@@ -81,8 +81,6 @@ def test_release(release_files, caplog, mock_git):
 
 
 def test_release_no_checks(release_files, caplog, mock_git):
-    """Test the release feature."""
-
     releaser = MakeRelease(str(release_files))
     releaser.run()
 
@@ -90,10 +88,20 @@ def test_release_no_checks(release_files, caplog, mock_git):
     assert archive.is_file()
 
 
+def test_release_add_files(release_files, caplog, mock_git):
+    releaser = MakeRelease(str(release_files), "-a", "README.md")
+    releaser.run()
+
+    archive = release_files / "deploy" / f"myplc-{VERSION}.zip"
+    assert archive.is_file()
+    release_dir = release_files / "deploy" / "unpacked"
+    shutil.unpack_archive(archive, release_dir)
+    readme_file = release_dir / "README.md"
+    assert readme_file.is_file()
+
+
 @pytest.mark.parametrize("mock_git", [("v2.0.0",)], indirect=True)
 def test_release_failing_checks(release_files, caplog, mock_git):
-    """Test the release feature."""
-
     releaser = MakeRelease(
         str(release_files),
         "--check-cpu",
@@ -119,8 +127,6 @@ def test_release_failing_checks(release_files, caplog, mock_git):
 
 
 def test_release_with_hmi(release_files, caplog, mock_git):
-    """Test the release feature."""
-
     releaser = MakeRelease(
         str(release_files),
         "--include-hmi",
