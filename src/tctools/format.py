@@ -1,5 +1,4 @@
 import sys
-from argparse import ArgumentParser
 
 from .format_class import Formatter
 
@@ -15,8 +14,7 @@ def main_argv():
 
 
 def get_parser():
-    parser = ArgumentParser()
-    return Formatter.set_arguments(parser)
+    return Formatter.get_argument_parser()
 
 
 if __name__ == "__main__":

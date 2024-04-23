@@ -25,15 +25,18 @@ class Tool(ABC):
 
         :param args: See :meth:`set_arguments`
         """
-        parser = ArgumentParser()
-        self.set_arguments(parser)
-        self.args = parser.parse_args(args)
+        self.args = self.get_argument_parser().parse_args(args)
         self.logger = self.get_logger()
+
+    @classmethod
+    def get_argument_parser(cls) -> ArgumentParser:
+        parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
+        cls.set_arguments(parser)
+        return parser
 
     @classmethod
     def set_arguments(cls, parser):
         """Create application-specific arguments."""
-        parser.formatter_class = ArgumentDefaultsHelpFormatter
         parser.add_argument(
             "--dry",
             help="Do not modify files on disk, only report changes to be made",

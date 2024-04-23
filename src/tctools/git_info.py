@@ -1,5 +1,4 @@
 import sys
-from argparse import ArgumentParser
 
 from .git_info_class import GitInfo
 
@@ -15,8 +14,7 @@ def main_argv():
 
 
 def get_parser():
-    parser = ArgumentParser()
-    return GitInfo.set_arguments(parser)
+    return GitInfo.get_argument_parser()
 
 
 if __name__ == "__main__":
