@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "TcTools"
-version = "0.0.1"
+version = "0.1.0"
 authors = [
   { name="Robert Roos", email="robert.soor@gmail.com" },
 ]
@@ -37,6 +37,11 @@ doc = [
     "sphinx_rtd_theme~=2.0.0",
     "sphinx-argparse~=0.4.0",
 ]
+
+[project.urls]
+"Homepage" = "https://github.com/DEMCON/TcTools"
+"Bug Tracker" = "https://github.com/DEMCON/TcTools/issues"
+"Documentation" = "https://tctools.readthedocs.io"
 
 [project.scripts]
 tc_format = "tctools.format:main_argv"
