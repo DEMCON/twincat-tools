@@ -1,23 +1,27 @@
 # TwinCAT Tools
 
-[![Documentation](https://readthedocs.org/projects/tctools/badge/?version=latest)](https://tctools.readthedocs.io/latest/?badge=latest)
-[![PyTest](https://github.com/DEMCON/tctools/actions/workflows/tests.yml/badge.svg)](https://github.com/DEMCON/TcTools/actions)
-[![codecov](https://codecov.io/gh/DEMCON/TcTools/graph/badge.svg?token=3NU2UNM2U0)](https://codecov.io/gh/DEMCON/TcTools)
+[![Documentation](https://readthedocs.org/projects/twincat-tools/badge/?version=latest)](https://twincat-tools.readthedocs.io/latest/?badge=latest)
+[![PyTest](https://github.com/DEMCON/twincat-tools/actions/workflows/tests.yml/badge.svg)](https://github.com/DEMCON/twincat-tools/actions)
+[![codecov](https://codecov.io/gh/DEMCON/twincat-tools/graph/badge.svg?token=3NU2UNM2U0)](https://codecov.io/gh/DEMCON/twincat-tools)
 
 This repository contains a small set of tools for developing TwinCAT projects.
 
 ## Install
 
-Get it with the usual:
+Install it with pip from [pypi.org](https://pypi.org/project/twincat-tools/) with:
 ```
-pip install .
+pip install twincat-tools
 ```
+
+Use it as `python -m tctools.[*]`.
+
+Note: the PyPi package named _TcTools_ is **not** affiliated with this project and is simply an unfortunate name conflict!
 
 ## Develop
 
 ### Requirements
 
-Install the development requirements with:
+Install package in editable mode and get the development requirements with:
 ```
 pip install -e .[test,doc]
 ```
@@ -25,8 +29,8 @@ pip install -e .[test,doc]
 ### Documentation
 
 Documentation is built using Sphinx.
-This is done automatically and hosted by ReadTheDocs: https://tctools.readthedocs.io/en/latest/
+This is done automatically and hosted by [ReadTheDocs](https://about.readthedocs.com/).
 
 ## Tools
 
-See RTD documentation for full overview.
+See RTD documentation for full overview of usage: https://twincat-tools.readthedocs.io/latest/pages/tools.html
