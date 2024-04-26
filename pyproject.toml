@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "TcTools"
+name = "twincat-tools"
 version = "0.1.0"
 authors = [
   { name="Robert Roos", email="robert.soor@gmail.com" },
@@ -39,9 +39,9 @@ doc = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/DEMCON/TcTools"
-"Bug Tracker" = "https://github.com/DEMCON/TcTools/issues"
-"Documentation" = "https://tctools.readthedocs.io"
+"Homepage" = "https://github.com/DEMCON/twincat-tools"
+"Bug Tracker" = "https://github.com/DEMCON/twincat-tools/issues"
+"Documentation" = "https://twincat-tools.readthedocs.io"
 
 [project.scripts]
 tc_format = "tctools.format:main_argv"
