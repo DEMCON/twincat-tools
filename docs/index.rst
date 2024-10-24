@@ -27,4 +27,5 @@ The tools summarized:
    :caption: Contents
 
    pages/tools.rst
+   pages/config.rst
    pages/api.rst
