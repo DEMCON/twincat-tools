@@ -23,7 +23,7 @@ Note: the PyPi package named _TcTools_ is **not** affiliated with this project a
 
 Install package in editable mode and get the development requirements with:
 ```
-pip install -e .[test,doc]
+poetry install --with dev --with doc
 ```
 
 ### Documentation
