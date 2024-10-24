@@ -56,19 +56,18 @@ indent_size = 4
     formatter = Formatter(str(file), "--dry", "-l", "DEBUG")
     formatter.run()
 
-    # fmt: off
+    txt = "Line contains a tab that should be spaces"
     expected = [
         ["Processing path"],
-        ["FB_Example.TcPOU", "declaration", ":3", "Line contains a tab that should be spaces"],
-        ["FB_Example.TcPOU", "declaration", ":10", "Line contains a tab that should be spaces"],
-        ["FB_Example.TcPOU", "implementation", ":2", "Line contains a tab that should be spaces"],
-        ["FB_Example.TcPOU", "implementation", ":4", "Line contains a tab that should be spaces"],
-        ["FB_Example.TcPOU", "implementation", ":5", "Line contains a tab that should be spaces"],
-        ["FB_Example.TcPOU", "implementation", ":12", "Line contains a tab that should be spaces"],
+        ["FB_Example.TcPOU", "declaration", ":3", txt],
+        ["FB_Example.TcPOU", "declaration", ":10", txt],
+        ["FB_Example.TcPOU", "implementation", ":2", txt],
+        ["FB_Example.TcPOU", "implementation", ":4", txt],
+        ["FB_Example.TcPOU", "implementation", ":5", txt],
+        ["FB_Example.TcPOU", "implementation", ":12", txt],
         ["Checked 1 path(s)"],
         ["Re-saved 0 path(s)"],
     ]
-    # fmt: on
 
     assert_strings_have_substrings(expected, caplog.messages)
     assert content_before == file.read_text() and "Source file was modified"
@@ -89,19 +88,18 @@ indent_size = 4
     formatter = Formatter(str(file), "--dry", "-l", "DEBUG")
     formatter.run()
 
-    # fmt: off
+    txt = "Line contains an indent that should be a tab"
     expected = [
         ["Processing path"],
-        ["FB_Example.TcPOU", "declaration", ":3", "Line contains an indent that should be a tab"],
-        ["FB_Example.TcPOU", "declaration", ":4", "Line contains an indent that should be a tab"],
-        ["FB_Example.TcPOU", "declaration", ":9", "Line contains an indent that should be a tab"],
-        ["FB_Example.TcPOU", "implementation", ":3", "Line contains an indent that should be a tab"],
-        ["FB_Example.TcPOU", "implementation", ":4", "Line contains an indent that should be a tab"],
-        ["FB_Example.TcPOU", "implementation", ":9", "Line contains an indent that should be a tab"],
+        ["FB_Example.TcPOU", "declaration", ":3", txt],
+        ["FB_Example.TcPOU", "declaration", ":4", txt],
+        ["FB_Example.TcPOU", "declaration", ":9", txt],
+        ["FB_Example.TcPOU", "implementation", ":3", txt],
+        ["FB_Example.TcPOU", "implementation", ":4", txt],
+        ["FB_Example.TcPOU", "implementation", ":9", txt],
         ["Checked 1 path(s)"],
         ["Re-saved 0 path(s)"],
     ]
-    # fmt: on
 
     assert_strings_have_substrings(expected, caplog.messages)
 
@@ -120,16 +118,15 @@ trim_trailing_whitespace = true
     formatter = Formatter(str(file), "--dry", "-l", "DEBUG")
     formatter.run()
 
-    # fmt: off
+    txt = "Line contains trailing whitespace"
     expected = [
         ["Processing path"],
-        ["FB_Example.TcPOU", "implementation", ":2", "Line contains trailing whitespace"],
-        ["FB_Example.TcPOU", "implementation", ":9", "Line contains trailing whitespace"],
-        ["FB_Example.TcPOU", "implementation", ":12", "Line contains trailing whitespace"],
+        ["FB_Example.TcPOU", "implementation", ":2", txt],
+        ["FB_Example.TcPOU", "implementation", ":9", txt],
+        ["FB_Example.TcPOU", "implementation", ":12", txt],
         ["Checked 1 path(s)"],
         ["Re-saved 0 path(s)"],
     ]
-    # fmt: on
 
     assert_strings_have_substrings(expected, caplog.messages)
 
