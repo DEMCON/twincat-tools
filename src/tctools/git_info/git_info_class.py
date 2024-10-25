@@ -2,7 +2,7 @@ from typing import Dict
 from git import Repo
 from pathlib import Path
 
-from .common import Tool
+from ..common import Tool
 
 
 class GitInfo(Tool):

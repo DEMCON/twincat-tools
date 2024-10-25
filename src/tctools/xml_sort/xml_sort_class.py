@@ -2,7 +2,7 @@ from typing import Dict
 from lxml import etree
 import re
 
-from .common import TcTool, Element
+from ..common import TcTool, Element
 
 
 class XmlSorter(TcTool):

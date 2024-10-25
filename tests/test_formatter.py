@@ -2,8 +2,8 @@ import pytest
 import subprocess
 import sys
 
-import tctools.format
-from tctools.format_class import Formatter
+import tctools.format.__main__
+from tctools.format.format_class import Formatter
 
 from .conftest import assert_strings_have_substrings
 
@@ -11,7 +11,7 @@ from .conftest import assert_strings_have_substrings
 def test_help(capsys):
     """Test the help text."""
     with pytest.raises(SystemExit) as err:
-        tctools.format.main("--help")
+        tctools.format.__main__.main("--help")
 
     assert err.type == SystemExit
 
@@ -152,8 +152,8 @@ indent_size = 4
 
     assert content_before == file.read_text()
 
-    tctools.format.main(str(file))  # Re-format
-    code_new = tctools.format.main(str(file), "--check")  # Check again
+    tctools.format.__main__.main(str(file))  # Re-format
+    code_new = tctools.format.__main__.main(str(file), "--check")  # Check again
     assert code_new == 0
 
 

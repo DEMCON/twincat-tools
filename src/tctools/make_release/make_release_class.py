@@ -6,7 +6,7 @@ import shutil
 from lxml import etree
 from git import Repo
 
-from .common import Tool
+from ..common import Tool
 
 
 ElementTree = etree._ElementTree  # noqa
