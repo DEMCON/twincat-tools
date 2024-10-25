@@ -3,9 +3,14 @@ import sys
 from abc import ABC, abstractmethod
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 from lxml import etree
+
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib  # Python 3.10 and before doesn't have tomllib yet
 
 # Create type hinting shortcuts:
 Element = etree._Element  # noqa
@@ -23,12 +28,36 @@ class Tool(ABC):
     # Default value for file filter argument:
     FILTER_DEFAULT: List[str]
 
+    CONFIG_KEY: Optional[str] = None
+
     def __init__(self, *args):
         """Pass e.g. ``sys.args[1:]`` (skipping the script part of the arguments).
 
         :param args: See :meth:`set_arguments`
         """
-        self.args = self.get_argument_parser().parse_args(args)
+        parser = self.get_argument_parser()
+
+        # All the fields were are going to have in the arguments output:
+        fields = {
+            action.dest for action in parser._actions if action.dest != "help"  # noqa
+        }
+
+        # Pre-create the arguments output and insert any configured values:
+        self.args = Namespace()
+
+        config = self.make_config()
+        if self.CONFIG_KEY:
+            config = config.get(self.CONFIG_KEY, {})
+        for key, value in config.items():
+            if key not in fields:
+                raise ValueError(
+                    f"Config field `{key}` is not recognized as a valid option"
+                )
+            setattr(self.args, key, value)
+
+        # Now parse CLI options on top of file configurations:
+        parser.parse_args(args, self.args)
+
         self.logger = self.get_logger()
 
     @classmethod
@@ -53,7 +82,40 @@ class Tool(ABC):
             help="Set log level to change verbosity",
             default="INFO",
         )
-        return parser
+        return
+
+    def make_config(self) -> Dict[str, Any]:
+        """Get configuration from possible files."""
+        config = {}
+        config_file = self._find_files_upwards(
+            Path.cwd(), ["tctools.toml", "pyproject.toml"]
+        )
+        if not config_file:
+            return config
+
+        with open(config_file, "rb") as fh:
+            data = tomllib.load(fh)
+            if "tctools" in data:
+                config = data["tctools"]
+
+        return config
+
+    @classmethod
+    def _find_files_upwards(
+        cls, directory: Path, filenames: List[str]
+    ) -> Optional[Path]:
+        """Find a file with a given name in the directory or it's parents.
+
+        First hit on any of the filenames is returned.
+        """
+        for option in ([directory], directory.parents):
+            for test_dir in option:
+                for filename in filenames:
+                    test_path = test_dir / filename
+                    if test_path.is_file():
+                        return test_path
+
+        return None
 
     @abstractmethod
     def run(self) -> int:
