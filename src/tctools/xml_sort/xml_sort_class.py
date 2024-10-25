@@ -16,6 +16,8 @@ class XmlSorter(TcTool):
 
     FILTER_DEFAULT: List[str] = ["*.tsproj", "*.xti", "*.plcproj"]
 
+    CONFIG_KEY = "xml_sort"
+
     def __init__(self, *args):
         super().__init__(*args)
 
