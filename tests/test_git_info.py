@@ -4,14 +4,14 @@ import sys
 from pathlib import Path
 import re
 
-import tctools.git_info
-from tctools.git_info_class import GitInfo
+import tctools.git_info.__main__
+from tctools.git_info.git_info_class import GitInfo
 
 
 def test_help(capsys):
     """Test the help text."""
     with pytest.raises(SystemExit) as err:
-        tctools.git_info.main("--help")
+        tctools.git_info.__main__.main("--help")
 
     assert err.type == SystemExit
 

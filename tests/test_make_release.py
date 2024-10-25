@@ -5,8 +5,8 @@ import subprocess
 import shutil
 from pathlib import Path
 
-import tctools.make_release
-from tctools.make_release_class import MakeRelease
+import tctools.make_release.__main__
+from tctools.make_release.make_release_class import MakeRelease
 
 
 VERSION = "v1.2.3"
@@ -27,7 +27,7 @@ def mock_git(mocker, plc_code, monkeypatch, request):
     Pass indirect argument to override the used version.
     """
     # Mock the `Repo` class
-    mocked_repo = mocker.patch("tctools.make_release_class.Repo")
+    mocked_repo = mocker.patch("tctools.make_release.make_release_class.Repo")
     # Mock `git.tag()` from a mocked Repo instance:
     version = request.param[0] if hasattr(request, "param") else VERSION
     mocked_repo().git.tag.return_value = version
@@ -39,7 +39,7 @@ def mock_git(mocker, plc_code, monkeypatch, request):
 
 def test_help(capsys):
     with pytest.raises(SystemExit) as err:
-        tctools.make_release.main("--help")
+        tctools.make_release.__main__.main("--help")
 
     assert err.type == SystemExit
 

@@ -2,8 +2,8 @@
 
 import pytest
 
-from tctools import format_rules
-from tctools.format_class import Kind
+from tctools.format import format_rules
+from tctools.format.format_class import Kind
 
 
 def test_replace_tab():

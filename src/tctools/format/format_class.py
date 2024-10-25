@@ -3,7 +3,7 @@ from typing import List, Tuple, Type, Optional
 from collections import OrderedDict
 import re
 
-from .common import TcTool
+from ..common import TcTool
 from .format_rules import (
     FormattingRule,
     FormatTabs,
