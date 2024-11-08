@@ -14,6 +14,8 @@ class XmlSorter(TcTool):
 
     LOGGER_NAME = "xml_sorter"
 
+    CONFIG_KEY = "xml_sort"
+
     def __init__(self, *args):
         super().__init__(*args)
 
