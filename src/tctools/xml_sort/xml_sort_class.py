@@ -1,8 +1,9 @@
-from typing import Dict
-from lxml import etree
 import re
+from typing import Dict
 
-from ..common import TcTool, Element
+from lxml import etree
+
+from ..common import Element, TcTool
 
 
 class XmlSorter(TcTool):

@@ -2,10 +2,11 @@
 Configuration for these tests.
 """
 
-import pytest
 import shutil
 from pathlib import Path
 from typing import List
+
+import pytest
 
 
 @pytest.fixture

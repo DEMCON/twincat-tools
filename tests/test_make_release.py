@@ -1,13 +1,13 @@
-import pytest
-import sys
 import os
-import subprocess
 import shutil
+import subprocess
+import sys
 from pathlib import Path
+
+import pytest
 
 import tctools.make_release.__main__
 from tctools.make_release.make_release_class import MakeRelease
-
 
 VERSION = "v1.2.3"
 

@@ -1,6 +1,7 @@
-from typing import Dict
-from git import Repo
 from pathlib import Path
+from typing import Dict
+
+from git import Repo
 
 from ..common import Tool
 

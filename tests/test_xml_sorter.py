@@ -1,6 +1,7 @@
-import pytest
 import subprocess
 import sys
+
+import pytest
 
 from tctools.xml_sort.__main__ import main as xml_sort_main
 from tctools.xml_sort.xml_sort_class import XmlSorter

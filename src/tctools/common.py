@@ -1,11 +1,11 @@
-from abc import ABC, abstractmethod
-from typing import Optional, List
-from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
-from pathlib import Path
-from lxml import etree
 import logging
 import sys
+from abc import ABC, abstractmethod
+from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
+from pathlib import Path
+from typing import List, Optional
 
+from lxml import etree
 
 # Create type hinting shortcuts:
 Element = etree._Element  # noqa

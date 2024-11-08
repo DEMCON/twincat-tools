@@ -1,20 +1,20 @@
-from editorconfig import get_properties
-from typing import List, Tuple, Type, Optional
-from collections import OrderedDict
 import re
+from collections import OrderedDict
+from typing import List, Optional, Tuple, Type
+
+from editorconfig import get_properties
 
 from ..common import TcTool
-from .format_rules import (
-    FormattingRule,
-    FormatTabs,
-    FormatTrailingWhitespace,
-    FormatInsertFinalNewline,
-    FormatEndOfLine,
-    FormatVariablesAlign,
-    FormatConditionalParentheses,
-)
 from .format_extras import Kind
-
+from .format_rules import (
+    FormatConditionalParentheses,
+    FormatEndOfLine,
+    FormatInsertFinalNewline,
+    FormatTabs,
+    FormattingRule,
+    FormatTrailingWhitespace,
+    FormatVariablesAlign,
+)
 
 RowCol = Tuple[int, int]
 Segment = Tuple[Kind, List[str], str]

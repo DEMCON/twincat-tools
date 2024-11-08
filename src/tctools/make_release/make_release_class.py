@@ -1,13 +1,13 @@
-from typing import Optional, List
 import re
+import shutil
 from pathlib import Path
 from tempfile import TemporaryDirectory
-import shutil
-from lxml import etree
+from typing import List, Optional
+
 from git import Repo
+from lxml import etree
 
 from ..common import Tool
-
 
 ElementTree = etree._ElementTree  # noqa
 Element = etree._Element  # noqa

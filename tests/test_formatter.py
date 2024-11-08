@@ -1,6 +1,7 @@
-import pytest
 import subprocess
 import sys
+
+import pytest
 
 import tctools.format.__main__
 from tctools.format.format_class import Formatter

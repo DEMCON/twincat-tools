@@ -1,10 +1,9 @@
-from typing import List, Dict, OrderedDict, Tuple, Optional, Type, Any
-from abc import ABC, abstractmethod
-import re
 import math
+import re
+from abc import ABC, abstractmethod
+from typing import Any, Dict, List, Optional, OrderedDict, Tuple, Type
 
 from .format_extras import Kind
-
 
 Correction = Tuple[int, str]
 
