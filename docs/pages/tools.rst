@@ -17,7 +17,7 @@ Usage
 Call with ``python -m tctools.xml_sort`` or ``tc_xml_sort``.
 
 .. argparse::
-   :module: tctools.xml_sort
+   :module: tctools.xml_sort.__main__
    :func: get_parser
    :nodescription:
 
@@ -82,7 +82,7 @@ Usage
 Call with ``python -m tctools.format`` or ``tc_format``.
 
 .. argparse::
-   :module: tctools.format
+   :module: tctools.format.__main__
    :func: get_parser
    :nodescription:
 
@@ -141,7 +141,7 @@ Usage
 Call with ``python -m tctools.git_info`` or ``tc_git_info``.
 
 .. argparse::
-   :module: tctools.git_info
+   :module: tctools.git_info.__main__
    :func: get_parser
    :nodescription:
 
@@ -175,6 +175,6 @@ Usage
 Call with ``python -m tctools.make_release`` or ``tc_make_release``.
 
 .. argparse::
-   :module: tctools.make_release
+   :module: tctools.make_release.__main__
    :func: get_parser
    :nodescription:

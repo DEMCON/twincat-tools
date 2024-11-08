@@ -5,31 +5,42 @@ API
 Base Classes
 ============
 
-.. autoclass:: tctools.common.Tool
-.. autoclass:: tctools.common.TcTool
+.. py:currentmodule:: tctools.common
+
+.. autoclass:: Tool
+.. autoclass:: TcTool
 
 
 XML Sorter
 ==========
 
-.. autoclass:: tctools.xml_sort_class.XmlSorter
+.. py:currentmodule:: tctools.xml_sort.xml_sort_class
+
+.. autoclass:: XmlSorter
 
 
 Formatter
 =========
 
-.. autoclass:: tctools.format_class.Formatter
-.. autoclass:: tctools.format_class.XmlMachine
-.. autoclass:: tctools.format_rules.FormattingRule
-.. autoclass:: tctools.format_rules.FormatTabs
-.. autoclass:: tctools.format_rules.FormatTrailingWhitespace
-.. autoclass:: tctools.format_rules.FormatInsertFinalNewline
-.. autoclass:: tctools.format_rules.FormatEndOfLine
-.. autoclass:: tctools.format_rules.FormatVariablesAlign
-.. autoclass:: tctools.format_rules.FormatConditionalParentheses
+.. py:currentmodule:: tctools.format.format_class
+
+.. autoclass:: Formatter
+.. autoclass:: XmlMachine
+
+.. py:currentmodule:: tctools.format.format_rules
+
+.. autoclass:: FormattingRule
+.. autoclass:: FormatTabs
+.. autoclass:: FormatTrailingWhitespace
+.. autoclass:: FormatInsertFinalNewline
+.. autoclass:: FormatEndOfLine
+.. autoclass:: FormatVariablesAlign
+.. autoclass:: FormatConditionalParentheses
 
 
 Git Info
 ========
 
-.. autoclass:: tctools.git_info_class.GitInfo
+.. py:currentmodule:: tctools.git_info.git_info_class
+
+.. autoclass:: GitInfo
