@@ -31,6 +31,19 @@ poetry install --with dev --with doc
 Documentation is built using Sphinx.
 This is done automatically and hosted by [ReadTheDocs](https://about.readthedocs.com/).
 
+### Linting
+
+Code style is enforced with black, isort and flake8. 
+Format code with:
+```
+isort .
+black .
+```
+And verify code with: (flake8 extensions will also perform black and isort checks)
+```
+flake8 ./src ./tests
+```
+
 ## Tools
 
 See RTD documentation for full overview of usage: https://twincat-tools.readthedocs.io/latest/pages/tools.html

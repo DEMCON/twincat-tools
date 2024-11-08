@@ -19,4 +19,4 @@ jobs:
       - uses: py-actions/flake8@v2
         with:
           path: "src/ tests/"
-          plugins: "flake8-bugbear flake8-black"
+          plugins: "flake8-bugbear flake8-black flake8-isort"
