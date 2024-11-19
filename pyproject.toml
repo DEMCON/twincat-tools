@@ -1,10 +1,10 @@
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]
+build-backend = "poetry_dynamic_versioning.backend"
 
 [tool.poetry]
 name = "twincat-tools"
-version = "0.1.0"
+version = "0.0.0"  # Overwritten by dynamic versioning
 description = "A set of tools for TwinCAT projects"
 authors = ["Robert Roos <robert.soor@gmail.com>"]
 readme = "README.md"
@@ -49,6 +49,9 @@ tc_format = "tctools.format.__main__:main_argv"
 tc_xml_sort = "tctools.xml_sort.__main__:main_argv"
 tc_git_info = "tctools.git_info.__main__:main_argv"
 tc_make_release = "tctools.make_release.__main__:main_argv"
+
+[tool.poetry-dynamic-versioning]
+enable = true
 
 # ----------- Other tools -----------
 
