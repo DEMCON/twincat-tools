@@ -26,6 +26,12 @@ Install package in editable mode and get the development requirements with:
 poetry install --with dev --with doc
 ```
 
+The package uses dynamic versioning.
+The plugin can be added to your Poetry installation with:
+```
+poetry self add "poetry-dynamic-versioning[plugin]"
+```
+
 ### Documentation
 
 Documentation is built using Sphinx.
