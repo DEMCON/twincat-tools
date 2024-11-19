@@ -1,5 +1,5 @@
 import re
-from typing import Dict
+from typing import Dict, List
 
 from lxml import etree
 
@@ -13,6 +13,8 @@ class XmlSorter(TcTool):
     """
 
     LOGGER_NAME = "xml_sorter"
+
+    FILTER_DEFAULT: List[str] = ["*.tsproj", "*.xti", "*.plcproj"]
 
     def __init__(self, *args):
         super().__init__(*args)

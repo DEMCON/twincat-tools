@@ -20,6 +20,9 @@ class Tool(ABC):
 
     LOGGER_NAME: Optional[str] = None
 
+    # Default value for file filter argument:
+    FILTER_DEFAULT: List[str]
+
     def __init__(self, *args):
         """Pass e.g. ``sys.args[1:]`` (skipping the script part of the arguments).
 
@@ -109,7 +112,7 @@ class TcTool(Tool, ABC):
             "--filter",
             help="Target files only with these patterns",
             nargs="+",
-            default=["*.tsproj", "*.xti", "*.plcproj"],
+            default=cls.FILTER_DEFAULT,
         )
 
         return parser

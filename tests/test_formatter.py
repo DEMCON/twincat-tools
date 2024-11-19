@@ -158,6 +158,32 @@ indent_size = 4
     assert code_new == 0
 
 
+def test_check_recursive(plc_code, caplog):
+    """Test `check` flag for formatter, on a folder"""
+    project_folder = plc_code / "TwinCAT Project1"
+    config = project_folder / ".editorconfig"
+    config.write_text(
+        """root = true
+[*.TcPOU]
+indent_style = space
+indent_size = 4
+"""
+    )
+    formatter = Formatter(str(project_folder), "--check", "-r", "-l", "DEBUG")
+    code = formatter.run()
+
+    for expected_file in [
+        "FB_Example.TcPOU",
+        "FB_Full.TcPOU",
+        "MAIN.TcPOU",
+        "GVL_Version.TcGVL",
+        "ST_Example.TcDUT",
+    ]:
+        assert any(expected_file in msg for msg in caplog.messages)
+
+    assert code != 0
+
+
 def test_reformat_empty_config(plc_code):
     """Test reformatting with no or empty `editorconfig`.
 

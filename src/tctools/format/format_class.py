@@ -93,6 +93,8 @@ class Formatter(TcTool):
 
     LOGGER_NAME = "formatter"
 
+    FILTER_DEFAULT = ["*.TcPOU", "*.TcGVL", "*.TcDUT"]
+
     _RULE_CLASSES: List[Type[FormattingRule]] = []
 
     def __init__(self, *args):
@@ -133,7 +135,7 @@ class Formatter(TcTool):
                 self.logger.info("No changes to be made in checked files!")
                 return 0
 
-            self.logger.info(f"{self.files_to_alter} path(s) can be re-sorted")
+            self.logger.info(f"{self.files_to_alter} path(s) should altered")
             return 1
 
         self.logger.info(f"Re-saved {self.files_resaved} path(s)")
