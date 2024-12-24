@@ -59,6 +59,7 @@ indent_size = 4
 
     txt = "Line contains a tab that should be spaces"
     expected = [
+        ["Loading from config"],
         ["Processing path"],
         ["FB_Example.TcPOU", "declaration", ":3", txt],
         ["FB_Example.TcPOU", "declaration", ":10", txt],
@@ -91,6 +92,7 @@ indent_size = 4
 
     txt = "Line contains an indent that should be a tab"
     expected = [
+        ["Loading from config"],
         ["Processing path"],
         ["FB_Example.TcPOU", "declaration", ":3", txt],
         ["FB_Example.TcPOU", "declaration", ":4", txt],
@@ -121,6 +123,7 @@ trim_trailing_whitespace = true
 
     txt = "Line contains trailing whitespace"
     expected = [
+        ["Loading from config"],
         ["Processing path"],
         ["FB_Example.TcPOU", "implementation", ":2", txt],
         ["FB_Example.TcPOU", "implementation", ":9", txt],
