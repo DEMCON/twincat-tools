@@ -6,12 +6,14 @@ The tools mostly share the same configuration methods.
 The following priority is given to options:
 
 #. Command line arguments
-#. Sections of config file ``tctools.toml``
-#. Sections of general config file ``pyproject.toml``
+#. Config file ``tctools.toml``
+#. General config file ``pyproject.toml``
 #. Extra config files (e.g. ``.editorconfig``)
 
-In case options are available in multiple files, only the section with the highest priority is considered.
-I.e. options are not merged down to the smallest level.
+In case options are available in multiple files, only the one with the highest priority is considered.
+I.e. options are not merged across levels: having entries in both ``tctools.toml`` and in ``pyproject.toml`` makes the ones in ``pyproject.toml`` be ignored.
+
+The exception is for the :ref:`auto_formatter`, where the ``.editorconfig`` file(s) are still always considered.
 
 Recommended
 ===========
@@ -36,3 +38,4 @@ Add options under a section:
 Substitute ``tool`` for a specific tool and ``option`` and ``"value"`` for meaningful entries.
 
 See pages about each tool for available options.
+The options are named the same as the command line arguments, except with any dashes (``-``) replaced by underscores (``_``).
