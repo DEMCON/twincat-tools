@@ -45,6 +45,8 @@ class Tool(ABC):
         # Pre-create the arguments output and insert any configured values:
         self.args = Namespace()
 
+        self.config_file: Optional[Path] = None
+
         config = self.make_config()
         if self.CONFIG_KEY:
             config = config.get(self.CONFIG_KEY, {})
@@ -58,7 +60,12 @@ class Tool(ABC):
         # Now parse CLI options on top of file configurations:
         parser.parse_args(args, self.args)
 
+        # Only after parsing all arguments we can establish a logger,
         self.logger = self.get_logger()
+
+        if self.config_file:
+            # Use property for config file path so we can still log it now:
+            self.logger.debug(f"Loading from config: {self.config_file}")
 
     @classmethod
     def get_argument_parser(cls) -> ArgumentParser:
@@ -87,13 +94,13 @@ class Tool(ABC):
     def make_config(self) -> Dict[str, Any]:
         """Get configuration from possible files."""
         config = {}
-        config_file = self._find_files_upwards(
+        self.config_file = self._find_files_upwards(
             Path.cwd(), ["tctools.toml", "pyproject.toml"]
         )
-        if not config_file:
+        if not self.config_file:
             return config
 
-        with open(config_file, "rb") as fh:
+        with open(self.config_file, "rb") as fh:
             data = tomllib.load(fh)
             if "tctools" in data:
                 config = data["tctools"]

@@ -51,4 +51,25 @@ my_option = "xyz123"
         tool = MyTool()
         assert tool.args.my_option == "xyz123"
 
-    # TODO: Add test for section priority
+    def test_config_file_priority(self, tmp_path, monkeypatch):
+        conf_dir = tmp_path / "project"
+        work_dir = conf_dir / "subdir1" / "subdir2"
+        work_dir.mkdir(parents=True)
+
+        conf_file2 = conf_dir / "pyproject.toml"
+        conf_file2.write_text(
+            """[tctools.dummy]
+my_option = "xyz123"
+"""
+        )
+        conf_file = conf_dir / "tctools.toml"
+        conf_file.write_text(
+            """[tctools.dummy]
+my_option = "abc987"
+"""
+        )
+
+        monkeypatch.chdir(work_dir)
+
+        tool = MyTool()
+        assert tool.args.my_option == "abc987"
