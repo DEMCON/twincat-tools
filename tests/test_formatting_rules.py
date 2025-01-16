@@ -274,7 +274,7 @@ def test_variable_align(content, expected, settings):
 
 
 content_parentheses = [
-    (
+    (  # Regular IF:
         [
             "IF inputs.button = 1 THEN\n",
             "    output.led := 1;\n",
@@ -286,7 +286,7 @@ content_parentheses = [
             "END_IF\n",
         ],
     ),
-    (
+    (  # Regular IF with comment (comment should be unchanged):
         [
             "IF inputs.button = 1 THEN // comment!\n",
         ],
@@ -294,7 +294,7 @@ content_parentheses = [
             "IF (inputs.button = 1) THEN // comment!\n",
         ],
     ),
-    (
+    (  # IF involving a function call (function parentheses should be unchanged):
         [
             "IF func(arg1 := 1, args2 := func2()) THEN\n",
         ],
@@ -302,7 +302,7 @@ content_parentheses = [
             "IF (func(arg1 := 1, args2 := func2())) THEN\n",
         ],
     ),
-    (
+    (  # WHILE involving function call (function parentheses should be unchanged):
         [
             "WHILE func() DO // comment!\n",
         ],
@@ -310,12 +310,20 @@ content_parentheses = [
             "WHILE (func()) DO // comment!\n",
         ],
     ),
-    (
+    (  # Regular CASE (part of SWITCH):
         [
             "CASE idx OF\n",
         ],
         [
             "CASE (idx) OF\n",
+        ],
+    ),
+    (  # IF involving compound statement, parentheses should not be removed at all:
+        [
+            "IF (var1 OR var2) AND (var3 OR var4) THEN\n",
+        ],
+        [
+            "IF (var1 OR var2) AND (var3 OR var4) THEN\n",
         ],
     ),
     # (  # This case fails, because we cannot identify matching parentheses:
@@ -329,24 +337,24 @@ content_parentheses = [
 ]
 
 
-@pytest.mark.parametrize("content,expected", content_parentheses)
-def test_parentheses_add(content, expected):
+@pytest.mark.parametrize("no_parentheses,parentheses", content_parentheses)
+def test_parentheses_add(no_parentheses, parentheses):
     rule = format_rules.FormatConditionalParentheses(
         {"twincat_parentheses_conditionals": True}
     )
-    content_new = content.copy()
+    content_new = no_parentheses.copy()
     rule.format(content_new)
-    assert content_new == expected
+    assert content_new == parentheses
 
 
-@pytest.mark.parametrize("expected,content", content_parentheses)
-def test_parentheses_remove(expected, content):
+@pytest.mark.parametrize("no_parentheses,parentheses", content_parentheses)
+def test_parentheses_remove(no_parentheses, parentheses):
     rule = format_rules.FormatConditionalParentheses(
         {"twincat_parentheses_conditionals": False}
     )
-    content_new = content.copy()
+    content_new = parentheses.copy()
     rule.format(content_new)
-    assert content_new == expected
+    assert content_new == no_parentheses
 
 
 def test_parentheses_remove_no_ws():
