@@ -326,14 +326,14 @@ content_parentheses = [
             "IF (var1 OR var2) AND (var3 OR var4) THEN\n",
         ],
     ),
-    # (  # This case fails, because we cannot identify matching parentheses:
-    #     [
-    #         "IF (1+1)*2 = 3*(x-1) THEN\n",
-    #     ],
-    #     [
-    #         "IF ((1+1)*2 = 3*(x-1)) THEN\n",
-    #     ],
-    # ),
+    (  # IF involving math statements, parentheses should not be removed at all:
+        [
+            "IF (1+1)*2 = 3*(x-1) THEN\n",
+        ],
+        [
+            "IF (1+1)*2 = 3*(x-1) THEN\n",
+        ],
+    ),
 ]
 
 

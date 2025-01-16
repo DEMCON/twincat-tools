@@ -368,7 +368,12 @@ class FormatVariablesAlign(FormattingRule):
 
 
 class FormatConditionalParentheses(FormattingRule):
-    """Formatter to make uses of parentheses inside IF, CASE and WHILE consistent."""
+    """Formatter to make uses of parentheses inside IF, CASE and WHILE consistent.
+
+    First regex is used to find potential corrections, which are then investigated
+    by a loop to make sure parentheses remain matching and no essential parentheses
+    are removed.
+    """
 
     def __init__(self, *args):
         super().__init__(*args)
@@ -377,8 +382,7 @@ class FormatConditionalParentheses(FormattingRule):
             "twincat_parentheses_conditionals", value_type=bool
         )
 
-        # Regex to find conditional inside single lines:
-
+        # Regex to find likely missing parentheses:
         self._re_needs_parentheses = re.compile(
             r"""
                 # Look for start of string or new line:
@@ -395,11 +399,12 @@ class FormatConditionalParentheses(FormattingRule):
             re.VERBOSE | re.MULTILINE,
         )
 
+        # Regex to find likely redundant parentheses:
         self._re_removes_parentheses = re.compile(
             r"""
                 # Look for start of string or new line:
                 ^
-                # Match IF with surrounding ws:
+                # Match keyword with surrounding ws:
                 \s*(?:IF|WHILE|CASE)\s*
                 # Match any characters within ():
                 \((.+)\)
@@ -413,10 +418,11 @@ class FormatConditionalParentheses(FormattingRule):
         if self._parentheses is None:
             return  # Nothing to do
 
-        if self._parentheses:
-            pattern = self._re_needs_parentheses
-        else:
-            pattern = self._re_removes_parentheses
+        pattern = (
+            self._re_needs_parentheses
+            if self._parentheses
+            else self._re_removes_parentheses
+        )
 
         for i, line in enumerate(content):
             # Do a manual match + replace, instead of e.g. subn(), because we might
@@ -429,6 +435,13 @@ class FormatConditionalParentheses(FormattingRule):
                 if self._parentheses:
                     condition = "(" + condition + ")"
                 else:
+                    # These parentheses could be of importance, check the leading
+                    # "(" is not part of a smaller sub-statement:
+                    if any(
+                        level < 0 for _, level in self.find_and_match_braces(condition)
+                    ):
+                        continue
+
                     prefix = prefix[:-1]  # Remove parentheses
                     suffix = suffix[1:]
 
@@ -448,3 +461,23 @@ class FormatConditionalParentheses(FormattingRule):
                 )
 
                 content[i] = prefix + condition + suffix
+
+    @staticmethod
+    def find_and_match_braces(
+        text: str, brace_left: str = "(", brace_right: str = ")"
+    ) -> Tuple[int, int]:
+        """Step through braces in a string.
+
+        Note that levels can step into negative.
+
+        :return:    Tuple of (strpos, level), where strpos is the zero-index position of
+                    the brace itself and level is the nested level it indicates
+        """
+        level = 0
+        re_any_brace = re.compile(r"[" + brace_left + brace_right + "]")
+        for match in re_any_brace.finditer(text):
+            if match.group() == brace_left:
+                level += 1  # Nest deeper
+            else:
+                level -= 1  # Nest back out
+            yield match.start(), level
