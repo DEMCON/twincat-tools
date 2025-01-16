@@ -103,6 +103,13 @@ class GitInfo(Tool):
 
         empty = "[empty]"
 
+        branch = empty
+        if git_hash:
+            try:
+                branch = repo.active_branch.name
+            except TypeError:
+                pass
+
         return {
             "HASH": git_hash or empty,
             "HASH_SHORT": git_hash[:8] if git_hash else empty,
@@ -112,7 +119,7 @@ class GitInfo(Tool):
                 else empty
             ),
             "TAG": repo.git.tag() if git_hash else empty,
-            "BRANCH": repo.active_branch.name if git_hash else empty,
+            "BRANCH": branch,
             "DESCRIPTION": (
                 repo.git.describe("--tags", "--always") if git_hash else empty
             ),
