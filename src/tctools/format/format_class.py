@@ -95,6 +95,8 @@ class Formatter(TcTool):
 
     FILTER_DEFAULT = ["*.TcPOU", "*.TcGVL", "*.TcDUT"]
 
+    CONFIG_KEY = "format"
+
     _RULE_CLASSES: List[Type[FormattingRule]] = []
 
     def __init__(self, *args):

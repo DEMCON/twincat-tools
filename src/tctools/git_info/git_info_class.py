@@ -14,6 +14,10 @@ class GitInfo(Tool):
     collide with XML brackets in ``$key`` the dollar sign is a key for string constants.
     """
 
+    LOGGER_NAME = "git_info"
+
+    CONFIG_KEY = "git_info"
+
     def __init__(self, *args):
         super().__init__(*args)
 
