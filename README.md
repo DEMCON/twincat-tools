@@ -1,6 +1,7 @@
 # TwinCAT Tools
 
 [![Documentation](https://readthedocs.org/projects/twincat-tools/badge/?version=latest)](https://twincat-tools.readthedocs.io/latest/?badge=latest)
+[![PyPI](https://img.shields.io/pypi/v/twincat-tools)](https://pypi.org/project/twincat-tools/)
 [![PyTest](https://github.com/DEMCON/twincat-tools/actions/workflows/tests.yml/badge.svg)](https://github.com/DEMCON/twincat-tools/actions)
 [![codecov](https://codecov.io/gh/DEMCON/twincat-tools/graph/badge.svg?token=3NU2UNM2U0)](https://codecov.io/gh/DEMCON/twincat-tools)
 
