@@ -16,6 +16,10 @@ Element = etree._Element  # noqa
 class MakeRelease(Tool):
     """Tool to create a release archive from a TwinCAT project."""
 
+    LOGGER_NAME = "make_release"
+
+    CONFIG_KEY = "make_release"
+
     def __init__(self, *args):
         super().__init__(*args)
 

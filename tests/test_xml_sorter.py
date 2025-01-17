@@ -216,3 +216,21 @@ def test_project(plc_code, caplog):
 
     for exp in expected:
         assert exp in result
+
+
+def test_config_file(plc_code, caplog, monkeypatch):
+    """Make sure options can be picked from a config file."""
+
+    monkeypatch.chdir(plc_code)
+
+    conf_file = plc_code / "tctools.toml"
+    conf_file.write_text(
+        """[tctools.xml_sort]
+target = "TwinCAT Project1/TwinCAT Project1.tsproj"
+skip_nodes = ["Device", "DeploymentEvents", "TcSmItem", "DataType"]
+"""
+    )
+    xml_sort_main()
+
+    assert "Checked 1 path(s)" in caplog.messages
+    assert "Re-saved 1 path(s)" in caplog.messages

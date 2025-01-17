@@ -42,23 +42,27 @@ class Tool(ABC):
             action.dest for action in parser._actions if action.dest != "help"  # noqa
         }
 
-        # Pre-create the arguments output and insert any configured values:
-        self.args = Namespace()
-
         self.config_file: Optional[Path] = None
 
         config = self.make_config()
         if self.CONFIG_KEY:
             config = config.get(self.CONFIG_KEY, {})
+
+        # Change the default values of the parser to the config results:
         for key, value in config.items():
             if key not in fields:
                 raise ValueError(
                     f"Config field `{key}` is not recognized as a valid option"
                 )
-            setattr(self.args, key, value)
+            parser.set_defaults(**{key: value})
+
+            for action in parser._actions:
+                if action.dest == key:
+                    action.required = False
+                    # Unfortunately this wouldn't disable required flags yet
 
         # Now parse CLI options on top of file configurations:
-        parser.parse_args(args, self.args)
+        self.args: Namespace = parser.parse_args(args)
 
         # Only after parsing all arguments we can establish a logger,
         self.logger = self.get_logger()
@@ -212,7 +216,11 @@ class TcTool(Tool, ABC):
         if not self.args.target:
             return files
 
-        for target in self.args.target:
+        targets = self.args.target
+        if isinstance(targets, str):
+            targets = [targets]
+
+        for target in targets:
             path = Path(target).resolve()
             if path.is_file():
                 files.append(path)

@@ -35,7 +35,7 @@ Add options under a section:
    option = "value"
    # ...
 
-Substitute ``tool`` for a specific tool and ``option`` and ``"value"`` for meaningful entries.
+Substitute ``tool`` for either ``format``, ``xml_sort``, ``git_info`` or ``make_release``, and replace ``option`` and ``"value"`` for meaningful entries.
 
 See pages about each tool for available options.
-The options are named the same as the command line arguments, except with any dashes (``-``) replaced by underscores (``_``).
+The options are named the same as the command line arguments, except without any leading dashes and with any other dashes (``-``) replaced by underscores (``_``).
