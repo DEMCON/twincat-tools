@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Dict
 
-from git import Repo
+from git import GitCommandError, Repo
 
 from ..common import Tool
 
@@ -114,6 +114,15 @@ class GitInfo(Tool):
             except TypeError:
                 pass
 
+        tag = ""
+        if git_hash:
+            try:
+                tag = repo.git.describe("--tags")
+            except (TypeError, GitCommandError):
+                pass
+        if not tag.strip():
+            tag = empty
+
         return {
             "HASH": git_hash or empty,
             "HASH_SHORT": git_hash[:8] if git_hash else empty,
@@ -122,7 +131,7 @@ class GitInfo(Tool):
                 if git_hash
                 else empty
             ),
-            "TAG": repo.git.tag() if git_hash else empty,
+            "TAG": tag,
             "BRANCH": branch,
             "DESCRIPTION": (
                 repo.git.describe("--tags", "--always") if git_hash else empty
