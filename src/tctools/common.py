@@ -30,6 +30,8 @@ class Tool(ABC):
 
     CONFIG_KEY: Optional[str] = None
 
+    PATH_VARIABLES: List[str] = []  # Names of options that are considered file paths
+
     def __init__(self, *args):
         """Pass e.g. ``sys.args[1:]`` (skipping the script part of the arguments).
 
@@ -54,6 +56,11 @@ class Tool(ABC):
                 raise ValueError(
                     f"Config field `{key}` is not recognized as a valid option"
                 )
+            if key in self.PATH_VARIABLES:
+                value = self._make_path_from_config(value)
+                # We should treat these paths as relative to the config file, ignoring
+                # the current working directory
+
             parser.set_defaults(**{key: value})
 
             for action in parser._actions:
@@ -128,6 +135,27 @@ class Tool(ABC):
 
         return None
 
+    def _make_path_from_config(self, path: Any) -> Path:
+        """Turn a relative path from a config file into a global path.
+
+        Otherwise, return it as-is.
+
+        :param path: Config value, can be (list of) `Path` or `str`
+        """
+
+        def _fix_path(p):
+            p = Path(p)
+            if not p.is_absolute() and self.config_file:
+                p = self.config_file.parent / p
+            return p
+
+        if isinstance(path, list):
+            path = [_fix_path(p) for p in path]
+        else:
+            path = _fix_path(path)
+
+        return path
+
     @abstractmethod
     def run(self) -> int:
         """Main tool execution."""
@@ -145,6 +173,8 @@ class Tool(ABC):
 
 class TcTool(Tool, ABC):
     """Base class for tools sharing TwinCAT functionality."""
+
+    PATH_VARIABLES = ["target"]
 
     def __init__(self, *args):
         super().__init__(*args)
@@ -217,7 +247,7 @@ class TcTool(Tool, ABC):
             return files
 
         targets = self.args.target
-        if isinstance(targets, str):
+        if isinstance(targets, str) or isinstance(targets, Path):
             targets = [targets]
 
         for target in targets:

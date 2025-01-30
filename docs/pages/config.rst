@@ -39,3 +39,6 @@ Substitute ``tool`` for either ``format``, ``xml_sort``, ``git_info`` or ``make_
 
 See pages about each tool for available options.
 The options are named the same as the command line arguments, except without any leading dashes and with any other dashes (``-``) replaced by underscores (``_``).
+
+Note that when a filepath is being used, it is considered relative to the config file it's in.
+This is different from when using the option from a commandline, where the current working directory is used as a root.
