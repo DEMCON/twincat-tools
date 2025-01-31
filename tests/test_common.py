@@ -48,6 +48,15 @@ class TestCommon:
         tool = MyTool()
         assert tool.args.my_option == "default-text"
 
+    def test_cli_version(self, capsys):
+        with pytest.raises(SystemExit) as err:
+            _ = MyTool("--version")
+
+        assert err.type == SystemExit
+
+        message = capsys.readouterr().out
+        assert message
+
     def test_config_file(self, tmp_path, monkeypatch):
         conf_dir = tmp_path / "project"
         work_dir = conf_dir / "subdir1" / "subdir2"
