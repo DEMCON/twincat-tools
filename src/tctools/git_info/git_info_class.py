@@ -18,6 +18,8 @@ class GitInfo(Tool):
 
     CONFIG_KEY = "git_info"
 
+    PATH_VARIABLES = ["template"]
+
     def __init__(self, *args):
         super().__init__(*args)
 
