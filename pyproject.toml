@@ -54,6 +54,9 @@ tc_make_release = "tctools.make_release.__main__:main_argv"
 [tool.poetry-dynamic-versioning]
 enable = true
 
+[tool.poetry-dynamic-versioning.substitution]
+files = ["src/tctools/__init__.py"]
+
 # ----------- Other tools -----------
 
 [tool.black]

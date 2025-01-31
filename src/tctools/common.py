@@ -7,6 +7,8 @@ from typing import Any, Dict, List, Optional
 
 from lxml import etree
 
+from . import __version__
+
 try:
     import tomllib
 except ImportError:
@@ -87,6 +89,9 @@ class Tool(ABC):
     @classmethod
     def set_arguments(cls, parser):
         """Create application-specific arguments."""
+        parser.add_argument(
+            "--version", "-V", action="version", version="%(prog)s " + __version__
+        )
         parser.add_argument(
             "--dry",
             help="Do not modify files on disk, only report changes to be made",
