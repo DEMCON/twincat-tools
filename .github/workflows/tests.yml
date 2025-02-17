@@ -37,6 +37,10 @@ jobs:
       uses: abatilo/actions-poetry@v4
       with:
         poetry-version: "2.1.1"
+    - name: Inject dynamic versioning
+      if: ${{matrix.os}} == 'windows-latest'
+      run: |
+        pipx inject poetry "poetry-dynamic-versioning[plugin]"
     - name: Install dependencies
       run: |
         poetry install --with dev
