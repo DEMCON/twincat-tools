@@ -148,13 +148,51 @@ Call with ``python -m tctools.git_info`` or ``tc_git_info``.
 Placeholders
 ------------
 
-* ``GIT_HASH``: Hash of the last commit (full 40 hex characters)
-* ``GIT_HASH_SHORT``: First 8 characters of the last commit hash
-* ``GIT_DATE``: Datetime of the last commit
-* ``GIT_TAG``: Most recent tag of this branch
-* ``GIT_BRANCH``: Currently checked out branch
-* ``GIT_DESCRIPTION``: Result of ``git describe --tags --always`` (e.g. `v0.0.3a-4-g51994a8`)
-* ``GIT_DESCRIPTION_DIRTY``: Result of ``git describe --tags --always --dirty`` (e.g. `v0.0.3a-4-g51994a8-dirty`)
+.. list-table::
+   :widths: 25 50 25
+   :header-rows: 1
+
+   * - Placeholder
+     - Description
+     - Example
+   * - GIT_HASH
+     - Full hash of the last commit
+     - 4cc498b3c37375d8d9138fdab553ced012cafc7a
+   * - GIT_HASH_SHORT
+     - 8-char hash of the last commit
+     - ``4cc498b3``
+   * - GIT_DATE
+     - Datetime of the last commit
+     - ``17-12-2024 12:47:10``
+   * - GIT_NOW
+     - The current date and time (not a git command at all)
+     - ``19-12-2024 16:20:35``
+   * - GIT_TAG
+     - Most relevant tag (result of git tag)
+     - ``v1.0.0``
+   * - GIT_VERSION
+     - Guaranteed 3-digit 1.2.3 like-string, based on `GIT_TAG`
+     - ``1.0.0``
+   * - GIT_BRANCH
+     - Current branch name
+     - ``master``
+   * - GIT_DESCRIPTION
+     - Most relevant tag + number of commits since then + last commit (result of git describe --tags --always)
+     - ``v0.0.1-1-g4cc498b``
+   * - GIT_DESCRIPTION_DIRTY
+     - Same as GIT_DESCRIPTION, except it also adds the --dirty argument to mark if there were uncommitted changes
+     - ``v0.0.1-1-g4cc498b-dirty``
+   * - GIT_DIRTY
+     - 1 if there are uncommited chances, otherwise 0
+     - ``0``
+
+
+You can also call git commands directly using function placeholders, e.g.:
+
+.. code-block::
+
+   myVar  : STRING := '{{git describe --tags --abrev=4}}';
+
 
 Notes
 -----

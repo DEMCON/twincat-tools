@@ -1,8 +1,8 @@
-from pathlib import Path
 import re
 from datetime import datetime
+from pathlib import Path
 
-from git import Repo, GitCommandError
+from git import GitCommandError, Repo
 
 from ..common import Tool
 
