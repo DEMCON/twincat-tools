@@ -37,7 +37,7 @@ jobs:
       uses: RobertoRoos/actions-poetry@feature/plugins
       with:
         poetry-version: "2.1.1"
-        poetry-plugins: "poetry-dynamic-versioning[plugin]"
+        poetry-plugins: "['poetry-dynamic-versioning[plugin]', 'poetry-plugin-bundle']"
     - name: Install dependencies
       run: |
         poetry install --with dev
