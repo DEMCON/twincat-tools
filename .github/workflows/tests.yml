@@ -34,13 +34,10 @@ jobs:
       with:
         python-version: ${{matrix.python-version}}
     - name: Set up Poetry
-      uses: abatilo/actions-poetry@v4
+      uses: RobertoRoos/actions-poetry@feature/plugins
       with:
         poetry-version: "2.1.1"
-    - name: Inject dynamic versioning
-      if: startswith(matrix.os, 'windows')
-      run: |
-        pipx inject poetry "poetry-dynamic-versioning[plugin]"
+        poetry-plugins: "poetry-dynamic-versioning[plugin]"
     - name: Install dependencies
       run: |
         poetry install --with dev
