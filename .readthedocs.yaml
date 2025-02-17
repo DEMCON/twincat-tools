@@ -16,7 +16,7 @@ build:
     # golang: "1.19"
   jobs:
     post_create_environment:
-      - pip install "poetry==1.8.4"
+      - pip install "poetry==2.1.1"
       # Using a venv would break here:
       - poetry config virtualenvs.create false
     post_install:
