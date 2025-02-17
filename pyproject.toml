@@ -1,29 +1,40 @@
 [build-system]
-requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]
+requires = ["poetry-core>=2.0.0,<3.0.0", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]
 build-backend = "poetry_dynamic_versioning.backend"
 
-[tool.poetry]
+[project]
 name = "twincat-tools"
-version = "0.0.0"  # Overwritten by dynamic versioning
+dynamic = ["version"]
 description = "A set of tools for TwinCAT projects"
-authors = ["Robert Roos <robert.soor@gmail.com>"]
+authors = [
+    { name = "Robert Roos", email = "robert.soor@gmail.com" },
+]
 readme = "README.md"
 license = "BSD-4-Clause"
-packages = [
-    { include = "tctools", from = "src"}
+requires-python = ">=3.10"
+dependencies = [
+    "lxml (>=5.3.0,<6.0.0)",
+    "EditorConfig (>=0.12.4,<0.13.0)",
+    "GitPython (>=3.1.43,<4.0.0)",
+    "tomli (>=2.0.2,<3.0.0) ; python_version<'3.11'",
 ]
 
-[tool.poetry.urls]
+[project.urls]
 "Homepage" = "https://github.com/DEMCON/twincat-tools"
 "Bug Tracker" = "https://github.com/DEMCON/twincat-tools/issues"
 "Documentation" = "https://twincat-tools.readthedocs.io"
 
-[tool.poetry.dependencies]
-python = "^3.10"
-lxml = "^5.3.0"
-EditorConfig = "^0.12.4"
-GitPython= "^3.1.43"
-tomli = { version = "^2.0.2", python = "<3.11" }
+[project.scripts]
+tc_format = "tctools.format.__main__:main_argv"
+tc_xml_sort = "tctools.xml_sort.__main__:main_argv"
+tc_git_info = "tctools.git_info.__main__:main_argv"
+tc_make_release = "tctools.make_release.__main__:main_argv"
+
+[tool.poetry]
+packages = [
+    { include = "tctools", from = "src"}
+]
+version = "0.0.0"  # Overwritten by dynamic versioning
 
 [tool.poetry.group.dev]
 optional = true
@@ -45,11 +56,8 @@ sphinx = "^8.1.3"
 sphinx_rtd_theme = "^3.0.1"
 sphinx-argparse = "^0.5.2"
 
-[tool.poetry.scripts]
-tc_format = "tctools.format.__main__:main_argv"
-tc_xml_sort = "tctools.xml_sort.__main__:main_argv"
-tc_git_info = "tctools.git_info.__main__:main_argv"
-tc_make_release = "tctools.make_release.__main__:main_argv"
+[tool.poetry.requires-plugins]
+poetry-dynamic-versioning = { version = ">=1.0.0,<2.0.0", extras = ["plugin"] }
 
 [tool.poetry-dynamic-versioning]
 enable = true
