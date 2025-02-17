@@ -157,7 +157,7 @@ Placeholders
      - Example
    * - GIT_HASH
      - Full hash of the last commit
-     - 4cc498b3c37375d8d9138fdab553ced012cafc7a
+     - ``4cc498b3c37375d8d9138fdab553ced012cafc7a``
    * - GIT_HASH_SHORT
      - 8-char hash of the last commit
      - ``4cc498b3``
@@ -186,6 +186,8 @@ Placeholders
      - 1 if there are uncommited chances, otherwise 0
      - ``0``
 
+When using the ``--tolerate-dirty`` flag, the ``-dirty'`` state can be repressed.
+The dirty detection itself is always done by Git directly.
 
 You can also call git commands directly using function placeholders, e.g.:
 

@@ -1,6 +1,8 @@
 import re
 from datetime import datetime
+from logging import Logger
 from pathlib import Path
+from typing import Optional, Set
 
 from git import GitCommandError, Repo
 
@@ -11,14 +13,20 @@ class GitSetter:
     """Helper class that uses properties to expose parsed Git info.
 
     This is a separate class to control protected methods.
+
+    The 'dirty' feature by Git is modified to ignore some changed files for the
+    dirty-state.
     """
 
     _EMPTY = "[empty]"
     _DATETIME_FORMAT = "%d-%m-%Y %H:%M:%S"
 
-    def __init__(self, repo, logger):
+    def __init__(
+        self, repo: Repo, logger: Logger, tolerate_dirty: Optional[Set[Path]] = None
+    ):
         self._repo: Repo = repo
         self._logger = logger
+        self._tolerate_dirty = {p.absolute() for p in tolerate_dirty}
         self._is_empty: bool = False
 
         try:
@@ -53,6 +61,30 @@ class GitSetter:
             return func(*commands[1:])  # Call, passing in remaining words as arguments
 
         raise ValueError(f"Unrecognized class of placeholder: {keyword}")
+
+    def _exempt_dirty(self) -> bool:
+        """
+
+        :return: `True` if all modified files are in the tolerate list
+                 Will return `False` if files were only created/deleted
+        """
+        if not self._tolerate_dirty:
+            return False  # No extra info
+
+        repo_path = Path(self._repo.working_dir).absolute()
+
+        exempt = False
+        for item in self._repo.index.diff(None):
+            if item.change_type != "M":
+                continue  # Only for modified files
+
+            diff_path = repo_path / Path(item.a_path)
+            if diff_path not in self._tolerate_dirty:
+                return False  # Modified file that we're not exempting, 'dirty' is real
+
+            exempt = True
+
+        return exempt
 
     @property
     def git_hash(self) -> str:
@@ -105,11 +137,14 @@ class GitSetter:
 
     @property
     def git_description_dirty(self):
-        return self._repo.git.describe("--tags", "--always", "--dirty")
+        txt: str = self._repo.git.describe("--tags", "--always", "--dirty")
+        if self._exempt_dirty():
+            txt = txt.replace("-dirty", "")
+        return txt
 
     @property
     def git_dirty(self) -> str:
-        return "1" if self._repo.is_dirty() else "0"
+        return "1" if self._repo.is_dirty() and not self._exempt_dirty() else "0"
 
 
 class GitInfo(Tool):
@@ -124,7 +159,7 @@ class GitInfo(Tool):
 
     CONFIG_KEY = "git_info"
 
-    PATH_VARIABLES = ["template"]
+    PATH_VARIABLES = ["template", "tolerate_dirty"]
 
     def __init__(self, *args):
         super().__init__(*args)
@@ -160,8 +195,8 @@ class GitInfo(Tool):
             "-t",
             help="Paths to files that are allowed to be modified without showing the "
             "'dirty' flag",
-            nargs="*",
             action="append",
+            type=str,
             default=[],
         )
         return parser
@@ -184,7 +219,11 @@ class GitInfo(Tool):
 
         repo = Repo(repo_path, search_parent_directories=True)
 
-        git_setter = GitSetter(repo, logger=self.logger)
+        git_setter = GitSetter(
+            repo,
+            logger=self.logger,
+            tolerate_dirty={Path(f) for f in self.args.tolerate_dirty},
+        )
 
         # Perform placeholder substitution:
         content, keywords_used = self._re_keyword.subn(
