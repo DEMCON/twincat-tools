@@ -1,9 +1,115 @@
 from pathlib import Path
-from typing import Dict
+import re
+from datetime import datetime
 
-from git import GitCommandError, Repo
+from git import Repo, GitCommandError
 
 from ..common import Tool
+
+
+class GitSetter:
+    """Helper class that uses properties to expose parsed Git info.
+
+    This is a separate class to control protected methods.
+    """
+
+    _EMPTY = "[empty]"
+    _DATETIME_FORMAT = "%d-%m-%Y %H:%M:%S"
+
+    def __init__(self, repo, logger):
+        self._repo: Repo = repo
+        self._logger = logger
+        self._is_empty: bool = False
+
+        try:
+            _ = self._repo.head.object
+        except ValueError as err:
+            self._logger.warning(f"Repository is probably empty: {err}")
+            self._is_empty = True
+
+    @property
+    def empty(self) -> bool:
+        return self._is_empty
+
+    def keyword_replace(self, match) -> str:
+        """Callback for regex replacement."""
+        keyword: str = match.group(1)  # Skipping the "{{" and "}}"
+
+        if keyword.startswith("GIT_"):
+            # Get value through local property
+            if self._is_empty:
+                return self._EMPTY
+            try:
+                return getattr(self, keyword.lower())
+            except GitCommandError as err:
+                self._logger.warning(f"Error in keyword '{keyword}': {err}")
+                return self._EMPTY
+
+        if keyword.startswith("git "):
+            # Run function instead
+            commands_str = keyword[4:]  # Strip "git "
+            commands = commands_str.split(" ")
+            func = getattr(self._repo.git, commands[0])  # Retrieve function handle
+            return func(*commands[1:])  # Call, passing in remaining words as arguments
+
+        raise ValueError(f"Unrecognized class of placeholder: {keyword}")
+
+    @property
+    def git_hash(self) -> str:
+        return self._repo.head.object.hexsha
+
+    @property
+    def git_hash_short(self) -> str:
+        return self.git_hash[:8]
+
+    @property
+    def git_date(self) -> str:
+        return self._repo.head.object.committed_datetime.strftime(self._DATETIME_FORMAT)
+
+    @property
+    def git_now(self) -> str:
+        """Technically not a Git command at all, but useful anyway."""
+        return datetime.now().strftime(self._DATETIME_FORMAT)
+
+    @property
+    def git_tag(self) -> str:
+        """Get the last most relevant tag to the current commit."""
+        # Getting the most relevant tag through `self._repo` is not so straightforward
+        # Easier to get it with `describe`
+        return self._repo.git.describe("--tags", "--abbrev=0")
+
+    @property
+    def git_version(self) -> str:
+        """Use `git_tag` but parse the three version digits."""
+        tag = self.git_tag
+        re_version = re.compile(r"\d+\.\d+\.+\d+")
+        match = re_version.search(tag)
+        if not match:
+            return "0.0.0"
+
+        return match.group()
+
+    @property
+    def git_branch(self) -> str:
+        try:
+            return self._repo.active_branch.name
+        except TypeError as err:
+            if "HEAD is a detached" not in str(err):
+                raise  # Re-raise error again, can't handle this
+
+            return self._EMPTY  # In detached head, current branch is not valid
+
+    @property
+    def git_description(self):
+        return self._repo.git.describe("--tags", "--always")
+
+    @property
+    def git_description_dirty(self):
+        return self._repo.git.describe("--tags", "--always", "--dirty")
+
+    @property
+    def git_dirty(self) -> str:
+        return "1" if self._repo.is_dirty() else "0"
 
 
 class GitInfo(Tool):
@@ -22,6 +128,8 @@ class GitInfo(Tool):
 
     def __init__(self, *args):
         super().__init__(*args)
+
+        self._re_keyword = re.compile(r"{{([^}]+)}}")
 
     @classmethod
     def set_arguments(cls, parser):
@@ -47,10 +155,23 @@ class GitInfo(Tool):
             "use the first repository up from the template file)",
             default=None,
         )
+        parser.add_argument(
+            "--tolerate-dirty",
+            "-t",
+            help="Paths to files that are allowed to be modified without showing the "
+            "'dirty' flag",
+            nargs="*",
+            action="append",
+            default=[],
+        )
         return parser
 
     def run(self) -> int:
-        """Produce an info file based on template."""
+        """Produce an info file based on template.
+
+        This is largely a copy of https://github.com/RobertoRoos/git-substitute.
+        This DRY violation is accepted to prevent a code dependency.
+        """
 
         template_path = Path(self.args.template)
 
@@ -63,15 +184,15 @@ class GitInfo(Tool):
 
         repo = Repo(repo_path, search_parent_directories=True)
 
-        keywords_used = 0
+        git_setter = GitSetter(repo, logger=self.logger)
 
-        info = self._get_info(repo)
-        for keyword, value in info.items():
-            new_content = content.replace(f"{{{{GIT_{keyword}}}}}", value)
-            if new_content != content:
-                keywords_used += 1
+        # Perform placeholder substitution:
+        content, keywords_used = self._re_keyword.subn(
+            git_setter.keyword_replace, content
+        )
 
-            content = new_content
+        # Now fix escaped characters:
+        content = content.replace(r"\{\{", "{{").replace(r"\}\}", "}}")
 
         self.logger.info(f"Applied {keywords_used} keyword(s) to template")
 
@@ -96,51 +217,3 @@ class GitInfo(Tool):
 
         self.logger.debug(f"Wrote to file `{output_path.absolute()}`")
         return 0
-
-    def _get_info(self, repo: Repo) -> Dict[str, str]:
-        try:
-            git_hash = (repo.head.object.hexsha,)
-        except ValueError as err:
-            self.logger.warning("Repository is probably empty: " + str(err))
-            git_hash = None
-
-        if isinstance(git_hash, tuple):
-            git_hash = git_hash[0]
-
-        empty = "[empty]"
-
-        branch = empty
-        if git_hash:
-            try:
-                branch = repo.active_branch.name
-            except TypeError:
-                pass
-
-        tag = ""
-        if git_hash:
-            try:
-                tag = repo.git.describe("--tags")
-            except (TypeError, GitCommandError):
-                pass
-        if not tag.strip():
-            tag = empty
-
-        return {
-            "HASH": git_hash or empty,
-            "HASH_SHORT": git_hash[:8] if git_hash else empty,
-            "DATE": (
-                repo.head.object.committed_datetime.strftime("%d-%m-%Y %H:%M:%S")
-                if git_hash
-                else empty
-            ),
-            "TAG": tag,
-            "BRANCH": branch,
-            "DESCRIPTION": (
-                repo.git.describe("--tags", "--always") if git_hash else empty
-            ),
-            "DESCRIPTION_DIRTY": (
-                repo.git.describe("--tags", "--dirty", "--always")
-                if git_hash
-                else empty
-            ),
-        }
