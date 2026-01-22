@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <DUT Name="E_UntrackedEnum" Id="{aed3e2af-69db-4c10-b1cd-b4552d883815}">
+    <Declaration><![CDATA[(*
+This file is present, but not yet tracked in the PLC project file.
+*)
+{attribute 'qualified_only'}
+{attribute 'strict'}
+{attribute 'to_string'}
+TYPE E_UntrackedEnum :
+(
+	enum_member := 0
+);
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>
