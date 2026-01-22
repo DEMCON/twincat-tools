@@ -59,6 +59,8 @@ class XmlSorter(TcTool):
 
         self.logger.info(f"Re-saved {self.files_resaved} path(s)")
 
+        return 0
+
     def sort_file(self, path: str):
         """Sort a single path."""
         tree = self.get_xml_tree(path)

@@ -19,7 +19,6 @@ Call with ``python -m tctools.xml_sort`` or ``tc_xml_sort``.
 .. argparse::
    :module: tctools.xml_sort.__main__
    :func: get_parser
-   :prog: tc_xml_sort
    :nodescription:
 
    --filter : @replace
@@ -85,7 +84,6 @@ Call with ``python -m tctools.format`` or ``tc_format``.
 .. argparse::
    :module: tctools.format.__main__
    :func: get_parser
-   :prog: tc_format
    :nodescription:
 
    --filter : @replace
@@ -145,7 +143,6 @@ Call with ``python -m tctools.git_info`` or ``tc_git_info``.
 .. argparse::
    :module: tctools.git_info.__main__
    :func: get_parser
-   :prog: tc_git_info
    :nodescription:
 
 Placeholders
@@ -220,7 +217,6 @@ Call with ``python -m tctools.make_release`` or ``tc_make_release``.
 .. argparse::
    :module: tctools.make_release.__main__
    :func: get_parser
-   :prog: tc_make_release
    :nodescription:
 
 
@@ -240,5 +236,4 @@ Call with ``pyton -m tctools.patch_plc`` or ``tc_patch_plc``.
 .. argparse::
    :module: tctools.patch_plc.__main__
    :func: get_parser
-   :prog: tc_patch_plc
    :nodescription:
