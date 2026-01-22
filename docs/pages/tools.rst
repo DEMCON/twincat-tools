@@ -3,10 +3,10 @@ Tools
 #####
 
 
-.. _xml_sorter:
+.. _xml_sort:
 
-XML Sorter
-==========
+XML Sort
+========
 
 TwinCAT saves its project files somewhat arbitrarily, the order of elements is changed seemingly at random.
 Use this XML sorter before committing your changes to fix the XML layout and keep your Git history more clean.
@@ -216,5 +216,24 @@ Call with ``python -m tctools.make_release`` or ``tc_make_release``.
 
 .. argparse::
    :module: tctools.make_release.__main__
+   :func: get_parser
+   :nodescription:
+
+
+.. _patch_plc:
+
+Patch PLC
+=========
+
+Adding existing source files to a PLC project can be done through the TwinCAT shell, but it is clunky, slow and prone to outright fail.
+This tool can discover existing files under a given folder and assert their presence in a plc project file (`.plcproj`).
+
+Usage
+-----
+
+Call with ``pyton -m tctools.patch_plc`` or ``tc_patch_plc``.
+
+.. argparse::
+   :module: tctools.patch_plc.__main__
    :func: get_parser
    :nodescription:

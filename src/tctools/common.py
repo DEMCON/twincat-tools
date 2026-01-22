@@ -237,7 +237,7 @@ class TcTool(Tool, ABC):
 
         return None
 
-    def get_xml_tree(self, path: str) -> ElementTree:
+    def get_xml_tree(self, path: str | Path) -> ElementTree:
         """Get parsed XML path."""
         tree = etree.parse(path, self.xml_parser)
 
@@ -245,14 +245,19 @@ class TcTool(Tool, ABC):
 
         return tree
 
-    def find_files(self) -> List[Path]:
-        """Use argparse arguments to get a set of target files."""
+    @classmethod
+    def find_files(
+        cls,
+        targets: str | List[str],
+        filters: None | List[str] = None,
+        recursive: bool = True,
+    ) -> List[Path]:
+        """Find a set of files, based on one or more targets and an optional filter."""
         files = []
-        if not self.args.target:
+        if not targets:
             return files
 
-        targets = self.args.target
-        if isinstance(targets, str) or isinstance(targets, Path):
+        if isinstance(targets, (str, Path)):
             targets = [targets]
 
         for target in targets:
@@ -260,12 +265,16 @@ class TcTool(Tool, ABC):
             if path.is_file():
                 files.append(path)
             elif path.is_dir():
-                if self.args.filter:
-                    for filt in self.args.filter:
-                        if self.args.recursive:
+                if filters:
+                    for filt in filters:
+                        if recursive:
                             filt = f"**/{filt}"
                         files += path.glob(filt)
             else:
                 raise ValueError(f"Could not find path or folder: `{target}`")
 
         return files
+
+    def find_target_files(self) -> List[Path]:
+        """Use argparse arguments to get a set of target files."""
+        return self.find_files(self.args.target, self.args.filter, self.args.recursive)

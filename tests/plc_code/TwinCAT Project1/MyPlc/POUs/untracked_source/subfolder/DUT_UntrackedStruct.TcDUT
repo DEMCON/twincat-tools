@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <DUT Name="DUT_UntrackedStruct" Id="{28ed785f-fd66-4200-89dd-9e89b4fe61c4}">
+    <Declaration><![CDATA[(*
+This file is present, but not yet tracked in the PLC project file.
+*)
+TYPE DUT_UntrackedStruct :
+STRUCT
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>
