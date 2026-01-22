@@ -125,7 +125,7 @@ class Formatter(TcTool):
         sorted(cls._RULE_CLASSES, key=lambda item: item.PRIORITY)
 
     def run(self) -> int:
-        files = self.find_files()
+        files = self.find_target_files()
 
         for file in files:
             self.format_file(str(file))
