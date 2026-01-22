@@ -164,11 +164,12 @@ class PatchPlc(TcTool):
     ):
         """Modify the files and folders elements in-place."""
         for folder in folders:
-            self._element_folders.append(etree.XML(f'<Folder Include="{folder}"/>'))
+            folder_str = str(folder).replace("/", "\\")
+            # On Linux the above will have the wrong slashes
+            xml = f'<Folder Include="{folder_str}"/>'
+            self._element_folders.append(etree.XML(xml))
 
         for file in files:
-            self._element_files.append(
-                etree.XML(
-                    f'<Compile Include="{file}"><SubType>Code</SubType></Compile>'
-                )
-            )
+            file_str = str(file).replace("/", "\\")
+            xml = f'<Compile Include="{file_str}"><SubType>Code</SubType></Compile>'
+            self._element_files.append(etree.XML(xml))
