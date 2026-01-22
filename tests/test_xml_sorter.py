@@ -224,12 +224,10 @@ def test_config_file(plc_code, caplog, monkeypatch):
     monkeypatch.chdir(plc_code)
 
     conf_file = plc_code / "tctools.toml"
-    conf_file.write_text(
-        """[tctools.xml_sort]
+    conf_file.write_text("""[tctools.xml_sort]
 target = "TwinCAT Project1/TwinCAT Project1.tsproj"
 skip_nodes = ["Device", "DeploymentEvents", "TcSmItem", "DataType"]
-"""
-    )
+""")
     xml_sort_main()
 
     assert "Checked 1 path(s)" in caplog.messages

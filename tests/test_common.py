@@ -63,11 +63,9 @@ class TestCommon:
         work_dir.mkdir(parents=True)
 
         conf_file = conf_dir / "tctools.toml"
-        conf_file.write_text(
-            """[tctools.dummy]
+        conf_file.write_text("""[tctools.dummy]
 my_option = "xyz123"
-"""
-        )
+""")
 
         monkeypatch.chdir(work_dir)
 
@@ -80,17 +78,13 @@ my_option = "xyz123"
         work_dir.mkdir(parents=True)
 
         conf_file2 = conf_dir / "pyproject.toml"
-        conf_file2.write_text(
-            """[tctools.dummy]
+        conf_file2.write_text("""[tctools.dummy]
 my_option = "xyz123"
-"""
-        )
+""")
         conf_file = conf_dir / "tctools.toml"
-        conf_file.write_text(
-            """[tctools.dummy]
+        conf_file.write_text("""[tctools.dummy]
 my_option = "abc987"
-"""
-        )
+""")
 
         monkeypatch.chdir(work_dir)
 
@@ -103,12 +97,10 @@ my_option = "abc987"
         work_dir.mkdir(parents=True)
 
         conf_file = conf_dir / "tctools.toml"
-        conf_file.write_text(
-            """[tctools.dummy]
+        conf_file.write_text("""[tctools.dummy]
     my_file = "some_file.txt"
     my_targets = ["./dir1", "dir2/subdir2/", "//abs_dir/absolute_file.txt"]
-    """
-        )
+    """)
 
         monkeypatch.chdir(work_dir)  # Run in child dir of config file dir
 
