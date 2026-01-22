@@ -20,10 +20,10 @@ jobs:
       fail-fast: true
       matrix:
         os: ["ubuntu-latest"]
-        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
         include:
           - os: "windows-latest"
-            python-version: "3.12"
+            python-version: "3.13"
 
     steps:
     - uses: actions/checkout@v4
@@ -48,7 +48,7 @@ jobs:
       run: |
         poetry run pytest --cov=src/ --cov-report=term
     - name: Upload coverage reports to Codecov
-      if: matrix.python-version == '3.12' && matrix.os == 'ubuntu-latest'
+      if: matrix.python-version == '3.13' && matrix.os == 'ubuntu-latest'
       uses: codecov/codecov-action@v3
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
