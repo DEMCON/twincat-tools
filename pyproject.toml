@@ -13,8 +13,8 @@ readme = "README.md"
 license = "BSD-4-Clause"
 requires-python = ">=3.10"
 dependencies = [
-    "lxml (>=5.3.0,<6.0.0)",
-    "EditorConfig (>=0.12.4,<0.13.0)",
+    "lxml (>=5.3.0,<7.0.0)",
+    "EditorConfig (>=0.12.4,<0.18.0)",
     "GitPython (>=3.1.43,<4.0.0)",
     "tomli (>=2.0.2,<3.0.0) ; python_version<'3.11'",
 ]
