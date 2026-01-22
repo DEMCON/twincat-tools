@@ -8,10 +8,11 @@ View the repository at https://github.com/DEMCON/TcTools.
 
 The tools summarized:
 
-* :ref:`xml_sorter`: Re-sort TwinCAT XML project folders for consistent version control
+* :ref:`xml_sort`: Re-sort TwinCAT XML project folders for consistent version control
 * :ref:`auto_formatter`: Re-format TwinCAT structured text (ST) PLC source files
 * :ref:`git_info`: Generate source file based on Git version info
 * :ref:`make_release`: Produce verified archive of built binaries
+* :ref:`patch_plc`: (De-)register existing PLC source files to a PLC project
 
 ..
    Header format:
