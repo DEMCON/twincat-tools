@@ -16,7 +16,9 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
-      - uses: py-actions/flake8@v2
+      - uses: abatilo/actions-poetry@v4
         with:
-          path: "src/ tests/"
-          plugins: "flake8-bugbear flake8-black flake8-isort"
+          poetry-version: "2.3.1"
+      - run: |
+          poetry install --only dev
+          poetry run flake8 src/ tests/
