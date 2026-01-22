@@ -24,7 +24,9 @@ class XmlSorter(TcTool):
         if self.args.skip_nodes is None:
             self.args.skip_nodes = []
 
-        self._file_changed = False  # True if any change is made in the current path
+        self._current_file_changed = (
+            False  # True if any change is made in the current path
+        )
         # This is a property to avoid passing around booleans between recursive calls
 
     @classmethod
@@ -44,7 +46,7 @@ class XmlSorter(TcTool):
         return parser
 
     def run(self) -> int:
-        for file in self.find_files():
+        for file in self.find_target_files():
             self.sort_file(str(file))
 
         self.logger.info(f"Checked {self.files_checked} path(s)")
@@ -66,7 +68,7 @@ class XmlSorter(TcTool):
         tree = self.get_xml_tree(path)
 
         self.files_checked += 1
-        self._file_changed = False  # Reset
+        self._current_file_changed = False  # Reset
 
         root = tree.getroot()
         self.sort_node_recursively(root)
@@ -83,7 +85,7 @@ class XmlSorter(TcTool):
 
         current_bytes = b"".join(current_contents)
 
-        if self._file_changed:
+        if self._current_file_changed:
             self.files_to_alter += 1
 
         if current_bytes != tree_bytes:
@@ -123,7 +125,7 @@ class XmlSorter(TcTool):
         # Also sort the attributes - but this won't work flawlessly, since dicts are
         # inherently unsorted
         if self.sort_attributes(node):
-            self._file_changed = True
+            self._current_file_changed = True
 
         # First sort the next level of children, necessary to sort the current node too
         for child in node:
@@ -132,7 +134,7 @@ class XmlSorter(TcTool):
         new_children = sorted(node, key=self.get_node_sorting_key)
 
         if new_children != node[:]:
-            self._file_changed = True
+            self._current_file_changed = True
 
         node[:] = new_children  # Replace children in place
 
