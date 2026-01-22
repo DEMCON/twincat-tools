@@ -26,17 +26,17 @@ jobs:
             python-version: "3.13"
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         submodules: true
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: ${{matrix.python-version}}
     - name: Set up Poetry
       uses: abatilo/actions-poetry@v4
       with:
-        poetry-version: "2.1.1"
+        poetry-version: "2.3.1"
     - name: Inject dynamic versioning
       if: startswith(matrix.os, 'windows')
       run: |
@@ -49,6 +49,6 @@ jobs:
         poetry run pytest --cov=src/ --cov-report=term
     - name: Upload coverage reports to Codecov
       if: matrix.python-version == '3.13' && matrix.os == 'ubuntu-latest'
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v5
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
