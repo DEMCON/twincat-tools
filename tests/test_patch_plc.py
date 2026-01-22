@@ -5,6 +5,7 @@ import pytest
 
 from tctools.patch_plc.__main__ import main as patch_plc_main
 from tctools.patch_plc.patch_plc_class import PatchPlc
+from tctools.xml_sort.xml_sort_class import XmlSorter
 
 
 def test_help(capsys):
@@ -84,3 +85,10 @@ def test_add_recursive(plc_code):
         assert f'<Compile Include="{file}">' in project_content
     for folder in untracked_folders:
         assert f'<Folder Include="{folder}"/>' in project_content
+
+    # Now compare with stored, sorted result:
+    expected_file = plc_code / source / "MyPlc_with_untracked.plcproj.xml"
+
+    XmlSorter(str(project)).run()
+
+    assert project.read_text() == expected_file.read_text()

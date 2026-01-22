@@ -57,7 +57,7 @@ class PatchPlc(TcTool):
                 raise ValueError("`target` must be exactly one project file")
             target = target[0]
 
-        self._project_file = Path(target)
+        self._project_file = Path(target).resolve()
         if not self._project_file.is_file():
             raise ValueError(f"Project file {self._project_file} does not exist")
 
@@ -76,7 +76,7 @@ class PatchPlc(TcTool):
             f"{len(new_source_files)} are unregistered"
         )
         self.logger.info(
-            f"Discovered {len(source_folders)} source files, of which "
+            f"Discovered {len(source_folders)} source (sub-)folders, of which "
             f"{len(new_source_folders)} are unregistered"
         )
 
@@ -102,6 +102,7 @@ class PatchPlc(TcTool):
         with open(self._project_file, "wb") as fh:
             project_tree.write(fh)
 
+        self.logger.info(f"Re-wrote file {self._project_file}")
         return 0
 
     def determine_source_folders(
