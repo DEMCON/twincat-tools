@@ -1,0 +1,97 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <ItemGroup>
+    <Compile Include="DUTs\ST_Example.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="GVLs\GVL_Version.TcGVL">
+      <LinkAlways>true</LinkAlways>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\FB_Example.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\FB_Full.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\MAIN.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\untracked_source\E_UntrackedEnum.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\untracked_source\F_UntrackedFunc.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\untracked_source\subfolder\DUT_UntrackedStruct.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\untracked_source\subfolder\FB_Untracked.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="PlcTask.TcTTO">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="DUTs"/>
+    <Folder Include="GVLs"/>
+    <Folder Include="POUs"/>
+    <Folder Include="POUs\untracked_source"/>
+    <Folder Include="POUs\untracked_source\subfolder"/>
+    <Folder Include="VISUs"/>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="MyPlc.tmc">
+      <SubType>Content</SubType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <PlaceholderReference Include="Tc2_Standard">
+      <DefaultResolution>Tc2_Standard, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc2_Standard</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc2_System">
+      <DefaultResolution>Tc2_System, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc2_System</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc3_Module">
+      <DefaultResolution>Tc3_Module, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc3_Module</Namespace>
+    </PlaceholderReference>
+  </ItemGroup>
+  <ProjectExtensions>
+    <PlcProjectOptions>
+      <XmlArchive>
+        <Data>
+          <o xml:space="preserve" t="OptionKey">
+            <v n="Name">"&lt;ProjectRoot&gt;"</v>
+            <d n="SubKeys" t="Hashtable"/>
+            <d n="Values" t="Hashtable"/>
+          </o>
+        </Data>
+        <TypeList>
+          <Type n="Hashtable">System.Collections.Hashtable</Type>
+          <Type n="OptionKey">{54dd0eac-a6d8-46f2-8c27-2f43c7e49861}</Type>
+          <Type n="String">System.String</Type>
+        </TypeList>
+      </XmlArchive>
+    </PlcProjectOptions>
+  </ProjectExtensions>
+  <PropertyGroup>
+    <Application>{9b80525c-51bc-47f5-868f-9f61efadf857}</Application>
+    <DownloadApplicationInfo>true</DownloadApplicationInfo>
+    <FileVersion>1.0.0.0</FileVersion>
+    <GenerateTpy>false</GenerateTpy>
+    <Implicit_Jitter_Distribution>{85a038e2-e5b4-4af4-916e-a04812cc85b0}</Implicit_Jitter_Distribution>
+    <Implicit_KindOfTask>{bc222fda-9a00-499c-8fe1-56590e05c741}</Implicit_KindOfTask>
+    <Implicit_Task_Info>{4cbef591-f0aa-4f71-8e8c-8748ed72f381}</Implicit_Task_Info>
+    <LibraryReferences>{387c9843-650a-4728-bc5d-67105fea5b12}</LibraryReferences>
+    <Name>MyPlc</Name>
+    <ProgramVersion>3.1.4023.0</ProgramVersion>
+    <ProjectGuid>{3863e7e1-422f-4d5c-92f7-9f7ce21f2ff0}</ProjectGuid>
+    <SchemaVersion>2.0</SchemaVersion>
+    <SubObjectsSortedByName>True</SubObjectsSortedByName>
+    <TypeSystem>{8c1ac7e2-784c-4117-8c69-6df5131a9b7a}</TypeSystem>
+    <WriteProductVersion>true</WriteProductVersion>
+  </PropertyGroup>
+</Project>

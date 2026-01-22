@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="FB_Untracked" Id="{efb8ac47-2fe7-4283-8729-6975cbd93c8f}" SpecialFunc="None">
+    <Declaration><![CDATA[(*
+This file is present, but not yet tracked in the PLC project file.
+*)
+FUNCTION_BLOCK FB_Untracked
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>
