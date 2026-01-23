@@ -228,6 +228,21 @@ Patch PLC
 Adding existing source files to a PLC project can be done through the TwinCAT shell, but it is clunky, slow and prone to outright fail.
 This tool can discover existing files under a given folder and assert their presence in a plc project file (`.plcproj`).
 
+The patched PLc project will not be sorted!
+And the XML formatting will be significantly altered, because the entire XML is saved again.
+All XML elements are maintained, new files are foldes are merely inserted at the end of the relevant XML nodes.
+However, the entire file still needs to be saved again, which inevitably cause visible (but non-funcitonal) changes.
+
+After opening, modifying and then saving the PLC project the next time, the original TwinCAT project file formatting will be restored.
+
+In case you track your project file under version control, it is recommended to sort it with :ref:`xml_sort` after patching, before committing changes.
+
+Note that it's best to close the TwinCAT project while the tool runs.
+If you still have the project opened, you will be prompted to reload the solution after activating the window again.
+For smaller projects this will likely be fine, after reloading the modified project should show as expected.
+But in the case that many, many files were added, this reload will get stuck.
+Close and re-opening the solution after `patch_plc` should be faster and more reliable.
+
 Usage
 -----
 
