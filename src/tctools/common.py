@@ -105,7 +105,6 @@ class Tool(ABC):
             help="Set log level to change verbosity",
             default="INFO",
         )
-        return
 
     def make_config(self) -> Dict[str, Any]:
         """Get configuration from possible files."""
@@ -197,11 +196,8 @@ class TcTool(Tool, ABC):
     def set_arguments(cls, parser):
         super().set_arguments(parser)
 
-        parser.add_argument(
-            "target",
-            help="File(s) or folder(s) to target",
-            nargs="+",
-        )
+        cls.set_main_argument(parser)
+
         parser.add_argument(
             "--check",
             help="Do not modify files on disk, but give a non-zero exit code if there "
@@ -224,6 +220,18 @@ class TcTool(Tool, ABC):
         )
 
         return parser
+
+    @classmethod
+    def set_main_argument(cls, parser):
+        """First argument that's supplied.
+
+        Separate method to allow overriding it.
+        """
+        parser.add_argument(
+            "target",
+            help="File(s) or folder(s) to target",
+            nargs="+",
+        )
 
     @staticmethod
     def get_xml_header(file: str) -> Optional[str]:

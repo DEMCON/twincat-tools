@@ -37,11 +37,22 @@ class PatchPlc(TcTool):
 
         parser.add_argument(
             "source",
-            help="File(s) or folder(s) with PLC source to add to the project "
-            "(=`target`)",
+            help="File(s) or folder(s) with PLC source to add to the project",
+            nargs="+",
+        )
+        parser.add_argument(
+            "--ignore",
+            help="File(s) to ignore on the filesystem",
             nargs="+",
         )
         return parser
+
+    @classmethod
+    def set_main_argument(cls, parser):
+        parser.add_argument(
+            "project",
+            help="Path to the PLC project (typically '.plcproj')",
+        )
 
     def run(self) -> int:
         """Perform actual patching."""
@@ -53,13 +64,7 @@ class PatchPlc(TcTool):
             )
         )
 
-        target = self.args.target
-        if not isinstance(target, (str, Path)):
-            if len(target) != 1:
-                raise ValueError("`target` must be exactly one project file")
-            target = target[0]
-
-        self._project_file = Path(target).resolve()
+        self._project_file = Path(self.args.project).resolve()
         if not self._project_file.is_file():
             raise ValueError(f"Project file {self._project_file} does not exist")
 
