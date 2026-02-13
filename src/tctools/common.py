@@ -269,7 +269,9 @@ class TcTool(Tool, ABC):
                     for filt in filters:
                         if recursive:
                             filt = f"**/{filt}"
-                        files += path.glob(filt)
+                        files += path.glob(filt, recurse_symlinks=True)
+                        # With `recurse_symlinks`, symlinks will be followed as if
+                        # files/folders are really there
             else:
                 raise ValueError(f"Could not find path or folder: `{target}`")
 

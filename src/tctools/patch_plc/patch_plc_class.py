@@ -12,7 +12,9 @@ class PatchPlc(TcTool):
     LOGGER_NAME = "patch_plc"
 
     # TwinCAT PLC source files:
-    FILTER_DEFAULT: List[str] = ["*.TcPOU", "*.TcGVL", "*.TcDUT"]
+    FILTER_DEFAULT: List[str] = [
+        "*.TcPOU", "*.TcGVL", "*.TcDUT", "*.TcGTLO", "*.TcIO", "*.TcTLEO"
+    ]
 
     CONFIG_KEY = "patch_plc"
 
