@@ -13,7 +13,12 @@ class PatchPlc(TcTool):
 
     # TwinCAT PLC source files:
     FILTER_DEFAULT: List[str] = [
-        "*.TcPOU", "*.TcGVL", "*.TcDUT", "*.TcGTLO", "*.TcIO", "*.TcTLEO"
+        "*.TcPOU",
+        "*.TcGVL",
+        "*.TcDUT",
+        "*.TcGTLO",
+        "*.TcIO",
+        "*.TcTLEO",
     ]
 
     CONFIG_KEY = "patch_plc"
@@ -42,7 +47,8 @@ class PatchPlc(TcTool):
         )
         parser.add_argument(
             "--ignore",
-            help="File(s) to ignore on the filesystem",
+            help="File(s) to ignore on the filesystem (filenames are only matched "
+            "exactly!)",
             nargs="+",
         )
         return parser
@@ -63,6 +69,10 @@ class PatchPlc(TcTool):
                 self.args.recursive,
             )
         )
+
+        source_files = [
+            file for file in source_files if file.name not in self.args.ignore
+        ]  # Remove the exact filename mentioned in the ignore list
 
         self._project_file = Path(self.args.project).resolve()
         if not self._project_file.is_file():
