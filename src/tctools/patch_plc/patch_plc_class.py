@@ -1,5 +1,7 @@
 from pathlib import Path
 from typing import Iterable, List, Set, Tuple
+from enum import Enum
+from argparse import RawDescriptionHelpFormatter
 
 from lxml import etree
 
@@ -34,10 +36,21 @@ class PatchPlc(TcTool):
 
     @classmethod
     def set_arguments(cls, parser):
+
+        parser.formatter_class = RawDescriptionHelpFormatter
+
         super().set_arguments(parser)
 
         parser.prog = "tc_patch_plc"
-        parser.description = "Add or remove existing files to a PLC project."
+        parser.description = """Add or remove existing files to a PLC project
+        
+Types of action to take with the provided files:
+merge:      Add any files/folders that are not yet registered
+reset:      Replace ALL registered files/folders under the given path(s) by the 
+            provided ones
+            Note: provided folders will be deleted whole from the project, regardless
+            of items present on the filesystem! 
+remove:     Remove the provided files/folders without adding anything"""
         parser.epilog = "Example: ``tc_patch_plc ./MyPLC.plcproj -r POUs/Generated/``"
 
         parser.add_argument(
@@ -50,6 +63,14 @@ class PatchPlc(TcTool):
             help="File(s) to ignore on the filesystem (filenames are only matched "
             "exactly!)",
             nargs="+",
+            default=[],
+        )
+        parser.add_argument(
+            "--clean-folders",
+            "-c",
+            help="Delete any and all empty folders in the PLC project afterwards",
+            action="store_true",
+            default=False,
         )
         return parser
 
@@ -58,6 +79,11 @@ class PatchPlc(TcTool):
         parser.add_argument(
             "project",
             help="Path to the PLC project (typically '.plcproj')",
+        )
+        parser.add_argument(
+            "operation",
+            help="Type of action to take (see description)",
+            choices=[v.name.lower() for v in Operation],
         )
 
     def run(self) -> int:
@@ -85,8 +111,41 @@ class PatchPlc(TcTool):
 
         current_files, current_folders = self.get_files_and_folders(project_tree)
 
-        new_source_files = source_files.difference(current_files)
-        new_source_folders = source_folders.difference(current_folders)
+        operation_method = Operation[self.args.operation.upper()].value[0]
+
+        rcode = operation_method(
+            self,
+            current_files,
+            current_folders,
+            source_files,
+            source_folders,
+        )
+        if rcode is not None:
+            return rcode  # Early return
+
+        # Re-indent by a double space
+        etree.indent(project_tree, space="  ", level=0)
+
+        if self.args.dry:
+            return 0  # Skip saving to file
+
+        # Actually commit to the file now:
+
+        with open(self._project_file, "wb") as fh:
+            project_tree.write(fh)
+
+        self.logger.info(f"Re-wrote file {self._project_file}")
+        return 0
+
+    def operation_merge(
+        self,
+        source_files,
+        source_folders,
+        new_files,
+        new_folders,
+    ) -> int | None:
+        new_source_files = source_files.difference(new_files)
+        new_source_folders = source_folders.difference(new_folders)
 
         self.logger.info(
             f"Discovered {len(source_files)} source files, of which "
@@ -108,19 +167,13 @@ class PatchPlc(TcTool):
 
         self.add_files_and_folders_to_xml(new_source_files, new_source_folders)
 
-        # Re-indent by a double space
-        etree.indent(project_tree, space="  ", level=0)
+        return None
 
-        if self.args.dry:
-            return 0  # Skip saving to file
+    def operation_remove(self, *args):
+        return 1
 
-        # Actually commit to the file now:
-
-        with open(self._project_file, "wb") as fh:
-            project_tree.write(fh)
-
-        self.logger.info(f"Re-wrote file {self._project_file}")
-        return 0
+    def operation_reset(self, *args):
+        return 1
 
     def determine_source_folders(
         self, source_files: Iterable[Path]
@@ -190,3 +243,9 @@ class PatchPlc(TcTool):
             file_str = str(file).replace("/", "\\")
             xml = f'<Compile Include="{file_str}"><SubType>Code</SubType></Compile>'
             self._element_files.append(etree.XML(xml))
+
+
+class Operation(Enum):
+    MERGE = (PatchPlc.operation_merge,)
+    RESET = (PatchPlc.operation_reset,)
+    REMOVE = (PatchPlc.operation_remove,)
