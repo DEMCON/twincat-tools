@@ -27,7 +27,7 @@ def test_cli(plc_code):
 
     path = sys.executable  # Re-use whatever executable we're using now
     result = subprocess.run(
-        [path, "-m", "tctools.patch_plc", str(project), "-r", str(source)],
+        [path, "-m", "tctools.patch_plc", str(project), "merge", "-r", str(source)],
         capture_output=True,
     )
 
@@ -36,13 +36,13 @@ def test_cli(plc_code):
     # TODO: Add some kind of output assertion here
 
 
-def test_add_single_file(plc_code):
+def test_merge_single_file(plc_code):
     """Test happy-flow adding."""
     plc_dir = plc_code / "TwinCAT Project1" / "MyPlc"
     project = plc_dir / "MyPlc.plcproj"
     source = plc_dir / "POUs" / "untracked_source" / "F_UntrackedFunc.TcPOU"
 
-    patcher = PatchPlc(str(project), str(source))
+    patcher = PatchPlc(str(project), "merge", str(source))
     patcher.run()
 
     project_content = project.read_text()
@@ -54,7 +54,7 @@ def test_add_single_file(plc_code):
     assert '<Folder Include="POUs\\untracked_source"/>' in project_content
 
 
-def test_add_recursive(plc_code):
+def test_merge_recursive(plc_code):
     """Test happy-flow adding for a complete folder."""
     plc_dir = plc_code / "TwinCAT Project1" / "MyPlc"
     project = plc_dir / "MyPlc.plcproj"
@@ -76,7 +76,7 @@ def test_add_recursive(plc_code):
     for path in untracked_files + untracked_folders:
         assert path not in project_content
 
-    patcher = PatchPlc(str(project), str(source), "-r")
+    patcher = PatchPlc(str(project), "merge", str(source), "-r")
     patcher.run()
 
     project_content = project.read_text()
@@ -92,3 +92,32 @@ def test_add_recursive(plc_code):
     XmlSorter(str(project)).run()
 
     assert project.read_text() == expected_file.read_text()
+
+
+def test_remove(plc_code):
+    """Test remove happy-flow."""
+    plc_dir = plc_code / "TwinCAT Project1" / "MyPlc"
+    project = plc_dir / "MyPlc.plcproj"
+    source = plc_dir / "POUs" / "untracked_source"
+
+    tracked_files = [
+        "POUs\\FB_Example.TcPOU",
+        "DUTs\\ST_Example.TcDUT",
+    ]
+
+    project_content = project.read_text()
+    lines_before = project_content.count("\n")
+
+    for file in tracked_files:
+        assert file in project_content
+
+    patcher = PatchPlc(str(project), "remove", str(source))
+    patcher.run()
+
+    project_content = project.read_text()
+
+    for file in tracked_files:
+        assert file not in project_content
+
+    lines_after = project_content.count("\n")
+    assert lines_before - 6 == lines_after  # Make sure not more got deleted
