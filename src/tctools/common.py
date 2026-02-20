@@ -3,7 +3,7 @@ import sys
 from abc import ABC, abstractmethod
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Generator, List, Optional
 
 from lxml import etree
 
@@ -17,6 +17,22 @@ except ImportError:
 # Create type hinting shortcuts:
 Element = etree._Element  # noqa
 ElementTree = etree._ElementTree  # noqa
+
+
+# The result of a files argument - like: `provided_path: [files]`
+FileGroups = Dict[Path, List[Path]]
+
+
+def path_glob(path: Path, pattern: Path | str, recurse_symlinks: bool = False):
+    """Wrapper for Path.glob()
+
+    We are interested in the ``recurse_symlinks`` kwarg, but it's only available
+    from Python 3.13. Here we quietly fall back on skipping that argument.
+    """
+    try:
+        yield from path.glob(pattern, recurse_symlinks=recurse_symlinks)
+    except TypeError:
+        yield from path.glob(pattern)  # For before Python 3.13
 
 
 class Tool(ABC):
@@ -259,25 +275,47 @@ class TcTool(Tool, ABC):
         targets: str | List[str],
         filters: None | List[str] = None,
         recursive: bool = True,
-    ) -> List[Path]:
-        """Find a set of files, based on one or more targets and an optional filter."""
-        files = []
+        skip_check: bool = False,
+    ) -> FileGroups:
+        """Find a set of files, based on one or more targets and an optional filter.
+
+        The entire set will never contain duplicate files
+
+        Returned dict looks like:
+        {
+            "given pattern 1": [file_1, folder/file2, etc.],
+            "given pattern 2": ... ,
+        }
+        """
+        files = {}
         if not targets:
             return files
+
+        files_unique = set()  # Make sure we don't get duplicate paths here
 
         if isinstance(targets, (str, Path)):
             targets = [targets]
 
+        def add_file(g: List[Path], f: Path):
+            """Little local method to prevent duplicate paths."""
+            if f not in files_unique:
+                files_unique.add(f)
+                g.append(f)
+
         for target in targets:
+            path = Path(target)
+            group = files.setdefault(path, [])
             path = Path(target).resolve()
-            if path.is_file():
-                files.append(path)
+            if skip_check or path.is_file():
+                add_file(group, path)
             elif path.is_dir():
                 if filters:
                     for filt in filters:
                         if recursive:
                             filt = f"**/{filt}"
-                        files += path.glob(filt, recurse_symlinks=True)
+
+                        for p in path_glob(path, filt, recurse_symlinks=True):
+                            add_file(group, p)
                         # With `recurse_symlinks`, symlinks will be followed as if
                         # files/folders are really there
             else:
@@ -285,6 +323,9 @@ class TcTool(Tool, ABC):
 
         return files
 
-    def find_target_files(self) -> List[Path]:
+    def find_target_files(self) -> Generator[Path, None, None]:
         """Use argparse arguments to get a set of target files."""
-        return self.find_files(self.args.target, self.args.filter, self.args.recursive)
+        for group in self.find_files(
+            self.args.target, self.args.filter, self.args.recursive
+        ).values():
+            yield from group
