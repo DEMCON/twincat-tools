@@ -1,11 +1,47 @@
-from pathlib import Path
-from typing import Iterable, List, Set, Tuple
-from enum import Enum
 from argparse import RawDescriptionHelpFormatter
+from dataclasses import dataclass, field
+from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, Iterable, List, Set
 
 from lxml import etree
 
 from ..common import Element, TcTool
+
+
+@dataclass
+class FileItems:
+    """A set of files and folders, typically grouped under one source input."""
+
+    folders: Set[Path] = field(default_factory=set)
+    files: Set[Path] = field(default_factory=set)
+
+    def add(self, other: "FileItems"):
+        self.folders |= other.folders
+        self.files |= other.files
+
+    def subtract(self, other: "FileItems"):
+        self.folders = self.folders.difference(other.folders)
+        self.files = self.files.difference(other.files)
+
+    @staticmethod
+    def merge(items: Iterable["FileItems"]) -> "FileItems":
+        """Combined an iterator of FileItems into a single one."""
+        summed = FileItems()
+        for item in items:
+            summed.add(item)
+
+        return summed
+
+    @staticmethod
+    def intersection(a: "FileItems", b: "FileItems") -> "FileItems":
+        return FileItems(
+            folders=a.folders.intersection(b.folders),
+            files=a.files.intersection(b.files),
+        )
+
+
+FileItemsGroups = Dict[Path, FileItems]
 
 
 class PatchPlc(TcTool):
@@ -43,13 +79,13 @@ class PatchPlc(TcTool):
 
         parser.prog = "tc_patch_plc"
         parser.description = """Add or remove existing files to a PLC project
-        
+
 Types of action to take with the provided files:
 merge:      Add any files/folders that are not yet registered
-reset:      Replace ALL registered files/folders under the given path(s) by the 
+reset:      Replace ALL registered files/folders under the given path(s) by the
             provided ones
             Note: provided folders will be deleted whole from the project, regardless
-            of items present on the filesystem! 
+            of items present on the filesystem!
 remove:     Remove the provided files/folders without adding anything"""
         parser.epilog = "Example: ``tc_patch_plc ./MyPLC.plcproj -r POUs/Generated/``"
 
@@ -88,37 +124,35 @@ remove:     Remove the provided files/folders without adding anything"""
 
     def run(self) -> int:
         """Perform actual patching."""
-        source_files = set(
-            self.find_files(
-                self.args.source,
-                self.args.filter,
-                self.args.recursive,
-            )
-        )
+        operation = Operation[self.args.operation.upper()]
 
-        source_files = [
-            file for file in source_files if file.name not in self.args.ignore
-        ]  # Remove the exact filename mentioned in the ignore list
+        input_sources = self.find_files(
+            self.args.source,
+            self.args.filter,
+            self.args.recursive,
+            skip_check=(operation == Operation.REMOVE),
+        )
 
         self._project_file = Path(self.args.project).resolve()
         if not self._project_file.is_file():
             raise ValueError(f"Project file {self._project_file} does not exist")
 
-        # List of all source folders - including intermediate ones
-        source_files, source_folders = self.determine_source_folders(source_files)
+        new_sources: FileItemsGroups = {}
+        for key, files in input_sources.items():
+            if operation == Operation.REMOVE:
+                new_sources[key] = FileItems()
+            else:
+                new_sources[key] = self.determine_source_folders(files)
+                # ^ also includes the ignore pattern
 
         project_tree = self.get_xml_tree(self._project_file)
 
-        current_files, current_folders = self.get_files_and_folders(project_tree)
+        current_sources = self.get_project_sources(project_tree)
 
-        operation_method = Operation[self.args.operation.upper()].value[0]
-
-        rcode = operation_method(
+        rcode = operation(
             self,
-            current_files,
-            current_folders,
-            source_files,
-            source_folders,
+            current_sources,
+            new_sources,
         )
         if rcode is not None:
             return rcode  # Early return
@@ -139,48 +173,86 @@ remove:     Remove the provided files/folders without adding anything"""
 
     def operation_merge(
         self,
-        source_files,
-        source_folders,
-        new_files,
-        new_folders,
+        current_sources: FileItems,
+        new_sources: FileItemsGroups,
     ) -> int | None:
-        new_source_files = source_files.difference(new_files)
-        new_source_folders = source_folders.difference(new_folders)
+        """See help info for `merge`."""
+        new_sources = FileItems.merge(new_sources.values())
+
+        sizes_all = (len(new_sources.folders), len(new_sources.files))
+
+        new_sources.subtract(current_sources)
 
         self.logger.info(
-            f"Discovered {len(source_files)} source files, of which "
-            f"{len(new_source_files)} are unregistered"
+            f"Discovered {sizes_all[1]} source files, of which "
+            f"{len(new_sources.files)} are unregistered"
         )
         self.logger.info(
-            f"Discovered {len(source_folders)} source (sub-)folders, of which "
-            f"{len(new_source_folders)} are unregistered"
+            f"Discovered {sizes_all[0]} source (sub-)folders, of which "
+            f"{len(new_sources.folders)} are unregistered"
         )
 
         # Decide what to do next:
-        if not new_source_files and not new_source_folders:
+        if not new_sources.files and not new_sources.folders:
             self.logger.info("No new source files or folders, stopping")
             return 0
 
         if self.args.check:
             self.logger.info("Some file or folders would be added")
-            return 1  # Something to do, exit with error (= check has failed)
+            return 1  # Something left to do, so exit with error (= check has failed)
 
-        self.add_files_and_folders_to_xml(new_source_files, new_source_folders)
-
+        self.xml_add_sources(new_sources)
         return None
 
-    def operation_remove(self, *args):
-        return 1
+    def operation_remove(
+        self, current_sources: FileItems, new_sources: FileItemsGroups
+    ):
+        """See help info for `remove`."""
+
+        sizes_all = (len(current_sources.folders), len(current_sources.files))
+        to_remove = FileItems()
+
+        for file in current_sources.files:
+            for target in new_sources.keys():
+                if file == target or file.is_relative_to(target):
+                    to_remove.files.add(file)
+
+        for folder in current_sources.folders:
+            for target in new_sources.keys():
+                if folder == target or folder.is_relative_to(target):
+                    to_remove.folders.add(folder)
+
+        self.logger.info(
+            f"{sizes_all[1]} registered source files, of which "
+            f"{len(to_remove.files)} will be unregistered"
+        )
+        self.logger.info(
+            f"{sizes_all[0]} registered source (sub-)folders, of which "
+            f"{len(to_remove.folders)} will be unregistered"
+        )
+
+        # Decide what to do next:
+        if not to_remove.files and not to_remove.folders:
+            self.logger.info("No files or folders to un-register, stopping")
+            return 0
+
+        if self.args.check:
+            self.logger.info("Some file or folders would be un-registered")
+            return 1  # Something left to do, so exit with error (= check has failed)
+
+        self.xml_remove_source(to_remove)
+        return None
 
     def operation_reset(self, *args):
         return 1
 
-    def determine_source_folders(
-        self, source_files: Iterable[Path]
-    ) -> Tuple[Set[Path], Set[Path]]:
-        """Collect all folders (incl. intermediate folders) of files."""
-        source_folders: Set[Path] = set()
-        new_source_files: Set[Path] = set()
+    def determine_source_folders(self, source_files: Iterable[Path]) -> FileItems:
+        """Collect all folders (incl. intermediate folders) of files.
+
+        Also turn files into a neat relative path, w.r.t. the project file.
+        Relies on `self._project_file`.
+        """
+        sources = FileItems()
         project_dir = self._project_file.parent
         for file in source_files:
             try:
@@ -191,22 +263,24 @@ remove:     Remove the provided files/folders without adding anything"""
                     f"directory `{project_dir}`"
                 )
             else:
-                new_source_files.add(relative_path)
+                if relative_path.name in self.args.ignore:
+                    continue  # Skip this file if the name matches exactly
+
+                sources.files.add(relative_path)
                 for folder in reversed(relative_path.parents):
                     if not folder.name:  # "./" is typically the first parent
                         continue
 
-                    source_folders.add(folder)  # Use a set to skip duplicates
+                    sources.folders.add(folder)  # Use a set to skip duplicates
 
             self.logger.debug(f"Found source file: {file}")
 
-        return new_source_files, source_folders
+        return sources
 
-    def get_files_and_folders(self, tree) -> Tuple[Set[Path], Set[Path]]:
+    def get_project_sources(self, tree) -> FileItems:
         """Get all files and folders currently in a PLC project."""
 
-        files = set()
-        folders = set()
+        sources = FileItems()
 
         # The project file has a "xmlns" defined, use a wildcard to ignore namespaces
         for item_group in tree.iterfind("ItemGroup", namespaces={"": "*"}):
@@ -219,33 +293,45 @@ remove:     Remove the provided files/folders without adding anything"""
                     if self._element_files is None:
                         self._element_files = item_group
                     path_str = item.attrib.get("Include")
-                    files.add(Path(path_str))
+                    sources.files.add(Path(path_str))
                 elif item.tag.endswith("Folder"):
                     if self._element_folders is None:
                         self._element_folders = item_group
                     path_str = item.attrib.get("Include")
-                    folders.add(Path(path_str))
+                    sources.folders.add(Path(path_str))
                 # Skip other types
 
-        return files, folders
+        return sources
 
-    def add_files_and_folders_to_xml(
-        self, files: Iterable[Path], folders: Iterable[Path]
-    ):
+    def xml_add_sources(self, sources: FileItems):
         """Modify the files and folders elements in-place."""
-        for folder in folders:
+        for folder in sources.folders:
             folder_str = str(folder).replace("/", "\\")
             # On Linux the above will have the wrong slashes
             xml = f'<Folder Include="{folder_str}"/>'
             self._element_folders.append(etree.XML(xml))
 
-        for file in files:
+        for file in sources.files:
             file_str = str(file).replace("/", "\\")
             xml = f'<Compile Include="{file_str}"><SubType>Code</SubType></Compile>'
             self._element_files.append(etree.XML(xml))
+
+    def xml_remove_source(self, to_remove: FileItems):
+        """Modify the files and folders elements in-place."""
+        for element in self._element_folders:
+            if Path(element.attrib["Include"]) in to_remove.folders:
+                self._element_folders.remove(element)
+
+        for element in self._element_files:
+            if Path(element.attrib["Include"]) in to_remove.files:
+                self._element_files.remove(element)
 
 
 class Operation(Enum):
     MERGE = (PatchPlc.operation_merge,)
     RESET = (PatchPlc.operation_reset,)
     REMOVE = (PatchPlc.operation_remove,)
+
+    def __call__(self, *args, **kwargs) -> Any:
+        """Call the method of the enum value."""
+        return self.value[0](*args, **kwargs)

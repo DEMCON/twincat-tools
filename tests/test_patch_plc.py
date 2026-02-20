@@ -98,7 +98,6 @@ def test_remove(plc_code):
     """Test remove happy-flow."""
     plc_dir = plc_code / "TwinCAT Project1" / "MyPlc"
     project = plc_dir / "MyPlc.plcproj"
-    source = plc_dir / "POUs" / "untracked_source"
 
     tracked_files = [
         "POUs\\FB_Example.TcPOU",
@@ -111,7 +110,9 @@ def test_remove(plc_code):
     for file in tracked_files:
         assert file in project_content
 
-    patcher = PatchPlc(str(project), "remove", str(source))
+    patcher = PatchPlc(
+        str(project), "remove", str(tracked_files[0]), str(tracked_files[1])
+    )
     patcher.run()
 
     project_content = project.read_text()
