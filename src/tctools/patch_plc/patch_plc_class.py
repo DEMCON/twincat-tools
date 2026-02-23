@@ -2,7 +2,7 @@ from argparse import RawDescriptionHelpFormatter
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Set
+from typing import Any, Dict, Generator, Iterable, List, Set
 
 from lxml import etree
 
@@ -100,13 +100,6 @@ remove:     Remove the provided files/folders without adding anything"""
             "exactly!)",
             nargs="+",
             default=[],
-        )
-        parser.add_argument(
-            "--clean-folders",
-            "-c",
-            help="Delete any and all empty folders in the PLC project afterwards",
-            action="store_true",
-            default=False,
         )
         return parser
 
@@ -212,15 +205,19 @@ remove:     Remove the provided files/folders without adding anything"""
         sizes_all = (len(current_sources.folders), len(current_sources.files))
         to_remove = FileItems()
 
-        for file in current_sources.files:
-            for target in new_sources.keys():
-                if file == target or file.is_relative_to(target):
-                    to_remove.files.add(file)
+        remove_items = [to_remove.files]
+        sources_items = [current_sources.files]
+        if self.args.recursive:  # Don't touch folders without `-r`
+            remove_items.append(to_remove.folders)
+            sources_items.append(current_sources.folders)
 
-        for folder in current_sources.folders:
-            for target in new_sources.keys():
-                if folder == target or folder.is_relative_to(target):
-                    to_remove.folders.add(folder)
+        for remove_list, sources_list in zip(remove_items, sources_items):
+            for item in sources_list:
+                for target in new_sources.keys():
+                    if item == target or (
+                        self.args.recursive and item.is_relative_to(target)
+                    ):  # Exact match without `-r`, also relative with
+                        remove_list.add(item)
 
         self.logger.info(
             f"{sizes_all[1]} registered source files, of which "

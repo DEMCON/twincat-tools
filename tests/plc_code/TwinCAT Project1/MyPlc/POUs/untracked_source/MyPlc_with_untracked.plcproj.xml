@@ -16,6 +16,15 @@
     <Compile Include="POUs\MAIN.TcPOU">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="POUs\Module\DUTs\ST_ModuleCmd.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Module\DUTs\ST_ModuleStatus.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Module\FB_Module.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="POUs\untracked_source\E_UntrackedEnum.TcDUT">
       <SubType>Code</SubType>
     </Compile>
@@ -36,6 +45,8 @@
     <Folder Include="DUTs"/>
     <Folder Include="GVLs"/>
     <Folder Include="POUs"/>
+    <Folder Include="POUs\Module"/>
+    <Folder Include="POUs\Module\DUTs"/>
     <Folder Include="POUs\untracked_source"/>
     <Folder Include="POUs\untracked_source\subfolder"/>
     <Folder Include="VISUs"/>
