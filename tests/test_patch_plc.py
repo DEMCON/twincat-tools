@@ -1,5 +1,7 @@
+import shutil
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 
@@ -122,3 +124,46 @@ def test_remove(plc_code):
 
     lines_after = project_content.count("\n")
     assert lines_before - 6 == lines_after  # Make sure not more got deleted
+
+
+@pytest.mark.parametrize("recursive", [False, True])
+def test_remove_recursive(plc_code, recursive):
+    plc_dir = plc_code / "TwinCAT Project1" / "MyPlc"
+    project = plc_dir / "MyPlc.plcproj"
+
+    folder = Path("POUs/Module")
+    tracked_folders = [
+        'Include="POUs\\Module"',
+        'Include="POUs\\Module\\DUTs"',
+    ]
+    tracked_files = [
+        'Include="POUs\\Module\\FB_Module.TcPOU"',
+        'Include="POUs\\Module\\DUTs\\ST_ModuleCmd.TcDUT"',
+        'Include="POUs\\Module\\DUTs\\ST_ModuleStatus.TcDUT"',
+    ]
+    content_before = project.read_text()
+    lines_before = content_before.count("\n")
+    for file in tracked_folders + tracked_files:
+        assert file in content_before
+
+    # Remove the actual folder first, because filesystem presence shouldn't matter:
+    shutil.rmtree(plc_dir / folder)
+
+    args = [str(project), "remove", str(folder)]
+    if recursive:
+        args.append("-r")
+
+    code = PatchPlc(*args).run()
+    assert code == 0
+
+    content_after = project.read_text()
+    lines_after = content_after.count("\n")
+
+    if not recursive:
+        assert content_before == content_after  # No changes
+        return
+
+    for item in tracked_files + tracked_folders:
+        assert item not in content_after
+
+    assert lines_before - 2 * 1 - 3 * 3 == lines_after

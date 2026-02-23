@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.17">
+  <DUT Name="ST_ModuleStatus" Id="{88520539-6dd6-4ad2-afe2-0cd458d3645e}">
+    <Declaration><![CDATA[TYPE ST_ModuleStatus :
+STRUCT
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

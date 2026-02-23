@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.17">
   <POU Name="FB_Example" Id="{bebb6320-5f8d-442b-bc9e-479d8a85bedf}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_Example
 VAR_INPUT
@@ -17,7 +17,7 @@ END_VAR
       <ST><![CDATA[FOR i := 1 TO 5 DO
 			
     IF otherInput < 1.0 THEN
-    	flag := someInput;
+    	flag := (someInput < 1.0);
 	END_IF
 
 
