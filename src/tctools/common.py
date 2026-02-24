@@ -23,16 +23,8 @@ ElementTree = etree._ElementTree  # noqa
 FileGroups = Dict[Path, List[Path]]
 
 
-def path_glob(path: Path, pattern: Path | str, recurse_symlinks: bool = False):
-    """Wrapper for Path.glob()
-
-    We are interested in the ``recurse_symlinks`` kwarg, but it's only available
-    from Python 3.13. Here we quietly fall back on skipping that argument.
-    """
-    try:
-        yield from path.glob(pattern, recurse_symlinks=recurse_symlinks)
-    except TypeError:
-        yield from path.glob(pattern)  # For before Python 3.13
+# Path.glob() only allows symlink recursion from Python 3.13:
+path_glob_symlinks = {} if sys.version_info < (3, 13) else {"recurse_symlinks": True}
 
 
 class Tool(ABC):
@@ -314,7 +306,7 @@ class TcTool(Tool, ABC):
                         if recursive:
                             filt = f"**/{filt}"
 
-                        for p in path_glob(path, filt, recurse_symlinks=True):
+                        for p in path.glob(filt, **path_glob_symlinks):
                             add_file(group, p)
                         # With `recurse_symlinks`, symlinks will be followed as if
                         # files/folders are really there

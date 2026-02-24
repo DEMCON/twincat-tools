@@ -2,7 +2,7 @@ from argparse import RawDescriptionHelpFormatter
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Generator, Iterable, List, Set
+from typing import Any, Dict, Iterable, List, Set
 
 from lxml import etree
 
