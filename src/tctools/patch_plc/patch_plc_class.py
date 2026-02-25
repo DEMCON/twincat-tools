@@ -1,7 +1,7 @@
 from argparse import RawDescriptionHelpFormatter
 from dataclasses import dataclass, field
 from enum import Enum
-from pathlib import Path
+from pathlib import Path, PurePath, PureWindowsPath
 from typing import Any, Dict, Iterable, List, Set
 
 from lxml import etree
@@ -268,7 +268,8 @@ remove:     Remove the provided files/folders without adding anything"""
                     if not folder.name:  # "./" is typically the first parent
                         continue
 
-                    sources.folders.add(folder)  # Use a set to skip duplicates
+                    sources.folders.add(folder)
+                    # Collection is a set to duplicates are skipped by default
 
             self.logger.debug(f"Found source file: {file}")
 
@@ -289,39 +290,55 @@ remove:     Remove the provided files/folders without adding anything"""
                 if item.tag.endswith("Compile"):
                     if self._element_files is None:
                         self._element_files = item_group
-                    path_str = item.attrib.get("Include")
-                    sources.files.add(Path(path_str))
+                    ref_set = sources.files
                 elif item.tag.endswith("Folder"):
                     if self._element_folders is None:
                         self._element_folders = item_group
-                    path_str = item.attrib.get("Include")
-                    sources.folders.add(Path(path_str))
-                # Skip other types
+                    ref_set = sources.folders
+                else:
+                    continue  # Skip other types
+
+                path_str = item.attrib.get("Include")
+                path = Path(PureWindowsPath(path_str))
+                # In the XML there are always backslashes, force to native type
+                ref_set.add(path)
 
         return sources
 
     def xml_add_sources(self, sources: FileItems):
         """Modify the files and folders elements in-place."""
-        for folder in sources.folders:
-            folder_str = str(folder).replace("/", "\\")
-            # On Linux the above will have the wrong slashes
-            xml = f'<Folder Include="{folder_str}"/>'
-            self._element_folders.append(etree.XML(xml))
-
-        for file in sources.files:
-            file_str = str(file).replace("/", "\\")
-            xml = f'<Compile Include="{file_str}"><SubType>Code</SubType></Compile>'
-            self._element_files.append(etree.XML(xml))
+        for ref_elements, ref_set, template in zip(
+            [self._element_folders, self._element_files],
+            [sources.folders, sources.files],
+            [
+                '<Folder Include="{}"/>',
+                '<Compile Include="{}"><SubType>Code</SubType></Compile>',
+            ],
+        ):  # Repeat for folders and then for files
+            for item in ref_set:
+                item_str = self.path_to_str(item)
+                xml = template.format(item_str)
+                ref_elements.append(etree.XML(xml))
 
     def xml_remove_source(self, to_remove: FileItems):
         """Modify the files and folders elements in-place."""
-        for element in self._element_folders:
-            if Path(element.attrib["Include"]) in to_remove.folders:
-                self._element_folders.remove(element)
+        for ref_elements, ref_set in zip(
+            [self._element_folders, self._element_files],
+            [to_remove.folders, to_remove.files],
+        ):  # Repeat for folders and then for files
+            for element in ref_elements:
+                this_path = Path(PureWindowsPath(element.attrib["Include"]))
+                # Force XML Windows path to native one
+                if this_path in ref_set:
+                    ref_elements.remove(element)
 
-        for element in self._element_files:
-            if Path(element.attrib["Include"]) in to_remove.files:
-                self._element_files.remove(element)
+    @staticmethod
+    def path_to_str(path: PurePath) -> str:
+        """Turn any path into a windows-path string.
+
+        This is useful mostly for the paths inside the PLC project XML.
+        """
+        return str(PureWindowsPath(path))
 
 
 class Operation(Enum):

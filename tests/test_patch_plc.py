@@ -1,13 +1,24 @@
 import shutil
 import subprocess
 import sys
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
+from typing import List
 
 import pytest
 
 from tctools.patch_plc.__main__ import main as patch_plc_main
 from tctools.patch_plc.patch_plc_class import PatchPlc
 from tctools.xml_sort.xml_sort_class import XmlSorter
+
+
+def path_to_str(p: Path) -> str:
+    """Force any path into a Windows path string."""
+    return str(PureWindowsPath(p))
+
+
+def to_paths(*paths: str) -> List[Path]:
+    """Turn a set of strings into Path objects."""
+    return [Path(p) for p in paths]
 
 
 def test_help(capsys):
@@ -62,21 +73,21 @@ def test_merge_recursive(plc_code):
     project = plc_dir / "MyPlc.plcproj"
     source = plc_dir / "POUs" / "untracked_source"
 
-    untracked_files = [
-        "POUs\\untracked_source\\F_UntrackedFunc.TcPOU",
-        "POUs\\untracked_source\\E_UntrackedEnum.TcDUT",
-        "POUs\\untracked_source\\subfolder\\FB_Untracked.TcPOU",
-        "POUs\\untracked_source\\subfolder\\DUT_UntrackedStruct.TcDUT",
-    ]
-    untracked_folders = [
-        "POUs\\untracked_source",
-        "POUs\\untracked_source\\subfolder",
-    ]
+    untracked_files = to_paths(
+        "POUs/untracked_source/F_UntrackedFunc.TcPOU",
+        "POUs/untracked_source/E_UntrackedEnum.TcDUT",
+        "POUs/untracked_source/subfolder/FB_Untracked.TcPOU",
+        "POUs/untracked_source/subfolder/DUT_UntrackedStruct.TcDUT",
+    )
+    untracked_folders = to_paths(
+        "POUs/untracked_source",
+        "POUs/untracked_source/subfolder",
+    )
 
     project_content = project.read_text()
 
     for path in untracked_files + untracked_folders:
-        assert path not in project_content
+        assert path_to_str(path) not in project_content
 
     patcher = PatchPlc(str(project), "merge", str(source), "-r")
     patcher.run()
@@ -84,9 +95,9 @@ def test_merge_recursive(plc_code):
     project_content = project.read_text()
 
     for file in untracked_files:
-        assert f'<Compile Include="{file}">' in project_content
+        assert f'<Compile Include="{path_to_str(file)}">' in project_content
     for folder in untracked_folders:
-        assert f'<Folder Include="{folder}"/>' in project_content
+        assert f'<Folder Include="{path_to_str(folder)}"/>' in project_content
 
     # Now compare with stored, sorted result:
     expected_file = plc_code / source / "MyPlc_with_untracked.plcproj.xml"
@@ -101,16 +112,16 @@ def test_remove(plc_code):
     plc_dir = plc_code / "TwinCAT Project1" / "MyPlc"
     project = plc_dir / "MyPlc.plcproj"
 
-    tracked_files = [
-        "POUs\\FB_Example.TcPOU",
-        "DUTs\\ST_Example.TcDUT",
-    ]
+    tracked_files = to_paths(
+        "POUs/FB_Example.TcPOU",
+        "DUTs/ST_Example.TcDUT",
+    )
 
     project_content = project.read_text()
     lines_before = project_content.count("\n")
 
     for file in tracked_files:
-        assert file in project_content
+        assert path_to_str(file) in project_content
 
     patcher = PatchPlc(
         str(project), "remove", str(tracked_files[0]), str(tracked_files[1])
@@ -120,7 +131,7 @@ def test_remove(plc_code):
     project_content = project.read_text()
 
     for file in tracked_files:
-        assert file not in project_content
+        assert path_to_str(file) not in project_content
 
     lines_after = project_content.count("\n")
     assert lines_before - 6 == lines_after  # Make sure not more got deleted
