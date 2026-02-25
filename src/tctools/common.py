@@ -297,7 +297,7 @@ class TcTool(Tool, ABC):
         for target in targets:
             path = Path(target)
             group = files.setdefault(path, [])
-            path = Path(target).resolve()
+            path = path.resolve()  # Get absolute path, resolved e.g. `~`
             if skip_check or path.is_file():
                 add_file(group, path)
             elif path.is_dir():
