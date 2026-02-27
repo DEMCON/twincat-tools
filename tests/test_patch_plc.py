@@ -123,9 +123,8 @@ def test_remove(plc_code):
     for file in tracked_files:
         assert path_to_str(file) in project_content
 
-    patcher = PatchPlc(
-        str(project), "remove", str(tracked_files[0]), str(tracked_files[1])
-    )
+    path_args = (str(plc_dir / p) for p in tracked_files)
+    patcher = PatchPlc(str(project), "remove", *path_args)
     patcher.run()
 
     project_content = project.read_text()
@@ -178,3 +177,50 @@ def test_remove_recursive(plc_code, recursive):
         assert item not in content_after
 
     assert lines_before - 2 * 1 - 3 * 3 == lines_after
+
+
+def test_reset(plc_code):
+    plc_dir = plc_code / "TwinCAT Project1" / "MyPlc"
+    project = plc_dir / "MyPlc.plcproj"
+
+    # Remove the actual (tracked) folder first:
+    shutil.rmtree(plc_dir / "POUs" / "Module")
+    # And there is already the "POUs/untracked_source" directory
+
+    expect_removed = [
+        "POUs\\Module",
+        "POUs\\Module\\DUTs",
+        "POUs\\Module\\FB_Module.TcPOU",
+        "POUs\\Module\\DUTs\\ST_ModuleCmd.TcDUT",
+        "POUs\\Module\\DUTs\\ST_ModuleStatus.TcDUT",
+    ]
+
+    expect_added = [
+        "POUs\\untracked_source",
+        "POUs\\untracked_source\\subfolder",
+        "POUs\\untracked_source\\E_UntrackedEnum.TcDUT",
+        "POUs\\untracked_source\\F_UntrackedFunc.TcPOU",
+        "POUs\\untracked_source\\subfolder\\DUT_UntrackedStruct.TcDUT",
+        "POUs\\untracked_source\\subfolder\\FB_Untracked.TcPOU",
+    ]
+
+    content_before = project.read_text()
+    lines_before = content_before.count("\n")
+    for item in expect_removed:
+        assert item in content_before
+    for item in expect_added:
+        assert item not in content_before
+
+    # Reset to the entire local directory:
+    code = PatchPlc(str(project), "reset", "-r", str(project.parent)).run()
+    assert code == 0
+
+    content_after = project.read_text()
+    for item in expect_removed:
+        assert item not in content_after
+    for item in expect_added:
+        assert item in content_after
+
+    lines_after = content_after.count("\n")
+    assert lines_before - (2 * 1) - (3 * 3) + (2 * 1) + (4 * 3) == lines_after
+    # Remove 2 folders and 3 files, add 2 folders and 4 files

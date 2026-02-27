@@ -24,6 +24,10 @@ class FileItems:
         self.folders = self.folders.difference(other.folders)
         self.files = self.files.difference(other.files)
 
+    def is_empty(self) -> bool:
+        """Return true if set contains nothing."""
+        return not self.folders and not self.files
+
     @staticmethod
     def merge(items: Iterable["FileItems"]) -> "FileItems":
         """Combined an iterator of FileItems into a single one."""
@@ -57,6 +61,7 @@ class PatchPlc(TcTool):
         "*.TcGTLO",
         "*.TcIO",
         "*.TcTLEO",
+        "*.TcTTO",  # Really a task, but tracked just like source
     ]
 
     CONFIG_KEY = "patch_plc"
@@ -186,7 +191,7 @@ remove:     Remove the provided files/folders without adding anything"""
         )
 
         # Decide what to do next:
-        if not new_sources.files and not new_sources.folders:
+        if new_sources.is_empty():
             self.logger.info("No new source files or folders, stopping")
             return 0
 
@@ -203,21 +208,7 @@ remove:     Remove the provided files/folders without adding anything"""
         """See help info for `remove`."""
 
         sizes_all = (len(current_sources.folders), len(current_sources.files))
-        to_remove = FileItems()
-
-        remove_items = [to_remove.files]
-        sources_items = [current_sources.files]
-        if self.args.recursive:  # Don't touch folders without `-r`
-            remove_items.append(to_remove.folders)
-            sources_items.append(current_sources.folders)
-
-        for remove_list, sources_list in zip(remove_items, sources_items):
-            for item in sources_list:
-                for target in new_sources.keys():
-                    if item == target or (
-                        self.args.recursive and item.is_relative_to(target)
-                    ):  # Exact match without `-r`, also relative with
-                        remove_list.add(item)
+        to_remove = self.sources_to_remove(current_sources, new_sources)
 
         self.logger.info(
             f"{sizes_all[1]} registered source files, of which "
@@ -229,7 +220,7 @@ remove:     Remove the provided files/folders without adding anything"""
         )
 
         # Decide what to do next:
-        if not to_remove.files and not to_remove.folders:
+        if to_remove.is_empty():
             self.logger.info("No files or folders to un-register, stopping")
             return 0
 
@@ -240,8 +231,53 @@ remove:     Remove the provided files/folders without adding anything"""
         self.xml_remove_source(to_remove)
         return None
 
-    def operation_reset(self, *args):
-        return 1
+    def operation_reset(self, current_sources: FileItems, new_sources: FileItemsGroups):
+        """See help info for `reset`."""
+        if not self.args.recursive:
+            self.logger.warning(
+                "reset operation can only work with the recursive option enabled"
+            )
+            return 1
+
+        sizes_all = (len(current_sources.folders), len(current_sources.files))
+
+        # All the registered sources underneath the user-given paths:
+        to_remove = self.sources_to_remove(current_sources, new_sources)
+
+        # All the sources on the filesystem under the user-given paths:
+        to_add = FileItems.merge(new_sources.values())
+
+        to_remove.subtract(to_add)  # Don't remove sources that are real
+        to_add.subtract(current_sources)  # Don't add sources that are already known
+
+        # Empty folders will also be removed, make sure to keep them:
+        to_remove.folders = set(
+            f for f in to_remove.folders if not (self._project_file.parent / f).exists()
+        )
+
+        self.logger.info(
+            f"{sizes_all[1]} registered source files, "
+            f"{len(to_remove.files)} will be unregistered and {len(to_add.files)} will "
+            f"be added"
+        )
+        self.logger.info(
+            f"{sizes_all[0]} registered source (sub-)folders, "
+            f"{len(to_remove.folders)} will be unregistered and {len(to_add.folders)} "
+            f"will be added"
+        )
+
+        # Decide what to do next:
+        if not to_remove.is_empty() and to_add.is_empty():
+            self.logger.info("No files or folders to change, stopping")
+            return 0
+
+        if self.args.check:
+            self.logger.info("Some file or folders would be (un-)registered")
+            return 1  # Something left to do, so exit with error (= check has failed)
+
+        self.xml_remove_source(to_remove)
+        self.xml_add_sources(to_add)
+        return None
 
     def determine_source_folders(self, source_files: Iterable[Path]) -> FileItems:
         """Collect all folders (incl. intermediate folders) of files.
@@ -304,6 +340,40 @@ remove:     Remove the provided files/folders without adding anything"""
                 ref_set.add(path)
 
         return sources
+
+    def sources_to_remove(
+        self,
+        current: FileItems,
+        new_sources: FileItemsGroups,
+    ) -> FileItems:
+        """From a set of sources and CLI input, determine the sources to remove.
+
+        Important: only the keys of `new_sources` are considered! I.e., the files to
+        remove need not exist on the filesystem.
+
+        Listens to `self.args.recursive`.
+        """
+        to_remove = FileItems()
+
+        remove_items = [to_remove.files]
+        sources_items = [current.files]
+        if self.args.recursive:  # Don't touch folders without `-r`
+            remove_items.append(to_remove.folders)
+            sources_items.append(current.folders)
+
+        project_folder = self._project_file.parent
+
+        for remove_list, sources_list in zip(remove_items, sources_items):
+            for item in sources_list:
+                for target in new_sources.keys():
+                    if target.is_absolute():
+                        target = target.relative_to(project_folder)
+                    if item == target or (
+                        self.args.recursive and item.is_relative_to(target)
+                    ):  # Exact match without `-r`, also relative with
+                        remove_list.add(item)
+
+        return to_remove
 
     def xml_add_sources(self, sources: FileItems):
         """Modify the files and folders elements in-place."""
