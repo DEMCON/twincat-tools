@@ -8,9 +8,9 @@ on: push
 
 jobs:
 
-  flake8-lint:
+  ruff-lint:
     runs-on: ubuntu-latest
-    name: Flake8 code check
+    name: Ruff code check
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
@@ -21,4 +21,5 @@ jobs:
           poetry-version: "2.3.1"
       - run: |
           poetry install --only dev
-          poetry run flake8 src/ tests/
+          poetry run ruff check src/ tests/
+          poetry run ruff format src/ tests/ --check
