@@ -1,11 +1,12 @@
 import math
 import re
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, OrderedDict, Tuple, Type
+from collections import OrderedDict
+from typing import Any
 
 from .format_extras import Kind
 
-Correction = Tuple[int, str]
+Correction = tuple[int, str]
 
 
 class FormattingRule(ABC):
@@ -23,7 +24,7 @@ class FormattingRule(ABC):
 
     def __init__(self, properties: OrderedDict):
         self._properties = properties
-        self._corrections: List[Correction] = []
+        self._corrections: list[Correction] = []
 
         # Universal properties:
 
@@ -34,13 +35,13 @@ class FormattingRule(ABC):
             "tab_width", default=self._indent_size, value_type=int
         )
 
-        self._indent_style: Optional[str] = self._properties.get("indent_style", None)
+        self._indent_style: str | None = self._properties.get("indent_style", None)
 
         self._indent_str: str = " " * self._indent_size
         if self._indent_style and self._indent_style == "tab":
             self._indent_str = "\t"
 
-        self._end_of_line: Optional[str] = self._properties.get("end_of_line", None)
+        self._end_of_line: str | None = self._properties.get("end_of_line", None)
         options = {"lf": "\n", "cr": "\r", "crlf": "\r\n"}
         self._line_ending: str = options.get(self._end_of_line, "\n")
 
@@ -58,7 +59,7 @@ class FormattingRule(ABC):
         self,
         name: str,
         default: Any = None,
-        value_type: Optional[Type] = None,
+        value_type: type | None = None,
     ) -> Any:
         """Get item from ``_properties``, parsing as needed.
 
@@ -81,7 +82,7 @@ class FormattingRule(ABC):
         return value_type(value)
 
     @abstractmethod
-    def format(self, content: List[str], kind: Optional[Kind] = None):
+    def format(self, content: list[str], kind: Kind | None = None):
         """Fun rule to format text.
 
         :param content: Text to format (changed in place!)
@@ -96,7 +97,7 @@ class FormattingRule(ABC):
         """
         self._corrections.append((line_nr, message))
 
-    def consume_corrections(self) -> List[Correction]:
+    def consume_corrections(self) -> list[Correction]:
         """Return listed corrections and reset list."""
         corrections = self._corrections
         self._corrections = []
@@ -112,7 +113,7 @@ class FormatTabs(FormattingRule):
     def __init__(self, *args):
         super().__init__(*args)
 
-    def format(self, content: List[str], kind: Optional[Kind] = None):
+    def format(self, content: list[str], kind: Kind | None = None):
         if self._indent_style == "tab":
             re_search = self._re_spaces
         elif self._indent_style == "space":
@@ -165,7 +166,7 @@ class FormatTrailingWhitespace(FormattingRule):
             "trim_trailing_whitespace", False, value_type=bool
         )
 
-    def format(self, content: List[str], kind: Optional[Kind] = None):
+    def format(self, content: list[str], kind: Kind | None = None):
         if not self._remove_tr_ws:
             return  # Nothing to do
         for i, line in enumerate(content):
@@ -185,7 +186,7 @@ class FormatInsertFinalNewline(FormattingRule):
             "insert_final_newline", False, value_type=bool
         )
 
-    def format(self, content: List[str], kind: Optional[Kind] = None):
+    def format(self, content: list[str], kind: Kind | None = None):
         if not self._insert_final_newline:
             return
 
@@ -232,7 +233,7 @@ class FormatEndOfLine(FormattingRule):
             else:
                 raise ValueError(f"Unrecognized file ending `{self._line_ending}`")
 
-    def format(self, content: List[str], kind: Optional[Kind] = None):
+    def format(self, content: list[str], kind: Kind | None = None):
         if self._end_of_line is None:
             return  # Nothing specified
 
@@ -279,7 +280,7 @@ class FormatVariablesAlign(FormattingRule):
 
         self._re_newlines = re.compile(r"[\r\n]+$")
 
-    def format(self, content: List[str], kind: Optional[Kind] = None):
+    def format(self, content: list[str], kind: Kind | None = None):
         if not self._align:
             return  # Disabled by config
 
@@ -288,14 +289,14 @@ class FormatVariablesAlign(FormattingRule):
 
         self.format_argument_list(content)
 
-    def format_argument_list(self, content: List[str]):
+    def format_argument_list(self, content: list[str]):
         """Format entire declaration section"""
 
         # Get variable definitions, split up and keyed by content index:
-        variable_definitions: Dict[int, List[Optional[str]]] = {}
+        variable_definitions: dict[int, list[str]] | None = {}
 
         # Biggest size of each chunk across all lines:
-        max_chunk_sizes: List[Optional[int]] = [None] * 3
+        max_chunk_sizes: list[int | None] = [None] * 3
 
         for i, line in enumerate(content):
             match = self._re_variable.match(line)
@@ -414,7 +415,7 @@ class FormatConditionalParentheses(FormattingRule):
             re.VERBOSE | re.MULTILINE,
         )
 
-    def format(self, content: List[str], kind: Optional[Kind] = None):
+    def format(self, content: list[str], kind: Kind | None = None):
         if self._parentheses is None:
             return  # Nothing to do
 
@@ -465,12 +466,12 @@ class FormatConditionalParentheses(FormattingRule):
     @staticmethod
     def find_and_match_braces(
         text: str, brace_left: str = "(", brace_right: str = ")"
-    ) -> Tuple[int, int]:
+    ) -> tuple[int, int]:
         """Step through braces in a string.
 
         Note that levels can step into negative.
 
-        :return:    Tuple of (strpos, level), where strpos is the zero-index position of
+        :return:    tuple of (strpos, level), where strpos is the zero-index position of
                     the brace itself and level is the nested level it indicates
         """
         level = 0

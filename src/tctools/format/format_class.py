@@ -1,6 +1,5 @@
 import re
 from collections import OrderedDict
-from typing import List, Optional, Tuple, Type
 
 from editorconfig import get_properties
 
@@ -16,8 +15,8 @@ from .format_rules import (
     FormatVariablesAlign,
 )
 
-RowCol = Tuple[int, int]
-Segment = Tuple[Kind, List[str], str]
+RowCol = tuple[int, int]
+Segment = tuple[Kind, list[str], str]
 
 
 class XmlMachine:
@@ -31,9 +30,9 @@ class XmlMachine:
         self._row = 0  # Line number inside path
         self._col = 0  # Position inside line
 
-        self.regions: List[Tuple[RowCol, Kind, str]] = []
+        self.regions: list[tuple[RowCol, Kind, str]] = []
 
-    def parse(self, content: List[str]):
+    def parse(self, content: list[str]):
         """Progress machine line by line."""
         self._kind = Kind.XML
         self._row = 0
@@ -97,7 +96,7 @@ class Formatter(TcTool):
 
     CONFIG_KEY = "format"
 
-    _RULE_CLASSES: List[Type[FormattingRule]] = []
+    _RULE_CLASSES: list[type[FormattingRule]] = []
 
     def __init__(self, *args):
         super().__init__(*args)
@@ -106,7 +105,7 @@ class Formatter(TcTool):
         # them between methods
         self._file = ""
         self._properties = OrderedDict()
-        self._rules: List[FormattingRule] = []
+        self._rules: list[FormattingRule] = []
 
         self._number_corrections = 0  # Track number of changes for the current file
 
@@ -119,7 +118,7 @@ class Formatter(TcTool):
         return parser
 
     @classmethod
-    def register_rule(cls, new_rule: Type[FormattingRule]):
+    def register_rule(cls, new_rule: type[FormattingRule]):
         """Incorporate a new formatting rule (accounting for its priority)."""
         cls._RULE_CLASSES.append(new_rule)
         sorted(cls._RULE_CLASSES, key=lambda item: item.PRIORITY)
@@ -170,7 +169,7 @@ class Formatter(TcTool):
             if rule.WHOLE_FILE:
                 self.apply_rule(rule, content)
 
-        segments: List[Segment] = list(self.split_code_segments(content))
+        segments: list[Segment] = list(self.split_code_segments(content))
 
         for kind, segment, _ in segments:
             # Changes are done in-place
@@ -188,7 +187,7 @@ class Formatter(TcTool):
             self.files_resaved += 1
 
     @staticmethod
-    def split_code_segments(content: List[str]):
+    def split_code_segments(content: list[str]):
         """Copy content, split into XML and code sections.
 
         Function is a generator, each pair is yielded.
@@ -197,7 +196,7 @@ class Formatter(TcTool):
         directly, without extra newlines.
 
         :param: File content as list
-        :return: List[Segment]
+        :return: list[Segment]
         """
         if not content:
             return  # Nothing to yield
@@ -230,11 +229,11 @@ class Formatter(TcTool):
 
             yield kind_prev, lines, name_prev
 
-    def format_segment(self, content: List[str], kind: Kind):
+    def format_segment(self, content: list[str], kind: Kind):
         """Format a specific segment of code.
 
         :param content: Text to reformat (changed in place!)
-        :param kind: Type of the content
+        :param kind: type of the content
         """
         if kind == Kind.XML:
             return  # Do nothing
@@ -243,7 +242,7 @@ class Formatter(TcTool):
                 if not rule.WHOLE_FILE:  # Skip otherwise
                     self.apply_rule(rule, content, kind)
 
-    def apply_rule(self, rule, content, kind: Optional[Kind] = None):
+    def apply_rule(self, rule, content, kind: Kind | None = None):
         """Run a rule over some content and handle results."""
         rule.format(content, kind)
         corrections = rule.consume_corrections()

@@ -4,7 +4,6 @@ Configuration for these tests.
 
 import shutil
 from pathlib import Path
-from typing import List
 
 import pytest
 
@@ -22,7 +21,7 @@ def plc_code(tmp_path):
 
 
 def assert_order_of_lines_in_file(
-    expected: List[str], file: str, is_substring=False, check_true=True
+    expected: list[str], file: str, is_substring=False, check_true=True
 ):
     """Assert the expected lines occur in the given order in the path.
 
@@ -31,7 +30,7 @@ def assert_order_of_lines_in_file(
     :param expected:
     :param file:
     :param is_substring: When True, use ``... in ...`` instead of equal
-    :param check_true: Set to False to assert the opposite
+    :param check_true: set to False to assert the opposite
     """
     idx = 0
 
@@ -64,7 +63,7 @@ def assert_order_of_lines_in_file(
     ) == check_true, "Did not encounter right number of expected lines"
 
 
-def assert_strings_have_substrings(expected: List[List[str]], actual: List[str]):
+def assert_strings_have_substrings(expected: list[list[str]], actual: list[str]):
     """Assert substrings occur in exactly one but any set of lines."""
 
     actual = [line for line in actual if len(line) > 0]  # Remove emtpy strings

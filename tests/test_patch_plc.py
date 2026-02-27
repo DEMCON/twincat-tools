@@ -2,7 +2,6 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path, PureWindowsPath
-from typing import List
 
 import pytest
 
@@ -16,7 +15,7 @@ def path_to_str(p: Path) -> str:
     return str(PureWindowsPath(p))
 
 
-def to_paths(*paths: str) -> List[Path]:
+def to_paths(*paths: str) -> list[Path]:
     """Turn a set of strings into Path objects."""
     return [Path(p) for p in paths]
 

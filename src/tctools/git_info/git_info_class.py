@@ -2,7 +2,6 @@ import re
 from datetime import datetime
 from logging import Logger
 from pathlib import Path
-from typing import Optional, Set
 
 from git import GitCommandError, Repo
 
@@ -22,7 +21,7 @@ class GitSetter:
     _DATETIME_FORMAT = "%d-%m-%Y %H:%M:%S"
 
     def __init__(
-        self, repo: Repo, logger: Logger, tolerate_dirty: Optional[Set[Path]] = None
+        self, repo: Repo, logger: Logger, tolerate_dirty: set[Path] | None = None
     ):
         self._repo: Repo = repo
         self._logger = logger

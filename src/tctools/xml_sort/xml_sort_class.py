@@ -1,5 +1,4 @@
 import re
-from typing import Dict, List
 
 from lxml import etree
 
@@ -14,7 +13,7 @@ class XmlSorter(TcTool):
 
     LOGGER_NAME = "xml_sorter"
 
-    FILTER_DEFAULT: List[str] = ["*.tsproj", "*.xti", "*.plcproj"]
+    FILTER_DEFAULT: list[str] = ["*.tsproj", "*.xti", "*.plcproj"]
 
     CONFIG_KEY = "xml_sort"
 
@@ -172,7 +171,7 @@ class XmlSorter(TcTool):
         return tag
 
     @staticmethod
-    def get_attrib(node: Element) -> Dict[str, str]:
+    def get_attrib(node: Element) -> dict[str, str]:
         """Yield node attributes, with namespace stripped."""
         attributes = {}
         for key, value in node.attrib.items():
