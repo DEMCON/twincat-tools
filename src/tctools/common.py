@@ -2,8 +2,9 @@ import logging
 import sys
 from abc import ABC, abstractmethod
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
+from collections.abc import Generator
 from pathlib import Path
-from typing import Any, Dict, Generator, List, Optional
+from typing import Any
 
 from lxml import etree
 
@@ -20,7 +21,7 @@ ElementTree = etree._ElementTree  # noqa
 
 
 # The result of a files argument - like: `provided_path: [files]`
-FileGroups = Dict[Path, List[Path]]
+FileGroups = dict[Path, list[Path]]
 
 
 # Path.glob() only allows symlink recursion from Python 3.13:
@@ -33,14 +34,14 @@ class Tool(ABC):
     ``argparse`` is done in the constructor, CLI arguments should be passed there.
     """
 
-    LOGGER_NAME: Optional[str] = None
+    LOGGER_NAME: str | None = None
 
     # Default value for file filter argument:
-    FILTER_DEFAULT: List[str]
+    FILTER_DEFAULT: list[str]
 
-    CONFIG_KEY: Optional[str] = None
+    CONFIG_KEY: str | None = None
 
-    PATH_VARIABLES: List[str] = []  # Names of options that are considered file paths
+    PATH_VARIABLES: list[str] = []  # Names of options that are considered file paths
 
     def __init__(self, *args):
         """Pass e.g. ``sys.args[1:]`` (skipping the script part of the arguments).
@@ -54,7 +55,7 @@ class Tool(ABC):
             action.dest for action in parser._actions if action.dest != "help"  # noqa
         }
 
-        self.config_file: Optional[Path] = None
+        self.config_file: Path | None = None
 
         config = self.make_config()
         if self.CONFIG_KEY:
@@ -114,7 +115,7 @@ class Tool(ABC):
             default="INFO",
         )
 
-    def make_config(self) -> Dict[str, Any]:
+    def make_config(self) -> dict[str, Any]:
         """Get configuration from possible files."""
         config = {}
         self.config_file = self._find_files_upwards(
@@ -131,9 +132,7 @@ class Tool(ABC):
         return config
 
     @classmethod
-    def _find_files_upwards(
-        cls, directory: Path, filenames: List[str]
-    ) -> Optional[Path]:
+    def _find_files_upwards(cls, directory: Path, filenames: list[str]) -> Path | None:
         """Find a file with a given name in the directory or it's parents.
 
         First hit on any of the filenames is returned.
@@ -194,7 +193,7 @@ class TcTool(Tool, ABC):
         # Preserve `CDATA` XML flags:
         self.xml_parser = etree.XMLParser(strip_cdata=False)
 
-        self.header_before: Optional[str] = None  # Header of the last XML path
+        self.header_before: str | None = None  # Header of the last XML path
 
         self.files_checked = 0  # Files read by parser
         self.files_to_alter = 0  # Files that seem to require changes
@@ -242,7 +241,7 @@ class TcTool(Tool, ABC):
         )
 
     @staticmethod
-    def get_xml_header(file: str) -> Optional[str]:
+    def get_xml_header(file: str) -> str | None:
         """Get raw XML header as string."""
         with open(file, "r") as fh:
             # Search only the start of the path, otherwise give up
@@ -264,8 +263,8 @@ class TcTool(Tool, ABC):
     @classmethod
     def find_files(
         cls,
-        targets: str | List[str],
-        filters: None | List[str] = None,
+        targets: str | list[str],
+        filters: None | list[str] = None,
         recursive: bool = True,
         skip_check: bool = False,
     ) -> FileGroups:
@@ -292,7 +291,7 @@ class TcTool(Tool, ABC):
         if isinstance(targets, (str, Path)):
             targets = [targets]
 
-        def add_file(g: List[Path], f: Path):
+        def add_file(g: list[Path], f: Path):
             """Little local method to prevent duplicate paths."""
             if f not in files_unique:
                 files_unique.add(f)

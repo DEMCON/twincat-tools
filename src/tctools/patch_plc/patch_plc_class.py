@@ -1,8 +1,9 @@
 from argparse import RawDescriptionHelpFormatter
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path, PurePath, PureWindowsPath
-from typing import Any, Dict, Iterable, List, Set
+from typing import Any
 
 from lxml import etree
 
@@ -13,8 +14,8 @@ from ..common import Element, TcTool
 class FileItems:
     """A set of files and folders, typically grouped under one source input."""
 
-    folders: Set[Path] = field(default_factory=set)
-    files: Set[Path] = field(default_factory=set)
+    folders: set[Path] = field(default_factory=set)
+    files: set[Path] = field(default_factory=set)
 
     def add(self, other: "FileItems"):
         self.folders |= other.folders
@@ -45,7 +46,7 @@ class FileItems:
         )
 
 
-FileItemsGroups = Dict[Path, FileItems]
+FileItemsGroups = dict[Path, FileItems]
 
 
 class PatchPlc(TcTool):
@@ -54,7 +55,7 @@ class PatchPlc(TcTool):
     LOGGER_NAME = "patch_plc"
 
     # TwinCAT PLC source files:
-    FILTER_DEFAULT: List[str] = [
+    FILTER_DEFAULT: list[str] = [
         "*.TcPOU",
         "*.TcGVL",
         "*.TcDUT",
@@ -351,7 +352,7 @@ remove:     Remove the provided files/folders without adding anything"""
         Important: only the keys of `new_sources` are considered! I.e., the files to
         remove need not exist on the filesystem.
 
-        Listens to `self.args.recursive`.
+        listens to `self.args.recursive`.
         """
         to_remove = FileItems()
 

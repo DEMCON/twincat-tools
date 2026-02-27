@@ -2,7 +2,6 @@ import re
 import shutil
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import List, Optional
 
 from git import Repo
 from lxml import etree
@@ -24,10 +23,10 @@ class MakeRelease(Tool):
         super().__init__(*args)
 
         # Bunch of attributes to easily share data between methods:
-        self.version: Optional[str] = None
-        self.destination_dir: Optional[Path] = None
-        self.archive_source: Optional[Path] = None
-        self.config_dir: Optional[Path] = None
+        self.version: str | None = None
+        self.destination_dir: Path | None = None
+        self.archive_source: Path | None = None
+        self.config_dir: Path | None = None
 
     @classmethod
     def set_arguments(cls, parser):
@@ -143,7 +142,7 @@ The resulting archive will be named after the PLC project.
         plc_project = self.glob_first(boot_dir, "*.tpzip")
         name = plc_project.stem.lower().replace(" ", "_")
 
-        hmi_bin_dir: Optional[Path] = None
+        hmi_bin_dir: Path | None = None
         if self.args.include_hmi:
             html_file = self.glob_first(source_dir, "bin/*.html")
             hmi_bin_dir = html_file.parent
@@ -211,7 +210,7 @@ The resulting archive will be named after the PLC project.
 
         return
 
-    def validate_release(self, temp_dir: Path) -> List[str]:
+    def validate_release(self, temp_dir: Path) -> list[str]:
         """
 
         :param temp_dir: Root of temporary directory
@@ -235,7 +234,7 @@ The resulting archive will be named after the PLC project.
 
         return errors
 
-    def check_cpu(self, root: ElementTree) -> List[str]:
+    def check_cpu(self, root: ElementTree) -> list[str]:
         """Validate CPU configuration."""
         if self.args.check_cpu is None:
             return []
@@ -255,14 +254,14 @@ The resulting archive will be named after the PLC project.
 
         return []
 
-    def check_devices(self, root: ElementTree) -> List[str]:
+    def check_devices(self, root: ElementTree) -> list[str]:
         """Validate device configuration."""
         errors = []
 
         if self.args.check_devices is None:
             return errors
 
-        devices: List[Element] = root.xpath("//TcSmProject/Project/Io/Device")
+        devices: list[Element] = root.xpath("//TcSmProject/Project/Io/Device")
 
         for i, device in enumerate(devices):
             if "File" in device.attrib:  # Replace by file reference
@@ -286,7 +285,7 @@ The resulting archive will be named after the PLC project.
 
         return errors
 
-    def check_version_variable(self, temp_dir: Path) -> List[str]:
+    def check_version_variable(self, temp_dir: Path) -> list[str]:
         """Validate the version variable matches the release version.
 
         :param temp_dir:
