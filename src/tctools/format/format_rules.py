@@ -74,7 +74,7 @@ class FormattingRule(ABC):
         if value_type is None:
             return value  # Unprocessed
 
-        if value_type == bool:
+        if value_type is bool:
             if isinstance(value, str):
                 return value in ["TRUE", "True", "true", "1"]
             return bool(value)
@@ -324,7 +324,7 @@ class FormatVariablesAlign(FormattingRule):
 
         for i, line_chunks in variable_definitions.items():
             new_line = ""
-            for chunk, indent in zip(line_chunks, chunk_indent_levels):
+            for chunk, indent in zip(line_chunks, chunk_indent_levels, strict=True):
                 if chunk:
                     if indent > 0:
                         new_line += self._pad_to_indent_level(new_line, indent)

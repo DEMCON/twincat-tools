@@ -14,7 +14,7 @@ def test_help(capsys):
     with pytest.raises(SystemExit) as err:
         tctools.format.__main__.main("--help")
 
-    assert err.type == SystemExit
+    assert err.type is SystemExit
 
     message = capsys.readouterr().out
     assert "usage:" in message

@@ -39,7 +39,7 @@ def assert_order_of_lines_in_file(
             return expected_line in line_to_check
         return expected[idx].strip() == line.strip()
 
-    with open(file, "r") as fh:
+    with open(file) as fh:
         count = 0
         while True:
             count += 1
@@ -58,9 +58,9 @@ def assert_order_of_lines_in_file(
                     if check_line(ex_line, line):
                         assert not check_true
 
-    assert (
-        idx == len(expected)
-    ) == check_true, "Did not encounter right number of expected lines"
+    assert (idx == len(expected)) == check_true, (
+        "Did not encounter right number of expected lines"
+    )
 
 
 def assert_strings_have_substrings(expected: list[list[str]], actual: list[str]):

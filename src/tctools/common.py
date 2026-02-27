@@ -52,7 +52,9 @@ class Tool(ABC):
 
         # All the fields were are going to have in the arguments output:
         fields = {
-            action.dest for action in parser._actions if action.dest != "help"  # noqa
+            action.dest
+            for action in parser._actions
+            if action.dest != "help"  # noqa
         }
 
         self.config_file: Path | None = None
@@ -243,7 +245,7 @@ class TcTool(Tool, ABC):
     @staticmethod
     def get_xml_header(file: str) -> str | None:
         """Get raw XML header as string."""
-        with open(file, "r") as fh:
+        with open(file) as fh:
             # Search only the start of the path, otherwise give up
             for _ in range(100):
                 line = fh.readline()

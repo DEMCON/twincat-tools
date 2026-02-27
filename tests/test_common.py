@@ -52,7 +52,7 @@ class TestCommon:
         with pytest.raises(SystemExit) as err:
             _ = MyTool("--version")
 
-        assert err.type == SystemExit
+        assert err.type is SystemExit
 
         message = capsys.readouterr().out
         assert message
