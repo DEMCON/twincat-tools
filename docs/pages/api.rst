@@ -44,3 +44,11 @@ Git Info
 .. py:currentmodule:: tctools.git_info.git_info_class
 
 .. autoclass:: GitInfo
+
+
+Patch PLC
+=========
+
+.. py:currentmodule:: tctools.patch_plc.patch_plc_class
+
+.. autoclass:: PatchPlc
