@@ -148,7 +148,7 @@ class Formatter(TcTool):
         The path is read as text and code inside XML tags is detected manually. Other
         lines of XML remain untouched.
         """
-        with open(path, "r", encoding="utf-8", errors="ignore", newline="") as fh:
+        with open(path, encoding="utf-8", errors="ignore", newline="") as fh:
             content = fh.readlines()
 
         self._file = path
@@ -211,7 +211,7 @@ class Formatter(TcTool):
 
         # Iterate over pairs of regions so we got the start and end together
         for (rowcol_prev, kind_prev, name_prev), (rowcol, _, _) in zip(
-            regions[:-1], regions[1:]
+            regions[:-1], regions[1:], strict=False
         ):
             lines = content[rowcol_prev[0] : (rowcol[0] + 1)]  # Inclusive range
 

@@ -25,7 +25,7 @@ def test_help(capsys):
     with pytest.raises(SystemExit) as err:
         patch_plc_main("--help")
 
-    assert err.type == SystemExit
+    assert err.type is SystemExit
 
     message = capsys.readouterr().out
     assert "usage:" in message
@@ -59,9 +59,12 @@ def test_merge_single_file(plc_code):
 
     project_content = project.read_text()
 
-    assert """<Compile Include="POUs\\untracked_source\\F_UntrackedFunc.TcPOU">
+    assert (
+        """<Compile Include="POUs\\untracked_source\\F_UntrackedFunc.TcPOU">
       <SubType>Code</SubType>
-    </Compile>""" in project_content
+    </Compile>"""
+        in project_content
+    )
 
     assert '<Folder Include="POUs\\untracked_source"/>' in project_content
 

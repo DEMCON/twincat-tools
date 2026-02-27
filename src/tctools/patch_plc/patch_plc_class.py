@@ -295,7 +295,7 @@ remove:     Remove the provided files/folders without adding anything"""
                 raise ValueError(
                     f"Source file `{file}` is not relative to project "
                     f"directory `{project_dir}`"
-                )
+                ) from None
             else:
                 if relative_path.name in self.args.ignore:
                     continue  # Skip this file if the name matches exactly
@@ -356,17 +356,11 @@ remove:     Remove the provided files/folders without adding anything"""
         """
         to_remove = FileItems()
 
-        remove_items = [to_remove.files]
-        sources_items = [current.files]
-        if self.args.recursive:  # Don't touch folders without `-r`
-            remove_items.append(to_remove.folders)
-            sources_items.append(current.folders)
-
         project_folder = self._project_file.parent
 
-        for remove_list, sources_list in zip(remove_items, sources_items):
+        def remove_helper(remove_list, sources_list):
             for item in sources_list:
-                for target in new_sources.keys():
+                for target in new_sources:
                     if target.is_absolute():
                         target = target.relative_to(project_folder)
                     if item == target or (
@@ -374,34 +368,44 @@ remove:     Remove the provided files/folders without adding anything"""
                     ):  # Exact match without `-r`, also relative with
                         remove_list.add(item)
 
+        remove_helper(to_remove.files, current.files)
+        if self.args.recursive:  # Don't touch folders without `-r`
+            remove_helper(to_remove.folders, current.folders)
+
         return to_remove
 
     def xml_add_sources(self, sources: FileItems):
         """Modify the files and folders elements in-place."""
-        for ref_elements, ref_set, template in zip(
-            [self._element_folders, self._element_files],
-            [sources.folders, sources.files],
-            [
-                '<Folder Include="{}"/>',
-                '<Compile Include="{}"><SubType>Code</SubType></Compile>',
-            ],
-        ):  # Repeat for folders and then for files
+
+        def add_helper(ref_elements, ref_set, template):
             for item in ref_set:
                 item_str = self.path_to_str(item)
                 xml = template.format(item_str)
                 ref_elements.append(etree.XML(xml))
 
+        add_helper(
+            self._element_folders,
+            sources.folders,
+            '<Folder Include="{}"/>',  # ...
+        )
+        add_helper(
+            self._element_files,
+            sources.files,
+            '<Compile Include="{}"><SubType>Code</SubType></Compile>',
+        )
+
     def xml_remove_source(self, to_remove: FileItems):
         """Modify the files and folders elements in-place."""
-        for ref_elements, ref_set in zip(
-            [self._element_folders, self._element_files],
-            [to_remove.folders, to_remove.files],
-        ):  # Repeat for folders and then for files
+
+        def remove_helper(ref_elements, ref_set):
             for element in ref_elements:
                 this_path = Path(PureWindowsPath(element.attrib["Include"]))
                 # Force XML Windows path to native one
                 if this_path in ref_set:
                     ref_elements.remove(element)
+
+        remove_helper(self._element_folders, to_remove.folders)
+        remove_helper(self._element_files, to_remove.files)
 
     @staticmethod
     def path_to_str(path: PurePath) -> str:
