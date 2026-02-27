@@ -274,10 +274,14 @@ class TcTool(Tool, ABC):
         The entire set will never contain duplicate files
 
         Returned dict looks like:
-        {
-            "given pattern 1": [file_1, folder/file2, etc.],
-            "given pattern 2": ... ,
-        }
+
+        .. code-block:: python
+
+           {
+               "given pattern 1": [file_1, folder/file2, etc.],
+               "given pattern 2": ... ,
+           }
+
         """
         files = {}
         if not targets:
