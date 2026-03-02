@@ -1,3 +1,4 @@
+import logging
 import shutil
 import subprocess
 import sys
@@ -214,7 +215,7 @@ def test_reset(plc_code):
         assert item not in content_before
 
     # Reset to the entire local directory:
-    code = PatchPlc(str(project), "reset", "-r", str(project.parent)).run()
+    code = PatchPlc(str(project), "reset", "-r", str(plc_dir)).run()
     assert code == 0
 
     content_after = project.read_text()
@@ -226,3 +227,26 @@ def test_reset(plc_code):
     lines_after = content_after.count("\n")
     assert lines_before - (2 * 1) - (3 * 3) + (2 * 1) + (4 * 3) == lines_after
     # Remove 2 folders and 3 files, add 2 folders and 4 files
+
+
+def test_reset_duplicate(plc_code, caplog):
+    plc_dir = plc_code / "TwinCAT Project1" / "MyPlc"
+    project = plc_dir / "MyPlc.plcproj"
+
+    # Create a new file, with a name that's already known:
+    module_folder = plc_dir / "POUs" / "Module"
+    new_file = module_folder / "DUTs" / "MAIN.TcPOU"
+    new_file.write_text("\n")  # Create the file
+
+    content_before = project.read_text()
+
+    with caplog.at_level(logging.WARNING):
+        code = PatchPlc(str(project), "reset", str(module_folder), "-r").run()
+
+    assert code == 0
+
+    assert len(caplog.records) == 1
+    msg = caplog.records[0].message
+    assert "Refusing to add" in msg and "MAIN.TcPOU" in msg
+
+    assert content_before == project.read_text()  # The project should not be changed

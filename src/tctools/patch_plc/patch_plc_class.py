@@ -18,10 +18,12 @@ class FileItems:
     files: set[Path] = field(default_factory=set)
 
     def add(self, other: "FileItems"):
+        """Merge in another set of files/folders."""
         self.folders |= other.folders
         self.files |= other.files
 
     def subtract(self, other: "FileItems"):
+        """Remove files/folders that occur in another set."""
         self.folders = self.folders.difference(other.folders)
         self.files = self.files.difference(other.files)
 
@@ -178,6 +180,8 @@ remove:     Remove the provided files/folders without adding anything"""
         """See help info for `merge`."""
         new_sources = FileItems.merge(new_sources.values())
 
+        self.skip_file_duplicates(new_sources, current_sources)
+
         sizes_all = (len(new_sources.folders), len(new_sources.files))
 
         new_sources.subtract(current_sources)
@@ -251,6 +255,8 @@ remove:     Remove the provided files/folders without adding anything"""
         to_remove.subtract(to_add)  # Don't remove sources that are real
         to_add.subtract(current_sources)  # Don't add sources that are already known
 
+        self.skip_file_duplicates(to_add, current_sources)
+
         # Empty folders will also be removed, make sure to keep them:
         to_remove.folders = set(
             f for f in to_remove.folders if not (self._project_file.parent / f).exists()
@@ -268,7 +274,7 @@ remove:     Remove the provided files/folders without adding anything"""
         )
 
         # Decide what to do next:
-        if not to_remove.is_empty() and to_add.is_empty():
+        if to_remove.is_empty() and to_add.is_empty():
             self.logger.info("No files or folders to change, stopping")
             return 0
 
@@ -311,6 +317,25 @@ remove:     Remove the provided files/folders without adding anything"""
             self.logger.debug(f"Found source file: {file}")
 
         return sources
+
+    def skip_file_duplicates(
+        self,
+        new_sources: FileItems,
+        current_sources: FileItems,
+    ):
+        """Avoid duplicate file names (regardless of full path).
+
+        ``current_sources`` is modified in-place.
+        """
+        filenames = set(f.name for f in current_sources.files)  # Reduce to just names
+        to_pop = set()
+        for file in new_sources.files:
+            if file.name in filenames:
+                to_pop.add(file)
+                self.logger.warning(f"Refusing to add existing file name: {file}")
+
+        if to_pop:
+            new_sources.files -= to_pop
 
     def get_project_sources(self, tree) -> FileItems:
         """Get all files and folders currently in a PLC project."""
