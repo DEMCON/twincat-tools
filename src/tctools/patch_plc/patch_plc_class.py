@@ -1,3 +1,4 @@
+import logging
 from argparse import RawDescriptionHelpFormatter
 from collections.abc import Iterable
 from dataclasses import dataclass, field
@@ -200,6 +201,8 @@ remove:     Remove the provided files/folders without adding anything"""
             self.logger.info("No new source files or folders, stopping")
             return 0
 
+        self.log_sources(new_sources, True)
+
         if self.args.check:
             self.logger.info("Some file or folders would be added")
             return 1  # Something left to do, so exit with error (= check has failed)
@@ -228,6 +231,8 @@ remove:     Remove the provided files/folders without adding anything"""
         if to_remove.is_empty():
             self.logger.info("No files or folders to un-register, stopping")
             return 0
+
+        self.log_sources(to_remove, False)
 
         if self.args.check:
             self.logger.info("Some file or folders would be un-registered")
@@ -277,6 +282,9 @@ remove:     Remove the provided files/folders without adding anything"""
         if to_remove.is_empty() and to_add.is_empty():
             self.logger.info("No files or folders to change, stopping")
             return 0
+
+        self.log_sources(to_add, True)
+        self.log_sources(to_remove, False)
 
         if self.args.check:
             self.logger.info("Some file or folders would be (un-)registered")
@@ -431,6 +439,20 @@ remove:     Remove the provided files/folders without adding anything"""
 
         remove_helper(self._element_folders, to_remove.folders)
         remove_helper(self._element_files, to_remove.files)
+
+    def log_sources(self, source: FileItems, add: bool):
+        """Log a set of sources in its entirety.
+
+        Logged a INFO level when `dry` or `check` (otherwise the output is kind of
+        meaningless), otherwise at DEBUG.
+        """
+        level = logging.INFO if self.args.check or self.args.dry else logging.DEBUG
+
+        action = "New" if add else "Remove"
+        for item in source.files:
+            self.logger.log(level, f"{action} file: {item}")
+        for item in source.folders:
+            self.logger.log(level, f"{action} folder: {item}")
 
     @staticmethod
     def path_to_str(path: PurePath) -> str:
