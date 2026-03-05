@@ -2,8 +2,8 @@ import logging
 import shutil
 import subprocess
 import sys
+from collections.abc import Generator
 from pathlib import Path, PureWindowsPath
-from typing import Any, Generator
 
 import pytest
 
@@ -23,12 +23,12 @@ def to_paths(*paths: str) -> list[Path]:
 
 
 @pytest.fixture()
-def plc_dir(plc_code) -> Generator[Any, Any, None]:
+def plc_dir(plc_code) -> Generator[Path, None, None]:
     yield plc_code / "TwinCAT Project1" / "MyPlc"
 
 
 @pytest.fixture()
-def project(plc_dir) -> Generator[Any, Any, None]:
+def project(plc_dir) -> Generator[Path, None, None]:
     yield plc_dir / "MyPlc.plcproj"
 
 
@@ -180,7 +180,7 @@ def test_remove_recursive(plc_dir, project, recursive):
     lines_after = content_after.count("\n")
 
     if not recursive:
-        assert content_after == content_before   # No changes
+        assert content_after == content_before  # No changes
         return
 
     for item in tracked_files + tracked_folders:
