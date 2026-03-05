@@ -3,6 +3,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path, PureWindowsPath
+from typing import Any, Generator
 
 import pytest
 
@@ -21,6 +22,16 @@ def to_paths(*paths: str) -> list[Path]:
     return [Path(p) for p in paths]
 
 
+@pytest.fixture()
+def plc_dir(plc_code) -> Generator[Any, Any, None]:
+    yield plc_code / "TwinCAT Project1" / "MyPlc"
+
+
+@pytest.fixture()
+def project(plc_dir) -> Generator[Any, Any, None]:
+    yield plc_dir / "MyPlc.plcproj"
+
+
 def test_help(capsys):
     """Test the help text."""
     with pytest.raises(SystemExit) as err:
@@ -32,11 +43,11 @@ def test_help(capsys):
     assert "usage:" in message
 
 
-def test_cli(plc_code):
+def test_cli(plc_dir, project):
     """Test the CLI hook works."""
-    plc_dir = plc_code / "TwinCAT Project1" / "MyPlc"
-    project = plc_dir / "MyPlc.plcproj"
     source = plc_dir / "POUs" / "untracked_source"
+
+    assert "untracked_source" not in project.read_text()
 
     path = sys.executable  # Re-use whatever executable we're using now
     result = subprocess.run(
@@ -45,14 +56,12 @@ def test_cli(plc_code):
     )
 
     assert result.returncode == 0
-    # assert "Re-saved 1 path" in result.stdout.decode()
-    # TODO: Add some kind of output assertion here
+    assert "untracked_source" in project.read_text()
+    # More detailed assertions we will perform in the next tests
 
 
-def test_merge_single_file(plc_code):
+def test_merge_single_file(plc_dir, project):
     """Test happy-flow adding."""
-    plc_dir = plc_code / "TwinCAT Project1" / "MyPlc"
-    project = plc_dir / "MyPlc.plcproj"
     source = plc_dir / "POUs" / "untracked_source" / "F_UntrackedFunc.TcPOU"
 
     patcher = PatchPlc(str(project), "merge", str(source))
@@ -70,11 +79,13 @@ def test_merge_single_file(plc_code):
     assert '<Folder Include="POUs\\untracked_source"/>' in project_content
 
 
-def test_merge_recursive(plc_code):
-    """Test happy-flow adding for a complete folder."""
-    plc_dir = plc_code / "TwinCAT Project1" / "MyPlc"
-    project = plc_dir / "MyPlc.plcproj"
-    source = plc_dir / "POUs" / "untracked_source"
+@pytest.mark.parametrize("target", ["POUs/untracked_source/", "./"])
+def test_merge_recursive(plc_dir, project, target, caplog):
+    """Test happy-flow adding for a complete folder.
+
+    Try both on a completely new folder and the entire project root
+    """
+    source = plc_dir / Path(target)
 
     untracked_files = to_paths(
         "POUs/untracked_source/F_UntrackedFunc.TcPOU",
@@ -92,8 +103,8 @@ def test_merge_recursive(plc_code):
     for path in untracked_files + untracked_folders:
         assert path_to_str(path) not in project_content
 
-    patcher = PatchPlc(str(project), "merge", str(source), "-r")
-    patcher.run()
+    with caplog.at_level(logging.WARNING):
+        PatchPlc(str(project), "merge", str(source), "-r").run()
 
     project_content = project.read_text()
 
@@ -102,19 +113,18 @@ def test_merge_recursive(plc_code):
     for folder in untracked_folders:
         assert f'<Folder Include="{path_to_str(folder)}"/>' in project_content
 
+    assert len(caplog.records) == 0  # No warnings or errors
+
     # Now compare with stored, sorted result:
-    expected_file = plc_code / source / "MyPlc_with_untracked.plcproj.xml"
+    expected_file = plc_dir / "MyPlc_with_untracked.plcproj.xml"
 
     XmlSorter(str(project)).run()
 
     assert project.read_text() == expected_file.read_text()
 
 
-def test_remove(plc_code):
+def test_remove(plc_dir, project):
     """Test remove happy-flow."""
-    plc_dir = plc_code / "TwinCAT Project1" / "MyPlc"
-    project = plc_dir / "MyPlc.plcproj"
-
     tracked_files = to_paths(
         "POUs/FB_Example.TcPOU",
         "DUTs/ST_Example.TcDUT",
@@ -136,14 +146,11 @@ def test_remove(plc_code):
         assert path_to_str(file) not in project_content
 
     lines_after = project_content.count("\n")
-    assert lines_before - 6 == lines_after  # Make sure not more got deleted
+    assert lines_after == lines_before - 6  # Make sure not more got deleted
 
 
 @pytest.mark.parametrize("recursive", [False, True])
-def test_remove_recursive(plc_code, recursive):
-    plc_dir = plc_code / "TwinCAT Project1" / "MyPlc"
-    project = plc_dir / "MyPlc.plcproj"
-
+def test_remove_recursive(plc_dir, project, recursive):
     folder = Path("POUs/Module")
     tracked_folders = [
         'Include="POUs\\Module"',
@@ -173,19 +180,16 @@ def test_remove_recursive(plc_code, recursive):
     lines_after = content_after.count("\n")
 
     if not recursive:
-        assert content_before == content_after  # No changes
+        assert content_after == content_before   # No changes
         return
 
     for item in tracked_files + tracked_folders:
         assert item not in content_after
 
-    assert lines_before - 2 * 1 - 3 * 3 == lines_after
+    assert lines_after == lines_before - 2 * 1 - 3 * 3
 
 
-def test_reset(plc_code):
-    plc_dir = plc_code / "TwinCAT Project1" / "MyPlc"
-    project = plc_dir / "MyPlc.plcproj"
-
+def test_reset(plc_dir, project):
     # Remove the actual (tracked) folder first:
     shutil.rmtree(plc_dir / "POUs" / "Module")
     # And there is already the "POUs/untracked_source" directory
@@ -225,14 +229,11 @@ def test_reset(plc_code):
         assert item in content_after
 
     lines_after = content_after.count("\n")
-    assert lines_before - (2 * 1) - (3 * 3) + (2 * 1) + (4 * 3) == lines_after
+    assert lines_after == lines_before - (2 * 1) - (3 * 3) + (2 * 1) + (4 * 3)
     # Remove 2 folders and 3 files, add 2 folders and 4 files
 
 
-def test_reset_duplicate(plc_code, caplog):
-    plc_dir = plc_code / "TwinCAT Project1" / "MyPlc"
-    project = plc_dir / "MyPlc.plcproj"
-
+def test_reset_duplicate(plc_dir, project, caplog):
     # Create a new file, with a name that's already known:
     module_folder = plc_dir / "POUs" / "Module"
     new_file = module_folder / "DUTs" / "MAIN.TcPOU"
@@ -249,4 +250,4 @@ def test_reset_duplicate(plc_code, caplog):
     msg = caplog.records[0].message
     assert "Refusing to add" in msg and "MAIN.TcPOU" in msg
 
-    assert content_before == project.read_text()  # The project should not be changed
+    assert project.read_text() == content_before  # The project should not be changed

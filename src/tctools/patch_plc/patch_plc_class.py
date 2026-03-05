@@ -180,11 +180,11 @@ remove:     Remove the provided files/folders without adding anything"""
         """See help info for `merge`."""
         new_sources = FileItems.merge(new_sources.values())
 
-        self.skip_file_duplicates(new_sources, current_sources)
-
         sizes_all = (len(new_sources.folders), len(new_sources.files))
 
         new_sources.subtract(current_sources)
+
+        self.skip_file_duplicates(new_sources, current_sources)
 
         self.logger.info(
             f"Discovered {sizes_all[1]} source files, of which "
