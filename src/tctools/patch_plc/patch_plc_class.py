@@ -373,6 +373,18 @@ remove:     Remove the provided files/folders without adding anything"""
                 # In the XML there are always backslashes, force to native type
                 ref_set.add(path)
 
+        if self._element_files is None:  # Group doesn't yet exist, create it:
+            # It must be the first of the <ItemGroup> set
+            element_neighbour: Element = tree.find(
+                "PropertyGroup", namespaces={"": "*"}
+            )
+            self._element_files = etree.XML("<ItemGroup></ItemGroup>")
+            element_neighbour.addnext(self._element_files)
+
+        if self._element_folders is None:
+            self._element_folders = etree.XML("<ItemGroup></ItemGroup>")
+            self._element_files.addnext(self._element_folders)
+
         return sources
 
     def sources_to_remove(

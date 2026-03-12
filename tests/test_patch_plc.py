@@ -251,3 +251,14 @@ def test_reset_duplicate(plc_dir, project, caplog):
     assert "Refusing to add" in msg and "MAIN.TcPOU" in msg
 
     assert project.read_text() == content_before  # The project should not be changed
+
+
+def test_reset_empty_project(plc_dir, caplog):
+    project = plc_dir / "MyPlc_empty.plcproj"  # Project with 0 sources
+
+    code = PatchPlc(str(project), "reset", str(plc_dir), "-r").run()
+    assert code == 0
+
+    content_after = project.read_text()
+    assert 'Include="POUs\\untracked_source\\F_UntrackedFunc.TcPOU"' in content_after
+    assert 'Include="POUs\\untracked_source"' in content_after
