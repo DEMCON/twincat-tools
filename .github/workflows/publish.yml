@@ -1,0 +1,39 @@
+#
+# Workflow to publish the package to PyPi on a tag.
+#
+
+name: Publish to PyPi
+
+on:
+  push:
+    tags: [ 'v*']
+
+jobs:
+
+  deploy:
+
+    runs-on: ubuntu-latest
+
+    environment:
+      name: testpypi
+
+    permissions:
+      id-token: write
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - uses: actions/setup-python@v6
+      with:
+        python-version: "3.13"
+
+    - uses: abatilo/actions-poetry@v4
+      with:
+        poetry-version: "2.3.1"
+    - run: poetry build
+
+    # PyPi authentication is done through a trusted publisher and a Github environment:
+    - uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        repository-url: https://test.pypi.org/legacy/
+        verbose: true
