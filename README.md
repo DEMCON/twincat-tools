@@ -40,16 +40,20 @@ This is done automatically and hosted by [ReadTheDocs](https://about.readthedocs
 
 ### Linting
 
-Code style is enforced with black, isort and flake8. 
+Code style is enforced with `ruff check` and `ruff format`. 
 Format code with:
 ```
-isort .
-black .
+ruff format
 ```
-And verify code with: (flake8 extensions will also perform black and isort checks)
+And verify code with:
 ```
-flake8 ./src ./tests
+ruff check [--fix]
 ```
+
+### Releasing
+
+To make a new release, just add a new tag following the format of `v2.3.4`.
+The CI will take care of the rest.
 
 ## Tools
 
