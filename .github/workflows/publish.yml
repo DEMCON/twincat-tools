@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
 
     environment:
-      name: testpypi
+      name: pypi
 
     permissions:
       id-token: write
@@ -34,6 +34,3 @@ jobs:
 
     # PyPi authentication is done through a trusted publisher and a Github environment:
     - uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        repository-url: https://test.pypi.org/legacy/
-        verbose: true
