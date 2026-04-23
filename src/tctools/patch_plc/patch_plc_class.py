@@ -116,7 +116,8 @@ remove:     Remove the provided files/folders without adding anything"""
     def set_main_argument(cls, parser):
         parser.add_argument(
             "project",
-            help="Path to the PLC project (typically '.plcproj')",
+            help="Either a path to the PLC project or a folder containing a "
+            "single '.plcproj' file",
         )
         parser.add_argument(
             "operation",
@@ -135,9 +136,23 @@ remove:     Remove the provided files/folders without adding anything"""
             skip_check=(operation == Operation.REMOVE),
         )
 
-        self._project_file = Path(self.args.project).resolve()
-        if not self._project_file.is_file():
-            raise ValueError(f"Project file {self._project_file} does not exist")
+        project_path = Path(self.args.project).resolve()
+        if project_path.is_dir():  # Looks for a local project automatically
+            results = list(project_path.glob("*.plcproj"))
+            if len(results) == 0:
+                raise RuntimeError(
+                    f"Found no PLC project directly under '{project_path}'"
+                )
+            if len(results) > 1:
+                raise RuntimeError(
+                    f"Found multiple PLC projects directly under '{project_path}'"
+                )
+            project_path = Path(results[0])
+
+        if not project_path.is_file():
+            raise ValueError(f"Project file {project_path} does not exist")
+
+        self._project_file: Path = project_path
 
         new_sources: FileItemsGroups = {}
         for key, files in input_sources.items():
